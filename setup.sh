@@ -134,13 +134,14 @@ curl -O https://github.com/xlinmengen/proxy-assets/releases/download/assets/frp_
 cd ..
 unzip -oq image.zip -d /
 
-chmod -R +rw /opt
+chmod -R +rw /opt/
 chmod +x /opt/xray/xray
 chmod +x /opt/frps/frps
 
 uuid=$(cat /proc/sys/kernel/random/uuid | tr -d '\n')
 token=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1 | tr -d '\n')
 shortid=$(cat /dev/urandom | tr -dc 'A-F0-9' | fold -w 16 | head -n 1 | tr -d '\n')
+serverip=$(hostname -I | awk '{print $1}')
 
 parse_xray_keys
 
@@ -156,6 +157,7 @@ sed -i "s/#\[privatekey\]/${privatekey}/g" /opt/xray/config.json
 sed -i "s/#\[uuid\]/${uuid}/g" /opt/monitor/datas/settings.json
 sed -i "s/#\[email\]/${email}/g" /opt/monitor/datas/settings.json
 sed -i "s/#\[shortid\]/${shortid}/g" /opt/monitor/datas/settings.json
+sed -i "s/#\[serverip\]/${serverip}/g" /opt/monitor/datas/settings.json
 sed -i "s/#\[password\]/${password}/g" /opt/monitor/datas/settings.json
 sed -i "s/#\[privatekey\]/${privatekey}/g" /opt/monitor/datas/settings.json
 sed -i "s/#\[passwordkey\]/${passwordkey}/g" /opt/monitor/datas/settings.json
@@ -298,7 +300,7 @@ ufw --force reset
 sudo ufw default deny  incoming
 sudo ufw default allow outgoing
 ufw allow 443/tcp comment 'Xray Proxy Service'
-ufw allow 80/tcp  comment 'Web Monitor Service'
+ufw allow 80/tcp comment 'Web Monitor Service'
 ufw delete 3
 ufw delete 3
 echo y|ufw enable
