@@ -155,6 +155,7 @@ sed -i "s/#\[shortid\]/${shortid}/g" /opt/xray/config.json
 sed -i "s/#\[privatekey\]/${privatekey}/g" /opt/xray/config.json
 
 sed -i "s/#\[uuid\]/${uuid}/g" /opt/monitor/datas/settings.json
+sed -i "s/#\[token\]/${token}/g" /opt/monitor/datas/settings.json
 sed -i "s/#\[email\]/${email}/g" /opt/monitor/datas/settings.json
 sed -i "s/#\[shortid\]/${shortid}/g" /opt/monitor/datas/settings.json
 sed -i "s/#\[serverip\]/${serverip}/g" /opt/monitor/datas/settings.json
