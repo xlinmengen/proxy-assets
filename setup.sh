@@ -133,6 +133,7 @@ curl -O https://github.com/xlinmengen/proxy-assets/releases/download/assets/frp_
 curl -O https://github.com/xlinmengen/proxy-assets/releases/download/assets/frp_windows_amd64.zip
 cd ..
 unzip -oq image.zip -d /
+rm image.zip
 
 chmod -R +rw /opt/
 chmod +x /opt/xray/xray
@@ -301,7 +302,9 @@ ufw --force reset
 sudo ufw default deny  incoming
 sudo ufw default allow outgoing
 ufw allow 443/tcp comment 'Xray Proxy Service'
+ufw allow 20/tcp comment 'Frps Service'
 ufw allow 80/tcp comment 'Web Monitor Service'
-ufw delete 3
-ufw delete 3
+ufw delete 4
+ufw delete 4
+ufw delete 4
 echo y|ufw enable
