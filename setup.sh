@@ -120,6 +120,7 @@ sudo ln -sf /usr/bin/python3 /usr/bin/py
 sudo ln -sf /usr/bin/python3 /usr/bin/python
 
 sudo pip3 install --break-system-packages flask
+sudo pip3 install --break-system-packages urllib3
 sudo pip3 install --break-system-packages waitress
 sudo pip3 install --break-system-packages requests
 sudo pip3 install --break-system-packages cryptography
@@ -164,16 +165,14 @@ sed -i "s/#\[password\]/${password}/g" /opt/monitor/datas/settings.json
 sed -i "s/#\[privatekey\]/${privatekey}/g" /opt/monitor/datas/settings.json
 sed -i "s/#\[passwordkey\]/${passwordkey}/g" /opt/monitor/datas/settings.json
 
-systemctl restart frps
-systemctl enable frps
-systemctl restart xray
-systemctl enable xray
-systemctl restart monitor
-systemctl enable monitor
+systemctl enable --now xray
+systemctl enable --now frps
+systemctl enable --now monitor
 
 ###################################################
 
 cat > /etc/hosts << 'Config_EOF'
+127.0.1.1 server
 127.0.0.1 localhost gate
 ::1 localhost ip6-localhost ip6-loopback
 Config_EOF
@@ -292,7 +291,10 @@ sudo systemctl restart systemd-networkd
 sudo systemctl restart systemd-resolved
 sudo ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
 
-echo && echo "UUID: $uuid" && echo
+echo
+echo "Server IP: $serverip"
+echo "UUID: $uuid"
+echo
 sudo passwd && echo
 
 sudo systemctl reload ssh
