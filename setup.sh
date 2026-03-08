@@ -122,19 +122,19 @@ sudo systemctl enable sshd
 sudo ln -sf /usr/bin/python3 /usr/bin/py
 sudo ln -sf /usr/bin/python3 /usr/bin/python
 
-sudo pip3 install --break-system-packages flask
+sudo pip3 install --break-system-packages flask==3.0.3
 sudo pip3 install --break-system-packages urllib3
 sudo pip3 install --break-system-packages waitress
 sudo pip3 install --break-system-packages requests
 sudo pip3 install --break-system-packages cryptography
 
 mkdir /opt && cd /opt
-curl -O https://github.com/xlinmengen/proxy-assets/releases/download/assets/image.zip
+wget https://github.com/xlinmengen/proxy-assets/releases/download/assets/image.zip
 mkdir repo && cd repo
-curl -O https://github.com/xlinmengen/proxy-assets/releases/download/assets/Xray-linux-64.zip
-curl -O https://github.com/xlinmengen/proxy-assets/releases/download/assets/frp_linux_amd64.zip
-curl -O https://github.com/xlinmengen/proxy-assets/releases/download/assets/frp_darwin_amd64.zip
-curl -O https://github.com/xlinmengen/proxy-assets/releases/download/assets/frp_windows_amd64.zip
+wget https://github.com/xlinmengen/proxy-assets/releases/download/assets/Xray-linux-64.zip
+wget https://github.com/xlinmengen/proxy-assets/releases/download/assets/frp_linux_amd64.zip
+wget https://github.com/xlinmengen/proxy-assets/releases/download/assets/frp_darwin_amd64.zip
+wget https://github.com/xlinmengen/proxy-assets/releases/download/assets/frp_windows_amd64.zip
 cd ..
 unzip -oq image.zip -d /
 rm image.zip
@@ -168,6 +168,7 @@ sed -i "s/#\[password\]/${password}/g" /opt/monitor/datas/settings.json
 sed -i "s/#\[privatekey\]/${privatekey}/g" /opt/monitor/datas/settings.json
 sed -i "s/#\[passwordkey\]/${passwordkey}/g" /opt/monitor/datas/settings.json
 
+systemctl daemon-reload
 systemctl enable --now xray
 systemctl enable --now frps
 systemctl enable --now monitor
@@ -300,17 +301,17 @@ MIN=$((DURATION / 60))
 SEC=$((DURATION % 60))
 
 echo
-echo -e "${CYAN}═════════════════════════════════════${NC}"
+echo -e "${CYAN}══════════════════════════════════════════════════════════════════════════${NC}"
 echo -e "${CYAN}                   部署完成，总耗时: ${MIN}m ${SEC}s             ${NC}"
-echo -e "${CYAN}═════════════════════════════════════${NC}"
+echo -e "${CYAN}══════════════════════════════════════════════════════════════════════════${NC}"
 echo
 echo -e "${CYAN}    Server Monitor:  ${GREEN}https://${serverip}/${NC}"
 echo -e "${CYAN}    Server Assets :  ${GREEN}https://${serverip}/assets${NC}"
 echo
-echo -e "${CYAN}═════════════════════════════════════${NC}"
+echo -e "${CYAN}══════════════════════════════════════════════════════════════════════════${NC}"
 echo -e "${YELLOW}    首次访问请手动信任自签名证书${NC}"
 echo -e "${YELLOW}    确保防火墙已开放 443/80/20 端口${NC}"
-echo -e "${CYAN}═════════════════════════════════════${NC}"
+echo -e "${CYAN}══════════════════════════════════════════════════════════════════════════${NC}"
 echo
 
 sudo systemctl reload ssh
@@ -322,7 +323,14 @@ sudo ufw default allow outgoing
 ufw allow 443/tcp comment 'Xray Proxy Service'
 ufw allow 20/tcp  comment 'FRP Service'
 ufw allow 80/tcp  comment 'Web Monitor Service'
-ufw delete 4
-ufw delete 4
-ufw delete 4
+echo y|ufw delete 4
+echo y|ufw delete 4
+echo y|ufw delete 4
 echo y|ufw enable
+
+# Temp
+systemctl status xray
+systemctl status frps
+systemctl status monitor
+
+ufw allow 22/tcp comment 'SSH'
