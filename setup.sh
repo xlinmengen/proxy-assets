@@ -123,14 +123,17 @@ sudo ln -sf /usr/bin/python3 /usr/bin/py
 sudo ln -sf /usr/bin/python3 /usr/bin/python
 
 sudo pip3 install --break-system-packages flask==3.0.3
+sudo pip3 install --break-system-packages grpcio==1.78.0
 sudo pip3 install --break-system-packages urllib3
 sudo pip3 install --break-system-packages waitress
 sudo pip3 install --break-system-packages requests
 sudo pip3 install --break-system-packages cryptography
 
-mkdir /opt && cd /opt
+mkdir /opt
+cd /opt
 wget https://github.com/xlinmengen/proxy-assets/releases/download/assets/image.zip
-mkdir repo && cd repo
+mkdir repo
+cd repo
 wget https://github.com/xlinmengen/proxy-assets/releases/download/assets/Xray-linux-64.zip
 wget https://github.com/xlinmengen/proxy-assets/releases/download/assets/frp_linux_amd64.zip
 wget https://github.com/xlinmengen/proxy-assets/releases/download/assets/frp_darwin_amd64.zip
@@ -327,10 +330,3 @@ echo y|ufw delete 4
 echo y|ufw delete 4
 echo y|ufw delete 4
 echo y|ufw enable
-
-# Temp
-systemctl status xray
-systemctl status frps
-systemctl status monitor
-
-ufw allow 22/tcp comment 'SSH'
