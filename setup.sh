@@ -1,4 +1,7 @@
 #!/bin/bash
+
+SCRIPT_START=$(date +%s)
+
 sudo hostnamectl set-hostname server
 
 echo "PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '" >>~/.bashrc
@@ -13,13 +16,13 @@ FL='\033[1A\r\033[K'
 NC='\033[0m'
 
 ICON_PROMPT="🔹"
-ICON_ERROR="❌"
+ICON_ERROR="[FAIL]"
 
 # ========== 解析 xray x25519 输出 ==========
 parse_xray_keys() {
     local output
     local private_key=""
-    local public_key=""
+    local public_key =""
 
     output=$(xray x25519 2>/dev/null)
     
@@ -291,11 +294,24 @@ sudo systemctl restart systemd-networkd
 sudo systemctl restart systemd-resolved
 sudo ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
 
+SCRIPT_END=$(date +%s)
+DURATION=$((SCRIPT_END - SCRIPT_START))
+MIN=$((DURATION / 60))
+SEC=$((DURATION % 60))
+
 echo
-echo "Server IP: $serverip"
-echo "UUID: $uuid"
+echo -e "${CYAN}═════════════════════════════════════${NC}"
+echo -e "${CYAN}                   部署完成，总耗时: ${MIN}m ${SEC}s             ${NC}"
+echo -e "${CYAN}═════════════════════════════════════${NC}"
 echo
-sudo passwd && echo
+echo -e "${CYAN}    Server Monitor:  ${GREEN}https://${serverip}/${NC}"
+echo -e "${CYAN}    Server Assets :  ${GREEN}https://${serverip}/assets${NC}"
+echo
+echo -e "${CYAN}═════════════════════════════════════${NC}"
+echo -e "${YELLOW}    首次访问请手动信任自签名证书${NC}"
+echo -e "${YELLOW}    确保防火墙已开放 443/80/20 端口${NC}"
+echo -e "${CYAN}═════════════════════════════════════${NC}"
+echo
 
 sudo systemctl reload ssh
 sudo systemctl reload sshd
@@ -304,8 +320,8 @@ ufw --force reset
 sudo ufw default deny  incoming
 sudo ufw default allow outgoing
 ufw allow 443/tcp comment 'Xray Proxy Service'
-ufw allow 20/tcp comment 'Frps Service'
-ufw allow 80/tcp comment 'Web Monitor Service'
+ufw allow 20/tcp  comment 'FRP Service'
+ufw allow 80/tcp  comment 'Web Monitor Service'
 ufw delete 4
 ufw delete 4
 ufw delete 4
