@@ -124,8 +124,8 @@ sudo ln -sf /usr/bin/python3 /usr/bin/python
 
 sudo pip3 install --break-system-packages flask==3.0.3
 sudo pip3 install --break-system-packages grpcio==1.78.0
+sudo pip3 install --break-system-packages gevent
 sudo pip3 install --break-system-packages urllib3
-sudo pip3 install --break-system-packages waitress
 sudo pip3 install --break-system-packages requests
 sudo pip3 install --break-system-packages cryptography
 
@@ -323,9 +323,9 @@ sudo systemctl reload sshd
 ufw --force reset
 sudo ufw default deny  incoming
 sudo ufw default allow outgoing
-ufw allow 443/tcp comment 'Xray Proxy Service'
-ufw allow 20/tcp  comment 'FRP Service'
-ufw allow 80/tcp  comment 'Web Monitor Service'
+ufw allow 5000/tcp comment 'Web Monitor Service'
+ufw allow 443/tcp  comment 'Xray Proxy Service'
+ufw allow 20/tcp   comment 'FRP Service'
 echo y|ufw delete 4
 echo y|ufw delete 4
 echo y|ufw delete 4
