@@ -313,7 +313,7 @@ echo -e "${CYAN}    Server Assets :  ${GREEN}https://${serverip}/assets${NC}"
 echo
 echo -e "${CYAN}══════════════════════════════════════════════════════════════════════════${NC}"
 echo -e "${YELLOW}    首次访问请手动信任自签名证书${NC}"
-echo -e "${YELLOW}    确保防火墙已开放 443/5000 端口${NC}"
+echo -e "${YELLOW}    确保防火墙已开放 443/80/20 端口${NC}"
 echo -e "${CYAN}══════════════════════════════════════════════════════════════════════════${NC}"
 echo
 
@@ -324,9 +324,11 @@ ufw --force reset
 sudo ufw default deny  incoming
 sudo ufw default allow outgoing
 ufw allow 5000/tcp comment 'Web Monitor Service'
-ufw allow 443/tcp  comment 'Xray Proxy Service'
+ufw allow 443/tcp  comment 'Xray Proxy  Service'
+ufw allow 80/tcp   comment 'Web Monitor Service'
 ufw allow 20/tcp   comment 'FRP Service'
-echo y|ufw delete 4
-echo y|ufw delete 4
-echo y|ufw delete 4
+echo y|ufw delete 5
+echo y|ufw delete 5
+echo y|ufw delete 5
+echo y|ufw delete 5
 echo y|ufw enable
