@@ -1,4 +1,2 @@
-cd ~
-curl -O https://github.com/xlinmengen/proxy-assets/raw/refs/heads/main/setup.sh
-chmod +x setup.sh
+wget https://github.com/xlinmengen/proxy-assets/raw/refs/heads/main/setup.sh
 bash setup.sh
