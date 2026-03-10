@@ -128,6 +128,7 @@ sudo pip3 install --break-system-packages gevent
 sudo pip3 install --break-system-packages urllib3
 sudo pip3 install --break-system-packages requests
 sudo pip3 install --break-system-packages cryptography
+sudo pip3 install --break-system-packages google-api-python-client
 
 mkdir /opt
 cd /opt
@@ -317,18 +318,18 @@ echo -e "${YELLOW}    确保防火墙已开放 20/80/443/5000 端口${NC}"
 echo -e "${CYAN}══════════════════════════════════════════════════════════════════════════${NC}"
 echo
 
-sudo systemctl reload ssh
-sudo systemctl reload sshd
+sudo systemctl reload ssh  >nul 2>&1
+sudo systemctl reload sshd >nul 2>&1
 
-ufw --force reset
-sudo ufw default deny  incoming
-sudo ufw default allow outgoing
-ufw allow 5000/tcp comment 'Web Monitor Service'
-ufw allow 443/tcp  comment 'Xray Proxy  Service'
-ufw allow 80/tcp   comment 'Web Monitor Service'
-ufw allow 20/tcp   comment 'FRP Service'
-echo y|ufw delete 5
-echo y|ufw delete 5
-echo y|ufw delete 5
-echo y|ufw delete 5
-echo y|ufw enable
+ufw --force reset >nul
+sudo ufw default deny  incoming >nul
+sudo ufw default allow outgoing >nul
+ufw allow 5000/tcp comment 'Web Monitor Service' >nul
+ufw allow 443/tcp  comment 'Xray Proxy  Service' >nul
+ufw allow 80/tcp   comment 'Web Monitor Service' >nul
+ufw allow 20/tcp   comment 'FRP Service' >nul
+echo y|ufw delete 5 >nul
+echo y|ufw delete 5 >nul
+echo y|ufw delete 5 >nul
+echo y|ufw delete 5 >nul
+echo y|ufw enable   >nul
