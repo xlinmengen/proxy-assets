@@ -324,10 +324,10 @@ sudo systemctl reload sshd >nul 2>&1
 ufw --force reset >nul
 sudo ufw default deny  incoming >nul
 sudo ufw default allow outgoing >nul
-ufw allow 5000/tcp comment 'Web Monitor Service' >nul
-ufw allow 443/tcp  comment 'Xray Proxy  Service' >nul
-ufw allow 80/tcp   comment 'Web Monitor Service' >nul
 ufw allow 20/tcp   comment 'FRP Service' >nul
+ufw allow 80/tcp   comment 'Web Monitor Service' >nul
+ufw allow 443/tcp  comment 'Xray Proxy  Service' >nul
+ufw allow 5000/tcp comment 'Web Monitor Service' >nul
 echo y|ufw delete 5 >nul
 echo y|ufw delete 5 >nul
 echo y|ufw delete 5 >nul
