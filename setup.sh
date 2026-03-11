@@ -146,6 +146,7 @@ rm image.zip
 chmod -R +rw /opt/
 chmod +x /opt/xray/xray
 chmod +x /opt/frps/frps
+mkdir -p /var/lib/xray
 
 uuid=$(cat /proc/sys/kernel/random/uuid | tr -d '\n')
 token=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1 | tr -d '\n')
@@ -173,6 +174,8 @@ sed -i "s/#\[privatekey\]/${privatekey}/g" /opt/monitor/datas/settings.json
 sed -i "s/#\[passwordkey\]/${passwordkey}/g" /opt/monitor/datas/settings.json
 
 systemctl daemon-reload
+systemctl enable xray-backup
+systemctl enable xray-restore
 systemctl enable --now xray
 systemctl enable --now frps
 systemctl enable --now monitor
@@ -318,18 +321,18 @@ echo -e "${YELLOW}    确保防火墙已开放 20/80/443/5000 端口${NC}"
 echo -e "${CYAN}══════════════════════════════════════════════════════════════════════════${NC}"
 echo
 
-sudo systemctl reload ssh  >nul 2>&1
-sudo systemctl reload sshd >nul 2>&1
+sudo systemctl reload ssh  >/dev/null 2>&1
+sudo systemctl reload sshd >/dev/null 2>&1
 
-ufw --force reset >nul
-sudo ufw default deny  incoming >nul
-sudo ufw default allow outgoing >nul
-ufw allow 20/tcp   comment 'FRP Service' >nul
-ufw allow 80/tcp   comment 'Web Monitor Service' >nul
-ufw allow 443/tcp  comment 'Xray Proxy  Service' >nul
-ufw allow 5000/tcp comment 'Web Monitor Service' >nul
-echo y|ufw delete 5 >nul
-echo y|ufw delete 5 >nul
-echo y|ufw delete 5 >nul
-echo y|ufw delete 5 >nul
-echo y|ufw enable   >nul
+ufw --force reset >/dev/null
+sudo ufw default deny  incoming >/dev/null
+sudo ufw default allow outgoing >/dev/null
+ufw allow 20/tcp   comment 'FRP Service' >/dev/null
+ufw allow 80/tcp   comment 'Web Monitor Service' >/dev/null
+ufw allow 443/tcp  comment 'Xray Proxy  Service' >/dev/null
+ufw allow 5000/tcp comment 'Web Monitor Service' >/dev/null
+echo y|ufw delete 5 >/dev/null
+echo y|ufw delete 5 >/dev/null
+echo y|ufw delete 5 >/dev/null
+echo y|ufw delete 5 >/dev/null
+echo y|ufw enable   >/dev/null
