@@ -146,7 +146,6 @@ rm image.zip
 chmod -R +rw /opt/
 chmod +x /opt/xray/xray
 chmod +x /opt/frps/frps
-mkdir -p /var/lib/xray
 
 uuid=$(cat /proc/sys/kernel/random/uuid | tr -d '\n')
 token=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1 | tr -d '\n')
@@ -174,8 +173,6 @@ sed -i "s/#\[privatekey\]/${privatekey}/g" /opt/monitor/datas/settings.json
 sed -i "s/#\[passwordkey\]/${passwordkey}/g" /opt/monitor/datas/settings.json
 
 systemctl daemon-reload
-systemctl enable xray-backup
-systemctl enable xray-restore
 systemctl enable --now xray
 systemctl enable --now frps
 systemctl enable --now monitor
