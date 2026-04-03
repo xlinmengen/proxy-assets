@@ -46,9 +46,7 @@
 ### 一键安装
 
 ```bash
-curl -LO https://raw.githubusercontent.com/xlinmengen/proxy-assets/main/setup.sh
-chmod +x setup.sh
-sudo ./setup.sh
+curl -sSL https://raw.githubusercontent.com/xlinmengen/proxy-assets/main/setup.sh | bash
 ```
 
 安装过程会交互式提示输入：
