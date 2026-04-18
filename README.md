@@ -85,7 +85,7 @@ curl -sSL https://raw.githubusercontent.com/xlinmengen/proxy-assets/main/setup.s
 
 | 组件 | 版本 | 用途 |
 | :--- | :--- | :--- |
-| [Xray-core](https://github.com/XTLS/Xray-core) | latest | 代理核心 (Reality 协议) |
+| [Xray-core](https://github.com/XTLS/Xray-core) | 26.3.27 | 代理核心 (Reality 协议) |
 | [FRP](https://github.com/fatedier/frp) | 0.58.0 | 内网穿透服务端 |
 | [Flask](https://flask.palletsprojects.com/) | 3.0.3 | Web 框架 |
 | [gRPC](https://grpc.io/) | 1.78.0 | 与 Xray API 通信 |
