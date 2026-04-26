@@ -1,0 +1,44 @@
+payload:
+  # --- 常见国内域名 ---
+  - '+.age.tv'
+  - '+.agedm.io'
+  - '+.bilibili.com'
+  - '+.biliapi.net'
+  - '+.biliapi.com'
+  - '+.bilivideo.com'
+  - '+.hdslb.com'
+  - '+.mcdn.bilivideo.cn'
+  
+  # --- 国内统计与推送 SDK (防止 App 启动卡顿) ---
+  - '+.umeng.com'
+  - '+.umengcloud.com'
+  - '+.log.umsns.com'
+  - '+.jpush.cn'
+  - '+.igexin.com'
+  
+  # --- 国内常用工具 ---
+  - '+.baidu.com'
+  - '+.bdstatic.com'
+  - '+.bcebos.com'
+  - '+.weibo.com'
+  - '+.sinaimg.cn'
+  - '+.tencent.com'
+  - '+.gtimg.cn'
+  - '+.qq.com'
+  - '+.weixin.com'
+  - '+.alipay.com'
+  - '+.taobao.com'
+  - '+.alicdn.com'
+  - '+.tmall.com'
+  - '+.jd.com'
+  - '+.163.com'
+  - '+.126.net'
+  
+  # --- 手机系统服务 ---
+  - '+.apple.com'
+  - '+.icloud.com'
+  - '+.mzstatic.com'
+  - '+.xiaomi.com'
+  - '+.mi-img.com'
+  - '+.miui.com'
+  - '+.speedtest.net'
