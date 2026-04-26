@@ -1,0 +1,16 @@
+payload:
+  # --- 全球广告联盟 ---
+  - '+.doubleclick.net'
+  - '+.googleadservices.com'
+  - '+.googlesyndication.com'
+  - '+.ads.pangle.io'
+  - '+.ads.pubmatic.com'
+  - '+.adservice.google.com'
+  
+  # --- 国内广告分发 ---
+  - '+.ad.qq.com'
+  - '+.gdt.qq.com'
+  - '+.adm.baidu.com'
+  - '+.mobads.baidu.com'
+  - '+.ad.xiaomi.com'
+  - '+.tracking.miui.com'
