@@ -13,8 +13,8 @@ ICON_ERROR="[FAIL]"
 # ========== 解析 xray x25519 输出 ==========
 parse_xray_keys() {
     local output
+    local public_key=""
     local private_key=""
-    local public_key =""
 
     output=$(xray x25519 2>/dev/null)
     
