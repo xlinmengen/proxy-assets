@@ -193,6 +193,9 @@ echo y|sudo -S ufw delete 5 >/dev/null
 echo y|sudo -S ufw delete 5 >/dev/null
 echo y|sudo -S ufw enable   >/dev/null
 
+curl -fsSL https://get.docker.com | bash
+sudo docker run -d --restart always --name anisette-v3 -p 127.0.0.1:30:6969 --volume anisette-v3_data:/home/Alcoholic/.config/anisette-v3/lib/ dadoum/anisette-v3-server
+
 ###################################################
 
 SCRIPT_END=$(date +%s)
