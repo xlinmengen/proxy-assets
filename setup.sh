@@ -185,10 +185,10 @@ sudo ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
 sudo ufw --force reset >/dev/null
 sudo ufw default deny  incoming >/dev/null
 sudo ufw default allow outgoing >/dev/null
-sudo ufw allow 20/tcp   comment 'FRP Service' >/dev/null
+sudo ufw allow 10/tcp   comment 'FRP Service' >/dev/null
 sudo ufw allow 80/tcp   comment 'Web Monitor Service' >/dev/null
 sudo ufw allow 443/tcp  comment 'Xray Proxy  Service' >/dev/null
-sudo ufw allow 5000/tcp comment 'Web Monitor Service' >/dev/null
+sudo ufw allow 1000/tcp comment 'Web Monitor Service' >/dev/null
 echo y|sudo -S ufw delete 5 >/dev/null
 echo y|sudo -S ufw delete 5 >/dev/null
 echo y|sudo -S ufw delete 5 >/dev/null
@@ -210,11 +210,11 @@ echo -e "${CYAN}═════════════════════�
 echo -e "${CYAN}                   部署完成，总耗时: ${MIN}m ${SEC}s             ${NC}"
 echo -e "${CYAN}══════════════════════════════════════════════════════════════════════════${NC}"
 echo
-echo -e "${CYAN}    Server Monitor:  ${GREEN}https://${serverip}:5000/${NC}"
-echo -e "${CYAN}    Server Assets :  ${GREEN}https://${serverip}:5000/assets${NC}"
+echo -e "${CYAN}    Server Monitor:  ${GREEN}https://${serverip}:1000/${NC}"
+echo -e "${CYAN}    Server Assets :  ${GREEN}https://${serverip}:1000/assets${NC}"
 echo
 echo -e "${CYAN}══════════════════════════════════════════════════════════════════════════${NC}"
 echo -e "${YELLOW}    首次访问请手动信任自签名证书${NC}"
-echo -e "${YELLOW}    确保防火墙已开放 20/80/443/5000 端口${NC}"
+echo -e "${YELLOW}    确保防火墙已开放 10/80/443/1000 端口${NC}"
 echo -e "${CYAN}══════════════════════════════════════════════════════════════════════════${NC}"
 echo
