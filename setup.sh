@@ -122,6 +122,7 @@ sudo pip3 install --break-system-packages flask==3.0.3
 sudo pip3 install --break-system-packages grpcio==1.78.0
 sudo pip3 install --break-system-packages image
 sudo pip3 install --break-system-packages psutil
+sudo pip3 install --break-system-packages pyotp
 sudo pip3 install --break-system-packages gevent
 sudo pip3 install --break-system-packages urllib3
 sudo pip3 install --break-system-packages requests
@@ -189,6 +190,7 @@ sudo ufw allow 10/tcp   comment 'FRP Service' >/dev/null
 sudo ufw allow 80/tcp   comment 'Web Monitor Service' >/dev/null
 sudo ufw allow 443/tcp  comment 'Xray Proxy  Service' >/dev/null
 sudo ufw allow 1000/tcp comment 'Web Monitor Service' >/dev/null
+
 echo y|sudo -S ufw delete 5 >/dev/null
 echo y|sudo -S ufw delete 5 >/dev/null
 echo y|sudo -S ufw delete 5 >/dev/null
