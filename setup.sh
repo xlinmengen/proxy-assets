@@ -111,7 +111,7 @@ echo 'PS1='\''${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]
 
 sudo apt update
 sudo apt upgrade -y
-sudo apt install -y curl nano ufw wget vim dnsutils cpufrequtils unzip python3 python3-pip python3-venv
+sudo apt install -y curl nano ufw wget vim dnsutils cpufrequtils unzip ca-certificates python3 python3-pip python3-venv
 sudo systemctl enable ssh
 sudo systemctl enable sshd
 
@@ -121,11 +121,11 @@ sudo ln -sf /usr/bin/python3 /usr/bin/python
 sudo pip3 install --break-system-packages flask==3.0.3
 sudo pip3 install --break-system-packages grpcio==1.78.0
 sudo pip3 install --break-system-packages image
-sudo pip3 install --break-system-packages psutil
 sudo pip3 install --break-system-packages pyotp
-sudo pip3 install --break-system-packages gevent
+sudo pip3 install --break-system-packages psutil
 sudo pip3 install --break-system-packages urllib3
 sudo pip3 install --break-system-packages requests
+sudo pip3 install --break-system-packages gunicorn
 sudo pip3 install --break-system-packages cryptography
 sudo pip3 install --break-system-packages google-api-python-client
 
@@ -187,14 +187,12 @@ sudo ufw --force reset >/dev/null
 sudo ufw default deny  incoming >/dev/null
 sudo ufw default allow outgoing >/dev/null
 sudo ufw allow 10/tcp   comment 'FRP Service' >/dev/null
-sudo ufw allow 80/tcp   comment 'Web Monitor Service' >/dev/null
 sudo ufw allow 443/tcp  comment 'Xray Proxy  Service' >/dev/null
 sudo ufw allow 1000/tcp comment 'Web Monitor Service' >/dev/null
 
-echo y|sudo -S ufw delete 5 >/dev/null
-echo y|sudo -S ufw delete 5 >/dev/null
-echo y|sudo -S ufw delete 5 >/dev/null
-echo y|sudo -S ufw delete 5 >/dev/null
+echo y|sudo -S ufw delete 4 >/dev/null
+echo y|sudo -S ufw delete 4 >/dev/null
+echo y|sudo -S ufw delete 4 >/dev/null
 echo y|sudo -S ufw enable   >/dev/null
 
 curl -fsSL https://get.docker.com | bash
@@ -217,6 +215,6 @@ echo -e "${CYAN}    Server Assets :  ${GREEN}https://${serverip}:1000/assets${NC
 echo
 echo -e "${CYAN}══════════════════════════════════════════════════════════════════════════${NC}"
 echo -e "${YELLOW}    首次访问请手动信任自签名证书${NC}"
-echo -e "${YELLOW}    确保防火墙已开放 10/80/443/1000 端口${NC}"
+echo -e "${YELLOW}    确保防火墙已开放 10/443/1000 端口${NC}"
 echo -e "${CYAN}══════════════════════════════════════════════════════════════════════════${NC}"
 echo
