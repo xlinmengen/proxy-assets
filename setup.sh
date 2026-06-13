@@ -124,8 +124,8 @@ sudo pip3 install --break-system-packages image
 sudo pip3 install --break-system-packages pyotp
 sudo pip3 install --break-system-packages psutil
 sudo pip3 install --break-system-packages urllib3
+sudo pip3 install --break-system-packages granian
 sudo pip3 install --break-system-packages requests
-sudo pip3 install --break-system-packages gunicorn
 sudo pip3 install --break-system-packages cryptography
 sudo pip3 install --break-system-packages google-api-python-client
 
