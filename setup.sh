@@ -122,6 +122,7 @@ sudo pip3 install --break-system-packages flask==3.0.3
 sudo pip3 install --break-system-packages grpcio==1.78.0
 sudo pip3 install --break-system-packages image
 sudo pip3 install --break-system-packages pyotp
+sudo pip3 install --break-system-packages Pyro5
 sudo pip3 install --break-system-packages psutil
 sudo pip3 install --break-system-packages urllib3
 sudo pip3 install --break-system-packages granian
