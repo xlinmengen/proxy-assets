@@ -122,7 +122,6 @@ sudo pip3 install --break-system-packages flask==3.0.3
 sudo pip3 install --break-system-packages grpcio==1.78.0
 sudo pip3 install --break-system-packages image
 sudo pip3 install --break-system-packages pyotp
-sudo pip3 install --break-system-packages Pyro5
 sudo pip3 install --break-system-packages psutil
 sudo pip3 install --break-system-packages urllib3
 sudo pip3 install --break-system-packages granian
@@ -179,6 +178,7 @@ sudo systemctl reload sshd
 sudo systemctl enable --now xray
 sudo systemctl enable --now frps
 sudo systemctl enable --now monitor
+sudo systemctl enable --now monitor_launcher
 sudo systemctl restart cpufrequtils
 sudo systemctl restart systemd-networkd
 sudo systemctl restart systemd-resolved
