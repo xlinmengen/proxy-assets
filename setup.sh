@@ -153,15 +153,6 @@ serverip=$(hostname -I | awk '{print $1}')
 
 parse_xray_keys
 
-sudo sed -i "s/#\[token\]/${token}/g" /opt/frps/frps.toml
-sudo sed -i "s/#\[username\]/${email}/g" /opt/frps/frps.toml
-sudo sed -i "s/#\[password\]/${password}/g" /opt/frps/frps.toml
-
-sudo sed -i "s/#\[uuid\]/${uuid}/g" /opt/xray/config.json
-sudo sed -i "s/#\[email\]/${email}/g" /opt/xray/config.json
-sudo sed -i "s/#\[shortid\]/${shortid}/g" /opt/xray/config.json
-sudo sed -i "s/#\[privatekey\]/${privatekey}/g" /opt/xray/config.json
-
 sudo sed -i "s/#\[uuid\]/${uuid}/g" /opt/monitor/datas/settings.json
 sudo sed -i "s/#\[token\]/${token}/g" /opt/monitor/datas/settings.json
 sudo sed -i "s/#\[email\]/${email}/g" /opt/monitor/datas/settings.json
@@ -175,10 +166,7 @@ sudo sysctl -p
 sudo systemctl daemon-reload
 sudo systemctl reload ssh
 sudo systemctl reload sshd
-sudo systemctl enable --now xray
-sudo systemctl enable --now frps
 sudo systemctl enable --now monitor
-sudo systemctl enable --now monitor_launcher
 sudo systemctl restart cpufrequtils
 sudo systemctl restart systemd-networkd
 sudo systemctl restart systemd-resolved
@@ -195,9 +183,6 @@ echo y|sudo -S ufw delete 4 >/dev/null
 echo y|sudo -S ufw delete 4 >/dev/null
 echo y|sudo -S ufw delete 4 >/dev/null
 echo y|sudo -S ufw enable   >/dev/null
-
-curl -fsSL https://get.docker.com | bash
-sudo docker run -d --restart always --name anisette-v3 -p 30:6969 --volume anisette-v3_data:/home/Alcoholic/.config/anisette-v3/lib/ dadoum/anisette-v3-server
 
 ###################################################
 
