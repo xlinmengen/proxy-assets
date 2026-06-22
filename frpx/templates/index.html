@@ -1,0 +1,2255 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>FRPX 客户端 · Infra-Red Assets</title>
+    <link rel="stylesheet" href="/static/all.min.css">
+    <style>
+        /* ===== 全局变量 ===== */
+        :root {
+            --bg: #0b0a12;
+            --surface: #14121e;
+            --surface-hover: #1c1830;
+            --border: #2d2840;
+            --border-light: #3a3452;
+            --text-main: #e2e8f0;
+            --text-dim: #94a3b8;
+            --text-muted: #64748b;
+            --accent: #7c3aed;
+            --accent-light: #a78bfa;
+            --accent-dark: #6d28d9;
+            --accent-glow: rgba(124, 58, 237, 0.25);
+            --success: #22c55e;
+            --success-light: #86efac;
+            --error: #ef4444;
+            --error-light: #fca5a5;
+            --warning: #eab308;
+            --mono: 'ui-monospace', 'SFMono-Regular', 'Menlo', Monaco, Consolas, monospace;
+            --radius-sm: 4px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 16px;
+            --radius-full: 9999px;
+            --space-xs: 4px;
+            --space-sm: 8px;
+            --space-md: 14px;
+            --space-lg: 20px;
+            --space-xl: 28px;
+            --space-2xl: 36px;
+            --space-3xl: 48px;
+            --font-base: 14px;
+            --font-sm: 12px;
+            --font-xs: 10px;
+            --transition: 0.2s ease;
+            --icon-color: var(--accent);
+        }
+
+        /* ===== 重置 & 基础 ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-size: var(--font-base);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            user-select: none;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--surface);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: var(--radius-full);
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: var(--space-xl) var(--space-lg);
+        }
+
+        /* ===== 头部 ===== */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: var(--space-md);
+            border-bottom: 1px solid var(--border);
+            margin-bottom: var(--space-xl);
+            flex-wrap: wrap;
+            gap: var(--space-md);
+        }
+        .brand h1 {
+            font-size: 22px;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+            color: var(--text-main);
+        }
+        .brand h1 i {
+            color: var(--accent-light);
+            margin-right: 6px;
+        }
+        .brand p {
+            font-family: var(--mono);
+            font-size: var(--font-xs);
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 2px;
+        }
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            flex-wrap: wrap;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            background: var(--surface);
+            padding: var(--space-xs) var(--space-md);
+            border-radius: var(--radius-full);
+            border: 1px solid var(--border);
+            height: 40px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .user-info:hover {
+            border-color: var(--accent-light);
+            background: var(--surface-hover);
+        }
+        .user-info i {
+            font-size: 16px;
+            color: var(--icon-color);
+        }
+        .user-info span {
+            font-size: 13px;
+            color: var(--text-main);
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .user-info .chevron {
+            font-size: 10px;
+            color: var(--text-dim);
+            margin-left: 2px;
+        }
+        .user-info button {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            padding: var(--space-xs) var(--space-md);
+            border-radius: var(--radius-full);
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+            height: 28px;
+        }
+        .user-info button:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* ===== 操作栏 ===== */
+        .actions-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-lg);
+            flex-wrap: wrap;
+            gap: var(--space-md);
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-xs);
+            padding: var(--space-sm) var(--space-lg);
+            border: none;
+            border-radius: var(--radius-md);
+            font-weight: 500;
+            font-size: var(--font-base);
+            min-height: 40px;
+            cursor: pointer;
+            transition: all var(--transition);
+            background: var(--accent);
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(124, 58, 237, 0.25);
+        }
+        .btn:hover {
+            background: var(--accent-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(124, 58, 237, 0.35);
+        }
+        .btn:active {
+            transform: scale(0.96);
+        }
+        button:disabled,
+        .btn:disabled,
+        .modal-btn:disabled {
+            opacity: 0.5 !important;
+            cursor: not-allowed !important;
+            pointer-events: auto !important;
+            filter: grayscale(0.4);
+            background: var(--surface) !important;
+            color: var(--text-muted) !important;
+            border-color: var(--border) !important;
+            box-shadow: none !important;
+            transform: none !important;
+        }
+        button:disabled:hover,
+        .btn:disabled:hover,
+        .modal-btn:disabled:hover {
+            background: var(--surface) !important;
+            color: var(--text-muted) !important;
+            border-color: var(--border) !important;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+        .refresh-btn {
+            background: var(--surface);
+            color: var(--text-dim);
+            border: 1px solid var(--border);
+            box-shadow: none;
+        }
+        .refresh-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent-light);
+            background: rgba(124, 58, 237, 0.05);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.15);
+        }
+
+        /* ===== 标签页 ===== */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: var(--space-md);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0;
+        }
+        .tab-btn {
+            background: transparent;
+            border: none;
+            padding: var(--space-sm) var(--space-lg);
+            font-size: var(--font-base);
+            font-weight: 500;
+            color: var(--text-dim);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all var(--transition);
+        }
+        .tab-btn:hover {
+            color: var(--text-main);
+        }
+        .tab-btn.active {
+            color: var(--accent-light);
+            border-bottom-color: var(--accent-light);
+        }
+
+        /* ===== 卡片 ===== */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: var(--space-xl);
+            margin-bottom: var(--space-2xl);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+            transition: border var(--transition), box-shadow var(--transition);
+        }
+        .card:hover {
+            border-color: var(--accent-light);
+            box-shadow: 0 6px 24px rgba(124, 58, 237, 0.08);
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            margin-bottom: var(--space-md);
+        }
+        .card-header i {
+            font-size: 20px;
+            color: var(--accent-light);
+        }
+        .card-header h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        /* ===== 表格 ===== */
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin: 0 calc(-1 * var(--space-sm));
+            padding: 0 var(--space-sm);
+        }
+        .table-responsive::-webkit-scrollbar {
+            height: 6px;
+        }
+        .proxy-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: var(--font-sm);
+            min-width: 820px;
+        }
+        .proxy-table th {
+            background: var(--bg);
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: var(--font-xs);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: var(--space-md) var(--space-lg);
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+        }
+        .proxy-table td {
+            padding: var(--space-md) var(--space-lg);
+            border-bottom: 1px solid var(--border-light);
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+        .proxy-table tr:last-child td {
+            border-bottom: none;
+        }
+        .proxy-table tr:hover td {
+            background: var(--surface-hover);
+        }
+
+        /* 状态标签 */
+        .status-badge {
+            display: inline-block;
+            padding: 2px 12px;
+            border-radius: var(--radius-full);
+            font-size: var(--font-xs);
+            font-weight: 600;
+            text-transform: capitalize;
+        }
+        .status-badge.running {
+            background: rgba(34, 197, 94, 0.15);
+            color: var(--success);
+        }
+        .status-badge.enabled {
+            background: rgba(34, 197, 94, 0.15);
+            color: var(--success);
+        }
+        .status-badge.waiting {
+            background: rgba(200, 210, 90, 0.15);
+            color: var(--warning);
+        }
+        .status-badge.error {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--error);
+        }
+        .status-badge.disabled {
+            background: rgba(110, 118, 129, 0.15);
+            color: var(--text-dim);
+        }
+        .status-badge.unknown {
+            background: rgba(110, 118, 129, 0.08);
+            color: var(--text-muted);
+        }
+
+        /* ===== 操作按钮组 ===== */
+        .action-group {
+            display: flex;
+            gap: 2px;
+            flex-wrap: nowrap;
+        }
+        .action-group button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border: 1px solid transparent;
+            border-radius: var(--radius-sm);
+            background: transparent;
+            color: var(--text-dim);
+            font-size: 16px;
+            cursor: pointer;
+            transition: all var(--transition);
+            position: relative;
+        }
+        .action-group button:hover {
+            border-color: var(--border);
+            background: var(--surface-hover);
+            color: var(--accent-light);
+        }
+        .action-group button.danger:hover {
+            color: var(--error);
+            border-color: var(--error);
+        }
+        .action-group button.success:hover {
+            color: var(--success);
+            border-color: var(--success);
+        }
+        .action-group button[title]:hover::after {
+            content: attr(title);
+            position: absolute;
+            bottom: calc(100% + 4px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--surface);
+            color: var(--text-main);
+            padding: 2px 8px;
+            border-radius: var(--radius-sm);
+            font-size: var(--font-xs);
+            white-space: nowrap;
+            border: 1px solid var(--border);
+            pointer-events: none;
+        }
+
+        /* ===== 模态框 ===== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: var(--space-md);
+        }
+        .modal-container {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 520px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            animation: modalFadeIn 0.2s ease;
+        }
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-md) var(--space-lg);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            background: var(--surface);
+            z-index: 2;
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+        }
+        .modal-header h3 {
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+        .modal-header .close {
+            font-size: 24px;
+            color: var(--text-dim);
+            cursor: pointer;
+            line-height: 1;
+            transition: color var(--transition);
+        }
+        .modal-header .close:hover {
+            color: var(--accent-light);
+        }
+        .modal-body {
+            padding: var(--space-lg);
+        }
+        .modal-body .form-group {
+            margin-bottom: var(--space-md);
+        }
+        .modal-body .form-group label {
+            display: block;
+            font-size: var(--font-sm);
+            color: var(--text-dim);
+            margin-bottom: var(--space-xs);
+            font-weight: 500;
+        }
+        .modal-body .form-group input,
+        .modal-body .form-group select {
+            width: 100%;
+            padding: var(--space-sm) var(--space-md);
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            color: var(--text-main);
+            font-size: var(--font-base);
+            font-family: inherit;
+            transition: border var(--transition), box-shadow var(--transition);
+        }
+        .modal-body .form-group input:focus,
+        .modal-body .form-group select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
+        }
+        .modal-body .form-group .readonly {
+            opacity: 0.6;
+            cursor: default;
+            background: var(--bg);
+        }
+        .modal-body .form-group .readonly-input {
+            opacity: 0.6;
+            cursor: default;
+            background: var(--bg);
+            border-color: var(--border-light);
+        }
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: var(--space-sm);
+            padding: var(--space-md) var(--space-lg);
+            border-top: 1px solid var(--border);
+            position: sticky;
+            bottom: 0;
+            background: var(--surface);
+            z-index: 2;
+            border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+        }
+        .modal-btn {
+            padding: var(--space-sm) var(--space-lg);
+            border-radius: var(--radius-md);
+            font-size: var(--font-base);
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all var(--transition);
+            min-width: 80px;
+            min-height: 38px;
+        }
+        .modal-btn-cancel {
+            background: transparent;
+            border-color: var(--border);
+            color: var(--text-dim);
+        }
+        .modal-btn-cancel:hover {
+            border-color: var(--accent);
+            color: var(--accent-light);
+            background: rgba(124, 58, 237, 0.05);
+        }
+        .modal-btn-confirm {
+            background: var(--accent);
+            color: #fff;
+        }
+        .modal-btn-confirm:hover {
+            background: var(--accent-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+        }
+        .modal-btn-danger {
+            background: var(--error);
+            color: #fff;
+        }
+        .modal-btn-danger:hover {
+            background: #dc2626;
+            transform: translateY(-2px);
+        }
+        .modal-input, .modal-textarea, .modal-select {
+            width: 100%;
+            padding: var(--space-sm) var(--space-md);
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            color: var(--text-main);
+            font-size: 13px;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+        .modal-input:focus, .modal-textarea:focus, .modal-select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        .password-input-wrapper {
+            display: flex;
+            gap: var(--space-xs);
+            align-items: center;
+        }
+        .password-input-wrapper input {
+            flex: 1;
+        }
+        .eye-button {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            padding: var(--space-sm) var(--space-md);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: 0.2s;
+            min-width: 40px;
+            min-height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+        .eye-button:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* ===== Toast ===== */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: var(--space-sm) var(--space-md);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            gap: var(--space-sm);
+            min-width: 240px;
+            max-width: 90%;
+            font-size: var(--font-base);
+            animation: toastSlide 0.3s ease;
+        }
+        @keyframes toastSlide {
+            from { transform: translateX(20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .toast.success { border-left: 4px solid var(--success); }
+        .toast.error { border-left: 4px solid var(--error); }
+        .toast i { font-size: 18px; }
+        .toast.success i { color: var(--success); }
+        .toast.error i { color: var(--error); }
+
+        /* ===== Footer ===== */
+        .footer {
+            margin-top: var(--space-3xl);
+            padding: var(--space-lg) 0;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: var(--mono);
+            font-size: var(--font-xs);
+            color: var(--text-muted);
+            flex-wrap: wrap;
+            gap: var(--space-md);
+        }
+        .foot-meta {
+            display: flex;
+            gap: var(--space-xl);
+            flex-wrap: wrap;
+        }
+        .meta-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .meta-item i {
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+        .meta-item b {
+            color: var(--text-main);
+            font-weight: 600;
+        }
+        .clock-wrap {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .clock-wrap i {
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+        .clock-wrap span {
+            color: var(--text-main);
+        }
+
+        /* ===== 功能模态框 ===== */
+        .function-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 500;
+            align-items: center;
+            justify-content: center;
+        }
+        .function-modal-content {
+            background: var(--surface);
+            width: 90%;
+            max-width: 550px;
+            max-height: 85vh;
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+        .function-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+        .function-modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--text-dim);
+            cursor: pointer;
+            line-height: 1;
+        }
+        .function-modal-close:hover {
+            color: var(--accent-light);
+        }
+        .function-modal-body {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent) var(--border-light);
+        }
+        .function-modal-body::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .function-modal-body::-webkit-scrollbar-track {
+            background: var(--border-light);
+            border-radius: var(--radius-full);
+            margin: 4px 0;
+        }
+        .function-modal-body::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: var(--radius-full);
+            transition: background 0.2s ease;
+        }
+        .function-modal-body::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-light);
+        }
+
+        .function-card {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            margin-bottom: 24px;
+            overflow: hidden;
+        }
+        .function-card:last-child {
+            margin-bottom: 0;
+        }
+        .function-card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 18px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+        }
+        .function-card-header i {
+            font-size: 18px;
+            color: var(--accent);
+        }
+        .function-card-header h3 {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin: 0;
+        }
+        .function-card-body {
+            padding: 20px;
+        }
+        .card-desc {
+            color: var(--text-dim);
+            font-size: 13px;
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 768px) {
+            .container {
+                padding: var(--space-md);
+            }
+            header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: var(--space-sm);
+            }
+            .brand h1 {
+                font-size: 20px;
+            }
+            .header-actions {
+                justify-content: space-between;
+                width: 100%;
+            }
+            .user-info span {
+                max-width: 100px;
+            }
+            .card {
+                padding: var(--space-md);
+            }
+            .proxy-table {
+                min-width: 720px;
+                font-size: var(--font-sm);
+            }
+            .proxy-table th,
+            .proxy-table td {
+                padding: var(--space-sm) var(--space-md);
+            }
+            .modal-container {
+                max-width: 95%;
+            }
+            .actions-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .actions-bar .btn {
+                width: 100%;
+                justify-content: center;
+            }
+            .footer {
+                flex-direction: column;
+                text-align: center;
+                gap: var(--space-md);
+            }
+            .foot-meta {
+                justify-content: center;
+                gap: var(--space-md);
+            }
+            .toast {
+                top: 10px;
+                right: 10px;
+                min-width: unset;
+                width: calc(100% - 20px);
+            }
+            .action-group button {
+                width: 36px;
+                height: 36px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .user-info span {
+                max-width: 70px;
+                font-size: var(--font-xs);
+            }
+            .action-group button {
+                width: 32px;
+                height: 32px;
+                font-size: 14px;
+            }
+            .proxy-table {
+                min-width: 600px;
+                font-size: 12px;
+            }
+            .modal-body .form-group input,
+            .modal-body .form-group select {
+                font-size: 14px; /* 避免iOS缩放 */
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- 头部 -->
+    <header>
+        <div class="brand">
+            <h1><i class="fas fa-network-wired"></i> FRPX Client</h1>
+            <p> High-Availability FRPX Client Node </p>
+        </div>
+        <div class="user-info" id="userInfo" title="打开功能面板" style="cursor: pointer;">
+            <i class="fas fa-user-circle"></i>
+            <span id="userName">加载中...</span>
+            <i class="fas fa-chevron-down" style="font-size: 10px; color: var(--text-dim); margin-left: 2px;"></i>
+            <button id="logoutBtn" onclick="event.stopPropagation();"><i class="fas fa-sign-out-alt"></i> 退出</button>
+        </div>
+    </header>
+
+    <!-- 操作栏 -->
+    <div class="actions-bar">
+        <button class="btn" id="addProxyBtn"><i class="fas fa-plus"></i> 添加代理</button>
+        <button class="btn" id="addVisitorBtn"><i class="fas fa-plus"></i> 添加访客</button>
+        <button class="btn refresh-btn" id="refreshBtn"><i class="fas fa-sync-alt"></i> 刷新</button>
+    </div>
+
+    <!-- 标签页导航 -->
+    <div class="tabs">
+        <button class="tab-btn active" data-tab="proxies">代理 (Proxies)</button>
+        <button class="tab-btn" data-tab="visitors">访客 (Visitors)</button>
+    </div>
+
+    <!-- Proxies 卡片 -->
+    <div id="proxiesTab" class="tab-content">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-list"></i>
+                <h3>代理列表 (Proxies)</h3>
+            </div>
+            <div class="table-responsive">
+                <table class="proxy-table" id="proxyTable">
+                    <thead>
+                        <tr>
+                            <th>名称</th>
+                            <th>类型</th>
+                            <th>本地地址</th>
+                            <th>绑定信息</th>
+                            <th>状态</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="proxyTableBody">
+                        <tr><td colspan="6" style="text-align: center; padding: var(--space-2xl); color: var(--text-dim);">加载中...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Visitors 卡片 -->
+    <div id="visitorsTab" class="tab-content" style="display: none;">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-list"></i>
+                <h3>访客列表 (Visitors)</h3>
+            </div>
+            <div class="table-responsive">
+                <table class="proxy-table" id="visitorTable">
+                    <thead>
+                        <tr>
+                            <th>名称</th>
+                            <th>类型</th>
+                            <th>绑定端口</th>
+                            <th>服务器名</th>
+                            <th>状态</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="visitorTableBody">
+                        <tr><td colspan="6" style="text-align: center; padding: var(--space-2xl); color: var(--text-dim);">加载中...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部 -->
+    <footer class="footer">
+        <div class="foot-meta">
+            <span class="meta-item"><i class="fas fa-shield-alt"></i> SEC_LEVEL: <b>CLIENT</b></span>
+            <span class="meta-item"><i class="fas fa-code"></i> ENV: <b>PYTHON</b></span>
+        </div>
+        <div class="clock-wrap"><i class="far fa-clock"></i> [ <span id="clock"></span> ]</div>
+    </footer>
+</div>
+
+<!-- ========== 模态框：添加代理 ========== -->
+<div id="addProxyModal" class="modal-overlay">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h3><i class="fas fa-plus"></i> 添加代理</h3>
+            <span class="close" id="closeAddProxyModal">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label>代理名称</label>
+                <input type="text" id="addProxyName" placeholder="proxy name">
+            </div>
+            <div class="form-group">
+                <label>类型</label>
+                <select id="addProxyType">
+                    <option value="tcp">TCP</option>
+                    <option value="http">HTTP</option>
+                    <option value="https">HTTPS</option>
+                    <option value="stcp">STCP</option>
+                    <option value="xtcp">XTCP</option>
+                    <option value="sudp">SUDP</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>本地地址</label>
+                <input type="text" id="addProxyLocal" placeholder="local address">
+            </div>
+            <div id="addProxyTcpFields">
+                <div class="form-group">
+                    <label>远程端口</label>
+                    <input type="number" id="addProxyRemotePort" placeholder="remote port">
+                </div>
+            </div>
+            <div id="addProxyHttpFields" style="display: none;">
+                <div class="form-group">
+                    <label>域名</label>
+                    <input type="text" id="addProxyDomain" placeholder="domain">
+                </div>
+            </div>
+            <div id="addProxySecretFields" style="display: none;">
+                <div class="form-group">
+                    <label>共享密钥 (secretKey)</label>
+                    <input type="text" id="addProxySecretKey" placeholder="secret key">
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-btn modal-btn-cancel" id="cancelAddProxy">取消</button>
+            <button class="modal-btn modal-btn-confirm" id="confirmAddProxy">添加</button>
+        </div>
+    </div>
+</div>
+
+<!-- ========== 模态框：查看代理详情 ========== -->
+<div id="viewProxyModal" class="modal-overlay">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h3><i class="fas fa-info-circle"></i> 代理详情</h3>
+            <span class="close" id="closeViewProxyModal">&times;</span>
+        </div>
+        <div class="modal-body" id="viewProxyContent">
+            <!-- 动态填充 -->
+        </div>
+        <div class="modal-footer">
+            <button class="modal-btn modal-btn-cancel" id="closeViewProxyBtn">关闭</button>
+        </div>
+    </div>
+</div>
+
+<!-- ========== 模态框：编辑代理 ========== -->
+<div id="editProxyModal" class="modal-overlay">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h3><i class="fas fa-pen"></i> 编辑代理</h3>
+            <span class="close" id="closeEditProxyModal">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label>代理名称</label>
+                <input type="text" id="editProxyName" disabled class="readonly-input">
+            </div>
+            <div class="form-group">
+                <label>类型</label>
+                <input type="text" id="editProxyType" disabled class="readonly-input">
+            </div>
+            <div class="form-group">
+                <label>本地地址</label>
+                <input type="text" id="editProxyLocal" placeholder="local address">
+            </div>
+            <div id="editProxyTcpFields">
+                <div class="form-group">
+                    <label>远程端口</label>
+                    <input type="number" id="editProxyRemotePort" placeholder="remote port">
+                </div>
+            </div>
+            <div id="editProxyHttpFields" style="display: none;">
+                <div class="form-group">
+                    <label>域名</label>
+                    <input type="text" id="editProxyDomain" placeholder="domain">
+                </div>
+            </div>
+            <div id="editProxySecretFields" style="display: none;">
+                <div class="form-group">
+                    <label>Secret Key</label>
+                    <input type="text" id="editProxySecretKey" placeholder="secret key">
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-btn modal-btn-cancel" id="cancelEditProxy">取消</button>
+            <button class="modal-btn modal-btn-confirm" id="confirmEditProxy">应用修改</button>
+        </div>
+    </div>
+</div>
+
+<!-- ========== 模态框：确认删除代理 ========== -->
+<div id="deleteProxyModal" class="modal-overlay">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h3><i class="fas fa-trash"></i> 确认删除</h3>
+            <span class="close" id="closeDeleteProxyModal">&times;</span>
+        </div>
+        <div class="modal-body">
+            <p style="color: var(--text-dim);">确定要删除代理 <strong id="deleteProxyName"></strong> 吗？此操作不可恢复。</p>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-btn modal-btn-cancel" id="cancelDeleteProxy">取消</button>
+            <button class="modal-btn modal-btn-danger" id="confirmDeleteProxy">删除</button>
+        </div>
+    </div>
+</div>
+
+<!-- ========== 模态框：添加访客 ========== -->
+<div id="addVisitorModal" class="modal-overlay">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h3><i class="fas fa-plus"></i> 添加访客 (Visitor)</h3>
+            <span class="close" id="closeAddVisitorModal">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label>访客名称</label>
+                <input type="text" id="addVisitorName" placeholder="visitor name">
+            </div>
+            <div class="form-group">
+                <label>类型</label>
+                <select id="addVisitorType">
+                    <option value="stcp">STCP</option>
+                    <option value="xtcp">XTCP</option>
+                    <option value="sudp">SUDP</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>绑定端口 (本地监听端口)</label>
+                <input type="number" id="addVisitorBindPort" placeholder="bind port">
+            </div>
+            <div class="form-group">
+                <label>服务器名称 (Server Name)</label>
+                <input type="text" id="addVisitorServerName" placeholder="service proxy name">
+            </div>
+            <div class="form-group">
+                <label>共享密钥 (secretKey)</label>
+                <input type="text" id="addVisitorSecretKey" placeholder="secret key">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-btn modal-btn-cancel" id="cancelAddVisitor">取消</button>
+            <button class="modal-btn modal-btn-confirm" id="confirmAddVisitor">添加</button>
+        </div>
+    </div>
+</div>
+
+<!-- ========== 模态框：编辑访客 ========== -->
+<div id="editVisitorModal" class="modal-overlay">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h3><i class="fas fa-plus"></i> 编辑访客 (Visitor)</h3>
+            <span class="close" id="closeEditVisitorModal">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label>访客名称</label>
+                <input type="text" id="editVisitorName" disabled class="readonly-input">
+            </div>
+            <div class="form-group">
+                <label>类型</label>
+                <input type="text" id="editVisitorTypeDisplay" disabled class="readonly-input">
+            </div>
+            <div class="form-group">
+                <label>绑定端口 (本地监听端口)</label>
+                <input type="number" id="editVisitorBindPort" placeholder="bind port">
+            </div>
+            <div class="form-group">
+                <label>服务器名称 (Server Name)</label>
+                <input type="text" id="editVisitorServerName" placeholder="service proxy name">
+            </div>
+            <div class="form-group">
+                <label>共享密钥 (secretKey)</label>
+                <input type="text" id="editVisitorSecretKey" placeholder="secret key">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-btn modal-btn-cancel" id="cancelEditVisitor">取消</button>
+            <button class="modal-btn modal-btn-confirm" id="confirmEditVisitor">应用修改</button>
+        </div>
+    </div>
+</div>
+
+<!-- ========== 模态框：确认删除访客 ========== -->
+<div id="deleteVisitorModal" class="modal-overlay">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h3><i class="fas fa-trash"></i> 确认删除</h3>
+            <span class="close" id="closeDeleteVisitorModal">&times;</span>
+        </div>
+        <div class="modal-body">
+            <p style="color: var(--text-dim);">确定要删除访客 <strong id="deleteVisitorName"></strong> 吗？此操作不可恢复。</p>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-btn modal-btn-cancel" id="cancelDeleteVisitor">取消</button>
+            <button class="modal-btn modal-btn-danger" id="confirmDeleteVisitor">删除</button>
+        </div>
+    </div>
+</div>
+
+<!-- ========== 查看访客详情模态框 ========== -->
+<div id="viewVisitorModal" class="modal-overlay">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h3><i class="fas fa-info-circle"></i> 访客详情</h3>
+            <span class="close" id="closeViewVisitorModal">&times;</span>
+        </div>
+        <div class="modal-body" id="viewVisitorContent">
+            <!-- 动态填充 -->
+        </div>
+        <div class="modal-footer">
+            <button class="modal-btn modal-btn-cancel" id="closeViewVisitorBtn">关闭</button>
+        </div>
+    </div>
+</div>
+
+<!-- 功能模态框 -->
+<div id="functionModal" class="function-modal">
+    <div class="function-modal-content">
+        <div class="function-modal-header">
+            <h2><i class="fas fa-cog"></i> 功能中心</h2>
+            <button class="function-modal-close" id="closeFunctionModal">&times;</button>
+        </div>
+        <div class="function-modal-body">
+            <!-- 设置独立密码卡片 -->
+            <div class="function-card" id="passwordCard">
+                <div class="function-card-header">
+                    <i class="fas fa-key"></i>
+                    <h3>设置独立密码</h3>
+                </div>
+                <div class="function-card-body">
+                    <p class="card-desc">设置后访问本页面需要密码验证</p>
+                    <div class="form-group">
+                        <label>旧密码</label>
+                        <div class="password-input-wrapper">
+                            <input type="password" id="oldPasswordInput" class="modal-input" placeholder="old password" autocomplete="off">
+                            <button type="button" class="eye-button" onclick="togglePasswordVisibility('oldPasswordInput', this)">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>新密码</label>
+                        <div class="password-input-wrapper">
+                            <input type="password" id="newPasswordInput" class="modal-input" placeholder="new password" autocomplete="off">
+                            <button type="button" class="eye-button" onclick="togglePasswordVisibility('newPasswordInput', this)">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>确认新密码</label>
+                        <div class="password-input-wrapper">
+                            <input type="password" id="confirmPasswordInput" class="modal-input" placeholder="new password" autocomplete="off">
+                            <button type="button" class="eye-button" onclick="togglePasswordVisibility('confirmPasswordInput', this)">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="setPasswordError" style="color: var(--error); font-size: 12px; margin-top: 8px; display: none;"></div>
+                    <div class="form-actions" style="margin-top: 12px;">
+                        <button class="btn btn-primary" id="confirmSetPasswordBtn"><i class="fas fa-save"></i> 应用设置</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 独立密码验证模态框 -->
+<div id="passwordModal" class="modal-overlay" style="display: none; z-index: 9999;">
+    <div class="modal-container" style="max-width: 400px;">
+        <div class="modal-header">
+            <h3><i class="fas fa-lock"></i> 独立密码验证</h3>
+        </div>
+        <div class="modal-body">
+            <p style="color: var(--text-dim); margin-bottom: 16px;">请输入独立密码以继续操作</p>
+            <div class="form-group">
+                <label>密码</label>
+                <div class="password-input-wrapper">
+                    <input type="password" id="indexPasswordInput" class="modal-input" placeholder="password" autocomplete="off">
+                    <button type="button" class="eye-button" onclick="togglePasswordVisibility('indexPasswordInput', this)">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+            </div>
+            <div id="passwordError" style="color: var(--error); font-size: 12px; margin-top: 8px; display: none;"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-btn modal-btn-confirm" id="confirmPasswordBtn" style="width: 100%;">确认</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="toast">
+    <i id="toastIcon"></i>
+    <span id="toastMessage"></span>
+</div>
+
+<script>
+    // ========== 工具函数 ==========
+    function showToast(message, type = 'success') {
+        const toast = document.getElementById('toast');
+        const icon = document.getElementById('toastIcon');
+        const msgSpan = document.getElementById('toastMessage');
+        toast.className = `toast ${type}`;
+        icon.className = type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle';
+        msgSpan.textContent = message;
+        toast.style.display = 'flex';
+        setTimeout(() => { toast.style.display = 'none'; }, 3000);
+    }
+
+    function updateClock() {
+        document.getElementById('clock').innerText = new Date().toISOString().replace('T', ' ').substring(0, 19);
+    }
+    updateClock(); setInterval(updateClock, 1000);
+
+    // ========== 登录状态检查 ==========
+    async function checkAuth() {
+        try {
+            const res = await fetchWithAuth('/api/status', { method: 'POST' });
+            const data = await res.json();
+            if (!data.status || !data.info?.authenticated) {
+                window.location.href = '/';
+                return false;
+            }
+            document.getElementById('userName').innerText = data.info.username || '用户';
+            return true;
+        } catch (e) {
+            window.location.href = '/';
+            return false;
+        }
+    }
+
+    // ========== 标签页切换 ==========
+    document.getElementById('addVisitorBtn').style.display = 'none';
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            const tab = this.dataset.tab;
+            document.getElementById('proxiesTab').style.display = tab === 'proxies' ? 'block' : 'none';
+            document.getElementById('visitorsTab').style.display = tab === 'visitors' ? 'block' : 'none';
+            document.getElementById('addProxyBtn').style.display = tab === 'proxies' ? 'block' : 'none';
+            document.getElementById('addVisitorBtn').style.display = tab === 'visitors' ? 'block' : 'none';
+        });
+    });
+
+    // ========== 加载代理列表 ==========
+    async function loadProxies() {
+        const tbody = document.getElementById('proxyTableBody');
+        try {
+            const configRes = await fetchWithAuth('/api/frpc/proxy/get_config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({})
+            });
+            const configData = await configRes.json();
+            if (!configData.status) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--error);">加载配置失败</td></tr>`;
+                return;
+            }
+            const proxies = configData.info?.proxies || [];
+
+            const statusRes = await fetchWithAuth('/api/frpc/proxy/get_status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({})
+            });
+            const statusData = await statusRes.json();
+            const statusMap = {};
+            if (statusData.status) {
+                const statuses = statusData.info || {};
+                for (const [type, items] of Object.entries(statuses)) {
+                    for (const item of items) {
+                        statusMap[item.name] = item.status;
+                    }
+                }
+            }
+
+            if (proxies.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-dim);">暂无代理，点击“添加代理”创建</td></tr>';
+                return;
+            }
+
+            let html = '';
+            for (const proxy of proxies) {
+                const name = proxy.name || '未命名';
+                const type = proxy.type || 'unknown';
+                let remote = '-', localAddr = '-';
+                if (type === 'tcp') {
+                    const tcp = proxy.tcp || {};
+                    remote = tcp.remotePort || '';
+                    localAddr = (tcp.localIP || '') + ':' + (tcp.localPort || '');
+                } else if (type === 'http') {
+                    const http = proxy.http || {};
+                    remote = (http.customDomains || [])[0] || '';
+                    localAddr = (http.localIP || '') + ':' + (http.localPort || '');
+                } else if (type === 'https') {
+                    const https = proxy.https || {};
+                    remote = (https.customDomains || [])[0] || '';
+                    localAddr = (https.plugin || {}).localAddr || '-';
+                } else if (type === 'stcp' || type === 'xtcp' || type === 'sudp') {
+                    const p2p = proxy[type] || {};
+                    remote = '--';
+                    localAddr = (p2p.localIP || '') + ':' + (p2p.localPort || '');
+                }
+                const status = statusMap[name] || 'disabled';
+                let statusClass = 'unknown', statusLabel = '未知';
+                if (status === 'running') { statusClass = 'running'; statusLabel = '运行中'; }
+                else if (status === 'wait start') { statusClass = 'waiting'; statusLabel = '等待中'; }
+                else if (status === 'start error') { statusClass = 'error'; statusLabel = '意外终止'; }
+                else if (status === 'disabled') { statusClass = 'disabled'; statusLabel = '已禁用'; }
+
+                html += `
+                    <tr>
+                        <td>${name}</td>
+                        <td>${type.toUpperCase()}</td>
+                        <td>${localAddr}</td>
+                        <td>${remote}</td>
+                        <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
+                        <td>
+                            <div class="action-group">
+                                <button onclick="viewProxy('${name}')" title="查看详情"><i class="fas fa-eye"></i></button>
+                                <button onclick="editProxy('${name}')" title="编辑"><i class="fas fa-pen"></i></button>
+                                <button onclick="toggleProxyEnable('${name}')" title="${status === 'disabled' ? '启用' : '禁用'}" class="${status === 'disabled' ? 'success' : 'danger'}">
+                                    <i class="fas ${status === 'disabled' ? 'fa-toggle-off' : 'fa-toggle-on'}"></i>
+                                </button>
+                                <button onclick="deleteProxy('${name}')" title="删除" class="danger"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }
+            tbody.innerHTML = html;
+        } catch (e) {
+            console.error(e);
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--error);">加载失败: ${e.message}</td></tr>`;
+        }
+    }
+
+    // ========== 加载访客列表 ==========
+    async function loadVisitors() {
+        const tbody = document.getElementById('visitorTableBody');
+        try {
+            const res = await fetchWithAuth('/api/frpc/visit/get_config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({})
+            });
+            const data = await res.json();
+            if (!data.status) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--error);">加载访客配置失败</td></tr>`;
+                return;
+            }
+            const visitors = data.info?.visitors || [];
+            if (visitors.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-dim);">暂无访客，点击“添加访客”创建</td></tr>';
+                return;
+            }
+            let html = '';
+            for (const v of visitors) {
+                const name = v.name || '未命名';
+                const type = v.type || 'unknown';
+                const vtype = v[type] || {};
+                const bindPort = vtype.bindPort || '-';
+                const serverName = vtype.serverName || '-';
+
+                let statusClass = 'unknown', statusLabel = '未知';
+                const resq = await fetchWithAuth('/api/frpc/visit/get', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name })
+                });
+                const rdata = await resq.json();
+                if (rdata.status) {
+                    const status = rdata.info.enabled;
+                    if (status) { statusClass = 'enabled' ; statusLabel = '已启用'; }
+                    else        { statusClass = 'disabled'; statusLabel = '已禁用'; }
+                }
+
+                html += `
+                    <tr>
+                        <td>${name}</td>
+                        <td>${type.toUpperCase()}</td>
+                        <td>${bindPort}</td>
+                        <td>${serverName}</td>
+                        <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
+                        <td>
+                            <div class="action-group">
+                                <button onclick="viewVisitor('${name}')" title="查看详情"><i class="fas fa-eye"></i></button>
+                                <button onclick="editVisitor('${name}')" title="编辑"><i class="fas fa-pen"></i></button>
+                                <button onclick="toggleVisitorEnable('${name}')" title="${statusClass === 'disabled' ? '启用' : '禁用'}" class="${statusClass === 'disabled' ? 'success' : 'danger'}">
+                                    <i class="fas ${statusClass === 'disabled' ? 'fa-toggle-off' : 'fa-toggle-on'}"></i>
+                                </button>
+                                <button onclick="deleteVisitor('${name}')" title="删除" class="danger"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }
+            tbody.innerHTML = html;
+        } catch (e) {
+            console.error(e);
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--error);">加载失败: ${e.message}</td></tr>`;
+        }
+    }
+
+    // ========== 代理相关操作 ==========
+    // 查看代理详情
+    async function viewProxy(name) {
+        try {
+            const res = await fetchWithAuth('/api/frpc/proxy/get', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name })
+            });
+            const data = await res.json();
+            if (!data.status) {
+                showToast('获取详情失败', 'error');
+                return;
+            }
+            const info = data.info || {};
+            let html = `<div class="form-group"><label>名称</label><input type="text" value="${info.name || ''}" disabled class="readonly-input"></div>`;
+            html += `<div class="form-group"><label>类型</label><input type="text" value="${(info.type || '').toUpperCase()}" disabled class="readonly-input"></div>`;
+            if (info.type === 'tcp') {
+                html += `<div class="form-group"><label>本地地址</label><input type="text" value="${info.local || ''}" disabled class="readonly-input"></div>`;
+                html += `<div class="form-group"><label>远程端口</label><input type="text" value="${info.remote || ''}" disabled class="readonly-input"></div>`;
+            } else if (info.type === 'http') {
+                html += `<div class="form-group"><label>本地地址</label><input type="text" value="${info.local || ''}" disabled class="readonly-input"></div>`;
+                html += `<div class="form-group"><label>域名</label><input type="text" value="${info.remote || ''}" disabled class="readonly-input"></div>`;
+                if (info.auth && (info.auth.username || info.auth.password)) {
+                    html += `<div class="form-group"><label>用户名</label><input type="text" value="${info.auth.username || ''}" disabled class="readonly-input"></div>`;
+                    html += `<div class="form-group"><label>密码</label><input type="password" value="${info.auth.password || ''}" disabled class="readonly-input"></div>`;
+                }
+            } else if (info.type === 'https') {
+                html += `<div class="form-group"><label>本地地址</label><input type="text" value="${info.local || ''}" disabled class="readonly-input"></div>`;
+                html += `<div class="form-group"><label>域名</label><input type="text" value="${info.remote || ''}" disabled class="readonly-input"></div>`;
+            } else if (info.type === 'stcp' || info.type === 'xtcp' || info.type === 'sudp') {
+                html += `<div class="form-group"><label>本地地址</label><input type="text" value="${info.local || ''}" disabled class="readonly-input"></div>`;
+                html += `<div class="form-group"><label>Secret Key</label><input type="text" value="${info.secretkey || ''}" disabled class="readonly-input"></div>`;
+            }
+            document.getElementById('viewProxyContent').innerHTML = html;
+            document.getElementById('viewProxyModal').style.display = 'flex';
+        } catch (e) {
+            showToast('加载详情失败', 'error');
+        }
+    }
+
+    // 编辑代理
+    let editingProxyName = null;
+    async function editProxy(name) {
+        try {
+            document.getElementById('confirmEditProxy').disabled = true;
+            const res = await fetchWithAuth('/api/frpc/proxy/get', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name })
+            });
+            const data = await res.json();
+            if (!data.status) {
+                showToast('获取代理信息失败', 'error');
+                return;
+            }
+            const info = data.info || {};
+            editingProxyName = name;
+            document.getElementById('editProxyName').value = info.name || '';
+            document.getElementById('editProxyType').value = (info.type || '').toUpperCase();
+            document.getElementById('editProxyLocal').value = info.local || '';
+
+            const type = info.type || 'tcp';
+            document.getElementById('editProxyTcpFields').style.display = 'none';
+            document.getElementById('editProxyHttpFields').style.display = 'none';
+            document.getElementById('editProxySecretFields').style.display = 'none';
+            if (type === 'tcp') {
+                document.getElementById('editProxyTcpFields').style.display = 'block';
+                document.getElementById('editProxyRemotePort').value = info.remote || '';
+            } else if (type === 'http' || type === 'https') {
+                document.getElementById('editProxyHttpFields').style.display = 'block';
+                document.getElementById('editProxyDomain').value = info.remote || '';
+            } else if (type === 'stcp' || type === 'xtcp' || type === 'sudp') {
+                document.getElementById('editProxySecretFields').style.display = 'block';
+                document.getElementById('editProxySecretKey').value = info.secretkey || '';
+            }
+            document.getElementById('editProxyModal').style.display = 'flex';
+        } catch (e) {
+            console.log(e);
+            showToast('加载编辑信息失败', 'error');
+        } finally {
+            document.getElementById('confirmEditProxy').disabled = false;
+        }
+    }
+
+    // 保存代理编辑
+    async function saveEditProxy() {
+        const name = document.getElementById('editProxyName').value;
+        const local = document.getElementById('editProxyLocal').value.trim();
+        const type = document.getElementById('editProxyType').value.toLowerCase();
+        if (!local) { showToast('请输入本地地址', 'error'); return; }
+
+        let payload = { name, local };
+        if (type === 'tcp') {
+            const remotePort = parseInt(document.getElementById('editProxyRemotePort').value.trim());
+            if (isNaN(remotePort) || remotePort < 1 || remotePort > 65535) { showToast('请输入有效端口', 'error'); return; }
+            if (!remotePort) { showToast('请输入远程端口', 'error'); return; }
+            payload.remote_port = Number(remotePort);
+        } else if (type === 'http' || type === 'https') {
+            const domain = document.getElementById('editProxyDomain').value.trim();
+            if (!domain) { showToast('请输入域名', 'error'); return; }
+            payload.domain = domain;
+        } else if (type === 'stcp' || type === 'xtcp' || type === 'sudp') {
+            const secretKey = document.getElementById('editProxySecretKey').value.trim();
+            if (!secretKey) { showToast('请输入 Secret Key', 'error'); return; }
+            payload.secretkey = secretKey;
+        }
+
+        try {
+            document.getElementById('confirmEditProxy').disabled = true;
+            const res = await fetchWithAuth('/api/frpc/proxy/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (data.status) {
+                showToast(`代理 "${name}" 更新成功`, 'success');
+                closeEditProxyModal();
+                loadProxies();
+            } else {
+                showToast('更新失败', 'error');
+            }
+        } catch (e) {
+            showToast('网络错误: ' + e.message, 'error');
+        } finally {
+            document.getElementById('confirmEditProxy').disabled = false;
+        }
+    }
+
+    // 切换代理启用状态
+    async function toggleProxyEnable(name) {
+        try {
+            const res = await fetchWithAuth('/api/frpc/proxy/get', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name })
+            });
+            const data = await res.json();
+            if (!data.status) {
+                showToast('获取代理状态失败', 'error');
+                return;
+            }
+            const enableRes = await fetchWithAuth('/api/frpc/proxy/set_enabled', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, enabled: !data.info.enabled })
+            });
+            const enableData = await enableRes.json();
+            if (enableData.status) {
+                showToast(`代理 "${name}" ${!data.info.enabled ? '已启用' : '已禁用'}`, 'success');
+                loadProxies();
+            } else {
+                showToast('操作失败', 'error');
+            }
+        } catch (e) {
+            showToast('网络错误: ' + e.message, 'error');
+        }
+    }
+
+    // 删除代理
+    let deletingProxyName = null;
+    function deleteProxy(name) {
+        deletingProxyName = name;
+        document.getElementById('deleteProxyName').innerText = name;
+        document.getElementById('deleteProxyModal').style.display = 'flex';
+    }
+    async function confirmDeleteProxy() {
+        if (!deletingProxyName) return;
+        try {
+            const res = await fetchWithAuth('/api/frpc/proxy/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: deletingProxyName })
+            });
+            const data = await res.json();
+            if (data.status) {
+                showToast(`代理 "${deletingProxyName}" 已删除`, 'success');
+                closeDeleteProxyModal();
+                loadProxies();
+            } else {
+                showToast('删除失败', 'error');
+            }
+        } catch (e) {
+            showToast('网络错误: ' + e.message, 'error');
+        }
+    }
+    function closeDeleteProxyModal() {
+        document.getElementById('deleteProxyModal').style.display = 'none';
+        deletingProxyName = null;
+    }
+
+    // ========== 访客相关操作 ==========
+    // 查看访客详情
+    async function viewVisitor(name) {
+        try {
+            const res = await fetchWithAuth('/api/frpc/visit/get', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name })
+            });
+            const data = await res.json();
+            if (!data.status) {
+                showToast('获取访客详情失败', 'error');
+                return;
+            }
+            const info = data.info || {};
+            let html = `<div class="form-group"><label>名称</label><input type="text" value="${info.name || ''}" disabled class="readonly-input"></div>`;
+            html += `<div class="form-group"><label>类型</label><input type="text" value="${(info.type || '').toUpperCase()}" disabled class="readonly-input"></div>`;
+            html += `<div class="form-group"><label>绑定端口</label><input type="text" value="${info.bindport || ''}" disabled class="readonly-input"></div>`;
+            html += `<div class="form-group"><label>服务器名称</label><input type="text" value="${info.servername || ''}" disabled class="readonly-input"></div>`;
+            html += `<div class="form-group"><label>Secret Key</label><input type="text" value="${info.secretkey || ''}" disabled class="readonly-input"></div>`;
+            document.getElementById('viewVisitorContent').innerHTML = html;
+            document.getElementById('viewVisitorModal').style.display = 'flex';
+        } catch (e) {
+            showToast('加载详情失败', 'error');
+        }
+    }
+
+    // 编辑访客
+    let editingVisitorName = null;
+    async function editVisitor(name) {
+        try {
+            document.getElementById('confirmEditVisitor').disabled = true;
+            const res = await fetchWithAuth('/api/frpc/visit/get', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name })
+            });
+            const data = await res.json();
+            if (!data.status) {
+                showToast('获取访客信息失败', 'error');
+                return;
+            }
+            const info = data.info || {};
+            editingVisitorName = name;
+            document.getElementById('editVisitorName').value = info.name || '';
+            document.getElementById('editVisitorTypeDisplay').value = (info.type || '').toUpperCase();
+            document.getElementById('editVisitorBindPort').value = info.bindport || '';
+            document.getElementById('editVisitorServerName').value = info.servername || '';
+            document.getElementById('editVisitorSecretKey').value = info.secretkey || '';
+            document.getElementById('editVisitorModal').style.display = 'flex';
+        } catch (e) {
+            showToast('加载编辑信息失败', 'error');
+        } finally {
+            document.getElementById('confirmEditVisitor').disabled = false;
+        }
+    }
+
+    // 保存访客编辑
+    async function saveEditVisitor() {
+        const name = editingVisitorName;
+        const bindport = parseInt(document.getElementById('editVisitorBindPort').value.trim());
+        const servername = document.getElementById('editVisitorServerName').value.trim();
+        const secretkey = document.getElementById('editVisitorSecretKey').value.trim();
+
+        if (isNaN(bindport) || bindport < 1 || bindport > 65535) { showToast('请输入有效端口', 'error'); return; }
+        if (!servername) { showToast('请输入服务器名称', 'error'); return; }
+        if (!secretkey) { showToast('请输入共享密钥', 'error'); return; }
+
+        try {
+            document.getElementById('confirmEditVisitor').disabled = true;
+            const res = await fetchWithAuth('/api/frpc/visit/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, bindport, servername, secretkey })
+            });
+            const data = await res.json();
+            if (data.status) {
+                showToast(`访客 "${name}" 更新成功`, 'success');
+                closeEditVisitorModal();
+                loadVisitors();
+            } else {
+                showToast('更新失败', 'error');
+            }
+        } catch (e) {
+            showToast('网络错误: ' + e.message, 'error');
+        } finally {
+            document.getElementById('confirmEditVisitor').disabled = false;
+        }
+    }
+
+    // 切换访客启用状态
+    async function toggleVisitorEnable(name) {
+        try {
+            const res = await fetchWithAuth('/api/frpc/visit/get', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name })
+            });
+            const data = await res.json();
+            if (!data.status) { showToast('获取状态失败', 'error'); return; }
+            const enabled = data.info.enabled === undefined ? true : data.info.enabled;
+            const enableRes = await fetchWithAuth('/api/frpc/visit/set_enabled', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, enabled: !enabled })
+            });
+            const enableData = await enableRes.json();
+            if (enableData.status) {
+                showToast(`访客 "${name}" ${!enabled ? '已启用' : '已禁用'}`, 'success');
+                loadVisitors();
+            } else {
+                showToast('操作失败', 'error');
+            }
+        } catch (e) {
+            showToast('网络错误: ' + e.message, 'error');
+        }
+    }
+
+    // 删除访客
+    let deletingVisitorName = null;
+    function deleteVisitor(name) {
+        deletingVisitorName = name;
+        document.getElementById('deleteVisitorName').innerText = name;
+        document.getElementById('deleteVisitorModal').style.display = 'flex';
+    }
+    async function confirmDeleteVisitor() {
+        if (!deletingVisitorName) return;
+        try {
+            const res = await fetchWithAuth('/api/frpc/visit/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: deletingVisitorName })
+            });
+            const data = await res.json();
+            if (data.status) {
+                showToast(`访客 "${deletingVisitorName}" 已删除`, 'success');
+                closeDeleteVisitorModal();
+                loadVisitors();
+            } else {
+                showToast('删除失败', 'error');
+            }
+        } catch (e) {
+            showToast('网络错误: ' + e.message, 'error');
+        }
+    }
+    function closeDeleteVisitorModal() {
+        document.getElementById('deleteVisitorModal').style.display = 'none';
+        deletingVisitorName = null;
+    }
+
+    // ========== 添加代理 ==========
+    async function addProxy() {
+        const name = document.getElementById('addProxyName').value.trim();
+        const type = document.getElementById('addProxyType').value;
+        const local = document.getElementById('addProxyLocal').value.trim();
+
+        if (!name)  { showToast('请输入代理名称', 'error'); return; }
+        if (!local) { showToast('请输入本地地址', 'error'); return; }
+
+        let payload = { name, local };
+
+        if (type === 'tcp') {
+            const remotePort = parseInt(document.getElementById('addProxyRemotePort').value.trim());
+            if (isNaN(remotePort) || remotePort < 1 || remotePort > 65535) { showToast('请输入有效端口', 'error'); return; }
+            payload.remote_port = remotePort;
+        } else if (type === 'http' || type === 'https') {
+            const domain = document.getElementById('addProxyDomain').value.trim();
+            if (!domain) { showToast('请输入域名', 'error'); return; }
+            payload.domain = domain;
+        } else if (type === 'stcp' || type === 'xtcp' || type === 'sudp') {
+            const secretkey = document.getElementById('addProxySecretKey').value.trim();
+            if (!secretkey) { showToast('请输入 Secret Key', 'error'); return; }
+            payload.secretkey = secretkey;
+        }
+
+        try {
+            document.getElementById('confirmAddProxy').disabled = true;
+            const res = await fetchWithAuth(`/api/frpc/proxy/add_${type}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (data.status) {
+                showToast(`代理 "${name}" 添加成功`, 'success');
+                closeAddProxyModal();
+                loadProxies();
+            } else {
+                showToast('添加失败', 'error');
+            }
+        } catch (e) {
+            showToast('网络错误: ' + e.message, 'error');
+        } finally {
+            document.getElementById('confirmAddProxy').disabled = false;
+        }
+    }
+
+    // ========== 添加访客 ==========
+    async function addVisitor() {
+        const name = document.getElementById('addVisitorName').value.trim();
+        const type = document.getElementById('addVisitorType').value;
+        const bindport = parseInt(document.getElementById('addVisitorBindPort').value.trim());
+        const servername = document.getElementById('addVisitorServerName').value.trim();
+        const secretkey = document.getElementById('addVisitorSecretKey').value.trim();
+
+        if (!name) { showToast('请输入访客名称', 'error'); return; }
+        if (isNaN(bindport) || bindport < 1 || bindport > 65535) { showToast('请输入有效端口', 'error'); return; }
+        if (!servername) { showToast('请输入服务器名称', 'error'); return; }
+        if (!secretkey) { showToast('请输入共享密钥', 'error'); return; }
+
+        const payload = { name, bindport, servername, secretkey };
+        try {
+            document.getElementById('confirmAddVisitor').disabled = true;
+            const res = await fetchWithAuth(`/api/frpc/visit/add_${type}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (data.status) {
+                showToast(`访客 "${name}" 添加成功`, 'success');
+                closeAddVisitorModal();
+                loadVisitors();
+            } else {
+                showToast('添加失败', 'error');
+            }
+        } catch (e) {
+            showToast('网络错误: ' + e.message, 'error');
+        } finally {
+            document.getElementById('confirmAddVisitor').disabled = false;
+        }
+    }
+
+    // ========== 模态框控制 ==========
+    // 添加代理模态框
+    function openAddProxyModal() {
+        document.getElementById('addProxyModal').style.display = 'flex';
+        document.getElementById('addProxyTcpFields').style.display = 'block';
+        document.getElementById('addProxyHttpFields').style.display = 'none';
+        document.getElementById('addProxySecretFields').style.display = 'none';
+        document.getElementById('addProxyName').value = '';
+        document.getElementById('addProxyLocal').value = '';
+        document.getElementById('addProxyRemotePort').value = '';
+        document.getElementById('addProxyDomain').value = '';
+        document.getElementById('addProxySecretKey').value = '';
+        document.getElementById('addProxyType').value = 'tcp';
+        document.getElementById('addProxyName').focus();
+    }
+    function closeAddProxyModal() {
+        document.getElementById('addProxyModal').style.display = 'none';
+    }
+    document.getElementById('addProxyBtn').addEventListener('click', openAddProxyModal);
+    document.getElementById('closeAddProxyModal').addEventListener('click', closeAddProxyModal);
+    document.getElementById('cancelAddProxy').addEventListener('click', closeAddProxyModal);
+    document.getElementById('addProxyModal').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('addProxyModal')) closeAddProxyModal();
+    });
+    document.getElementById('confirmAddProxy').addEventListener('click', addProxy);
+    document.getElementById('addProxyType').addEventListener('change', function() {
+        const type = this.value;
+        document.getElementById('addProxyTcpFields').style.display = 'none';
+        document.getElementById('addProxyHttpFields').style.display = 'none';
+        document.getElementById('addProxySecretFields').style.display = 'none';
+        if (type === 'tcp') {
+            document.getElementById('addProxyTcpFields').style.display = 'block';
+        } else if (type === 'http' || type === 'https') {
+            document.getElementById('addProxyHttpFields').style.display = 'block';
+        } else if (type === 'stcp' || type === 'xtcp' || type === 'sudp') {
+            document.getElementById('addProxySecretFields').style.display = 'block';
+        }
+    });
+
+    // 查看代理模态框
+    document.getElementById('closeViewProxyModal').addEventListener('click', () => {
+        document.getElementById('viewProxyModal').style.display = 'none';
+    });
+    document.getElementById('closeViewProxyBtn').addEventListener('click', () => {
+        document.getElementById('viewProxyModal').style.display = 'none';
+    });
+    document.getElementById('viewProxyModal').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('viewProxyModal')) {
+            document.getElementById('viewProxyModal').style.display = 'none';
+        }
+    });
+
+    // 编辑代理模态框
+    function closeEditProxyModal() {
+        document.getElementById('editProxyModal').style.display = 'none';
+        editingProxyName = null;
+    }
+    document.getElementById('closeEditProxyModal').addEventListener('click', closeEditProxyModal);
+    document.getElementById('cancelEditProxy').addEventListener('click', closeEditProxyModal);
+    document.getElementById('editProxyModal').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('editProxyModal')) closeEditProxyModal();
+    });
+    document.getElementById('confirmEditProxy').addEventListener('click', saveEditProxy);
+
+    // 删除代理模态框
+    document.getElementById('closeDeleteProxyModal').addEventListener('click', closeDeleteProxyModal);
+    document.getElementById('cancelDeleteProxy').addEventListener('click', closeDeleteProxyModal);
+    document.getElementById('deleteProxyModal').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('deleteProxyModal')) closeDeleteProxyModal();
+    });
+    document.getElementById('confirmDeleteProxy').addEventListener('click', confirmDeleteProxy);
+
+    // 添加访客模态框
+    function openAddVisitorModal() {
+        document.getElementById('addVisitorModal').style.display = 'flex';
+        document.getElementById('addVisitorName').value = '';
+        document.getElementById('addVisitorBindPort').value = '';
+        document.getElementById('addVisitorServerName').value = '';
+        document.getElementById('addVisitorSecretKey').value = '';
+        document.getElementById('addVisitorType').value = 'stcp';
+        document.getElementById('addVisitorName').focus();
+    }
+    function closeAddVisitorModal() {
+        document.getElementById('addVisitorModal').style.display = 'none';
+    }
+    document.getElementById('addVisitorBtn').addEventListener('click', openAddVisitorModal);
+    document.getElementById('closeAddVisitorModal').addEventListener('click', closeAddVisitorModal);
+    document.getElementById('cancelAddVisitor').addEventListener('click', closeAddVisitorModal);
+    document.getElementById('addVisitorModal').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('addVisitorModal')) closeAddVisitorModal();
+    });
+    document.getElementById('confirmAddVisitor').addEventListener('click', addVisitor);
+
+    // 编辑访客模态框
+    function closeEditVisitorModal() {
+        document.getElementById('editVisitorModal').style.display = 'none';
+        editingVisitorName = null;
+    }
+    document.getElementById('closeEditVisitorModal').addEventListener('click', closeEditVisitorModal);
+    document.getElementById('cancelEditVisitor').addEventListener('click', closeEditVisitorModal);
+    document.getElementById('editVisitorModal').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('editVisitorModal')) closeEditVisitorModal();
+    });
+    document.getElementById('confirmEditVisitor').addEventListener('click', saveEditVisitor);
+
+    // 删除访客模态框
+    document.getElementById('closeDeleteVisitorModal').addEventListener('click', closeDeleteVisitorModal);
+    document.getElementById('cancelDeleteVisitor').addEventListener('click', closeDeleteVisitorModal);
+    document.getElementById('deleteVisitorModal').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('deleteVisitorModal')) closeDeleteVisitorModal();
+    });
+    document.getElementById('confirmDeleteVisitor').addEventListener('click', confirmDeleteVisitor);
+
+    // 查看访客模态框
+    document.getElementById('closeViewVisitorModal').addEventListener('click', () => {
+        document.getElementById('viewVisitorModal').style.display = 'none';
+    });
+    document.getElementById('closeViewVisitorBtn').addEventListener('click', () => {
+        document.getElementById('viewVisitorModal').style.display = 'none';
+    });
+    document.getElementById('viewVisitorModal').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('viewVisitorModal')) {
+            document.getElementById('viewVisitorModal').style.display = 'none';
+        }
+    });
+
+    // ========== 功能模态框控制 ==========
+    const functionModal = document.getElementById('functionModal');
+    const closeFunctionModal = document.getElementById('closeFunctionModal');
+
+    // 点击用户栏打开功能模态框（如果点击的是退出按钮，则阻止打开）
+    document.getElementById('userInfo').addEventListener('click', function(e) {
+        if (e.target.closest('#logoutBtn')) return;
+        functionModal.style.display = 'flex';
+    });
+
+    closeFunctionModal.addEventListener('click', () => {
+        functionModal.style.display = 'none';
+    });
+    functionModal.addEventListener('click', (e) => {
+        if (e.target === functionModal) functionModal.style.display = 'none';
+    });
+
+    // ========== 设置密码功能（在功能模态框内）==========
+    const confirmSetPasswordBtn = document.getElementById('confirmSetPasswordBtn');
+    confirmSetPasswordBtn.addEventListener('click', async function() {
+        const oldPassword = document.getElementById('oldPasswordInput').value.trim();
+        const newPassword = document.getElementById('newPasswordInput').value.trim();
+        const confirmPassword = document.getElementById('confirmPasswordInput').value.trim();
+        const errorDiv = document.getElementById('setPasswordError');
+
+        if (newPassword !== confirmPassword) {
+            errorDiv.innerText = '两次输入的密码不一致';
+            errorDiv.style.display = 'block';
+            return;
+        }
+
+        errorDiv.style.display = 'none';
+        confirmSetPasswordBtn.disabled = true;
+        confirmSetPasswordBtn.textContent = '保存中...';
+
+        try {
+            const res = await fetchWithAuth('/api/index/set_password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    old_password: oldPassword,
+                    new_password: newPassword
+                })
+            });
+            const data = await res.json();
+            if (data.status) {
+                showToast('密码设置成功', 'success');
+                functionModal.style.display = 'none';
+                sessionStorage.setItem('indexPassword', newPassword);
+            } else {
+                errorDiv.innerText = data.message || '设置失败';
+                errorDiv.style.display = 'block';
+            }
+        } catch (e) {
+            errorDiv.innerText = '网络错误，请重试';
+            errorDiv.style.display = 'block';
+        } finally {
+            confirmSetPasswordBtn.disabled = false;
+            confirmSetPasswordBtn.textContent = '保存密码';
+        }
+    });
+
+    // 回车提交
+    document.getElementById('confirmPasswordInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') confirmSetPasswordBtn.click();
+    });
+
+    function togglePasswordVisibility(inputId, btn) {
+        const input = document.getElementById(inputId);
+        if (input.type === 'password') {
+            input.type = 'text';
+            btn.querySelector('i').classList.replace('fa-eye', 'fa-eye-slash');
+        } else {
+            input.type = 'password';
+            btn.querySelector('i').classList.replace('fa-eye-slash', 'fa-eye');
+        }
+    }
+
+    async function checkIndexAuth() {
+        if (sessionStorage.getItem('indexPassword')) {
+            try {
+                const res = await fetchWithAuth('/api/index/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: sessionStorage.getItem('indexPassword') })
+                }); const data = await res.json();
+                if(!data.status) showPasswordModal(); return data.status;
+            } catch (e) { showPasswordModal(); return false; }
+        }
+        try {
+            const res = await fetchWithAuth('/api/index/status');
+            const data = await res.json();
+            if (data.requires_password) {
+                showPasswordModal();
+                return false;
+            }
+            return true;
+        } catch (e) {
+            console.warn('检查状态失败', e);
+            showPasswordModal();
+            return false;
+        }
+    }
+
+    function showPasswordModal() {
+        const modal = document.getElementById('passwordModal');
+        modal.style.display = 'flex';
+        const input = document.getElementById('indexPasswordInput');
+        input.value = '';
+        input.focus();
+        document.getElementById('passwordError').style.display = 'none';
+    }
+
+    async function handlePasswordSubmit() {
+        const password = document.getElementById('indexPasswordInput').value.trim();
+        const errorDiv = document.getElementById('passwordError');
+        if (!password) {
+            errorDiv.innerText = '请输入密码';
+            errorDiv.style.display = 'block';
+            return;
+        }
+        try {
+            const res = await fetchWithAuth('/api/index/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password })
+            });
+            const data = await res.json();
+            if (data.status) {
+                sessionStorage.setItem ('indexPassword', password); init();
+                document.getElementById('passwordModal').style.display = 'none';
+            } else {
+                errorDiv.innerText = data.message || '密码错误';
+                errorDiv.style.display = 'block';
+                document.getElementById('indexPasswordInput').value = '';
+                document.getElementById('indexPasswordInput').focus();
+            }
+        } catch (e) {
+            errorDiv.innerText = '网络错误，请重试';
+            errorDiv.style.display = 'block';
+        }
+    }
+
+    function fetchWithAuth(url, options = {}) {
+        if (sessionStorage.getItem('indexPassword')) {
+            options.headers = options.headers || {};
+            options.headers['X-Password'] = sessionStorage.getItem('indexPassword');
+        }
+        return fetch(url, options);
+    }
+
+    document.getElementById('confirmPasswordBtn').addEventListener('click', handlePasswordSubmit);
+    document.getElementById('indexPasswordInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('confirmPasswordBtn').click();
+        }
+    });
+
+    // ========== 退出登录 ==========
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+        await fetchWithAuth('/api/logout', { method: 'POST' });
+        sessionStorage.removeItem('indexAuthenticated');
+        window.location.href = '/';
+    });
+
+    // ========== 刷新 ==========
+    document.getElementById('refreshBtn').addEventListener('click', () => {
+        loadProxies();
+        loadVisitors();
+    });
+
+    // ========== 初始化 ==========
+    async function init() {
+        const authok1 = await checkIndexAuth();if (!authok1) return;
+        const authok2 = await checkAuth();     if (!authok2) return;
+        await loadProxies();
+        await loadVisitors();
+        // 定时刷新列表
+        setInterval(() => {
+            loadProxies();
+            loadVisitors();
+            checkIndexAuth();
+        }, 5000);
+    }
+
+    init();
+</script>
+</body>
+</html>
