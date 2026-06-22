@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>登录 · Infra-Red Assets</title>
+    <link rel="stylesheet" href="/static/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0d1117;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .login-card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 16px;
+            padding: 28px 24px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4);
+        }
+
+        .login-card h1 {
+            font-size: 24px;
+            font-weight: 600;
+            color: #f0f6fc;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .login-card h1 i {
+            color: #2f81f7;
+        }
+
+        .sub {
+            font-size: 13px;
+            color: #8b949e;
+            margin-bottom: 28px;
+            border-left: 2px solid #2f81f7;
+            padding-left: 12px;
+        }
+
+        .panels-container {
+            margin-bottom: 20px;
+        }
+
+        .panel {
+            display: none;
+        }
+
+        .panel.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 500;
+            color: #8b949e;
+            margin-bottom: 6px;
+        }
+
+        .input-wrapper {
+            display: flex;
+            align-items: center;
+            background: #010409;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            transition: 0.2s;
+        }
+
+        .input-wrapper:focus-within {
+            border-color: #2f81f7;
+            box-shadow: 0 0 0 1px #2f81f7;
+        }
+
+        .input-wrapper i {
+            width: 42px;
+            text-align: center;
+            color: #8b949e;
+            font-size: 15px;
+        }
+
+        .input-wrapper input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            padding: 10px 12px 10px 0;
+            color: #e6edf3;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .row-between {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .checkbox {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .checkbox input {
+            width: 14px;
+            height: 14px;
+            accent-color: #2f81f7;
+            cursor: pointer;
+        }
+
+        .checkbox label {
+            color: #8b949e;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .forgot-link a {
+            color: #8b949e;
+            font-size: 12px;
+            text-decoration: none;
+            transition: 0.2s;
+        }
+
+        .forgot-link a:hover {
+            color: #2f81f7;
+            text-decoration: underline;
+        }
+
+        .auth-card {
+            background: rgba(13, 17, 23, 0.6);
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 18px;
+            margin-bottom: 8px;
+        }
+
+        .auth-title {
+            font-size: 13px;
+            font-weight: 500;
+            color: #8b949e;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .method-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+        }
+
+        .method-btn {
+            background: transparent;
+            border: 1px solid #30363d;
+            border-radius: 20px;
+            padding: 5px 14px;
+            font-size: 12px;
+            font-weight: 500;
+            color: #8b949e;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .method-btn.active {
+            background: #2f81f7;
+            border-color: #2f81f7;
+            color: white;
+        }
+
+        .method-btn:hover:not(.active) {
+            border-color: #2f81f7;
+            color: #2f81f7;
+        }
+
+        .captcha-row {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            margin-top: 6px;
+        }
+
+        .captcha-img {
+            height: 42px;
+            border-radius: 6px;
+            border: 1px solid #30363d;
+            cursor: pointer;
+            background: #0a0c10;
+            min-width: 121.55px;
+            object-fit: cover;
+        }
+
+        .code-inputs-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 10px 0;
+        }
+
+        .code-digit {
+            width: 48px;
+            height: 52px;
+            text-align: center;
+            font-size: 22px;
+            font-weight: 600;
+            font-family: 'ui-monospace', 'SFMono-Regular', monospace;
+            background: #010409;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            color: #e6edf3;
+            transition: 0.2s;
+        }
+
+        .code-digit.alphanum {
+            text-transform: uppercase;
+        }
+
+        .code-digit:focus {
+            border-color: #2f81f7;
+            outline: none;
+            box-shadow: 0 0 0 1px #2f81f7;
+        }
+
+        .email-code-row {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .send-code-btn {
+            background: transparent;
+            border: 1px solid #30363d;
+            border-radius: 20px;
+            padding: 6px 12px;
+            font-size: 11px;
+            font-weight: 500;
+            color: #8b949e;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            align-self: flex-start;
+        }
+
+        .send-code-btn:hover {
+            border-color: #2f81f7;
+            color: #2f81f7;
+        }
+
+        .secure-link {
+            text-align: center;
+            margin-top: 12px;
+        }
+
+        .secure-link a {
+            color: #8b949e;
+            font-size: 12px;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .secure-link a:hover {
+            color: #2f81f7;
+            text-decoration: underline;
+        }
+
+        #secureCodeInput {
+            width: 100%;
+            background: #010409;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 10px 12px;
+            color: #e6edf3;
+            font-family: monospace;
+            font-size: 13px;
+            margin-top: 8px;
+        }
+
+        .btn-action {
+            width: 100%;
+            background: #2f81f7;
+            border: none;
+            border-radius: 8px;
+            padding: 10px;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-action:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-action.error-state {
+            background: #f85149;
+        }
+
+        .error-message {
+            color: #f85149;
+            font-size: 12px;
+            text-align: center;
+            margin-top: 14px;
+        }
+
+        .foot-note {
+            margin-top: 28px;
+            text-align: center;
+            font-size: 11px;
+            color: #8b949e;
+            border-top: 1px solid #30363d;
+            padding-top: 16px;
+        }
+
+        .toast-temp {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-size: 13px;
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            animation: fadeInUp 0.2s ease;
+        }
+
+        .toast-temp.success {
+            border-left: 3px solid #3fb950;
+            color: #3fb950;
+        }
+
+        .toast-temp.error {
+            border-left: 3px solid #f85149;
+            color: #f85149;
+        }
+
+        /* 骨架屏动画 */
+        @keyframes skeleton-loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .captcha-img.skeleton {
+            background: linear-gradient(90deg, #1a1f2e 25%, #2a313c 50%, #1a1f2e 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s infinite;
+            border-color: #2a313c;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateX(-50%) translateY(12px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+
+        @media (max-width: 480px) {
+            .login-card { padding: 20px 16px; }
+            .code-digit { width: 42px; height: 46px; font-size: 20px; }
+            .captcha-img { height: 38px; min-width: 80px; }
+        }
+    </style>
+</head>
+<body>
+<div class="login-card">
+    <h1><i class="fas fa-shield-alt"></i> 控制台登录</h1>
+    <div class="sub">高可用资产节点 · 安全访问</div>
+
+    <div class="panels-container">
+        <div id="panel1" class="panel active">
+            <div class="form-group">
+                <label><i class="fas fa-envelope"></i> 服务器 IP</label>
+                <div class="input-wrapper">
+                    <i class="fas fa-user"></i>
+                    <input type="text" id="serverip" placeholder="service ip" autocomplete="off">
+                </div>
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-envelope"></i> 用户名 / 邮箱</label>
+                <div class="input-wrapper">
+                    <i class="fas fa-user"></i>
+                    <input type="text" id="username" placeholder="username@example.com" autocomplete="off">
+                </div>
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-lock"></i> 密码 / 安全码</label>
+                <div class="input-wrapper">
+                    <i class="fas fa-key"></i>
+                    <input type="password" id="password" placeholder="••••••••" autocomplete="off">
+                </div>
+            </div>
+            <div class="row-between">
+                <div class="checkbox">
+                    <input type="checkbox" id="remember" hidden>
+                    <label for="remember" hidden>记住我</label>
+                </div>
+                <div class="forgot-link" hidden>
+                    <a href="#" id="forgotPasswordLink" hidden><i class="fas fa-question-circle"></i> 忘记密码？</a>
+                </div>
+            </div>
+        </div>
+
+        <div id="panel2" class="panel">
+            <div id="dynamicAuthContent"></div>
+        </div>
+    </div>
+
+    <button class="btn-action" id="actionBtn">
+        <i class="fas fa-sign-in-alt"></i> 登录
+    </button>
+    <div id="globalError" class="error-message"></div>
+    <div class="foot-note">
+        <i class="fas fa-database"></i> Asset Cluster Registry · 安全审计
+    </div>
+</div>
+
+<script>
+    const currentpathname = window.location.pathname;
+    const panel1 = document.getElementById('panel1');
+    const panel2 = document.getElementById('panel2');
+    const actionBtn = document.getElementById('actionBtn');
+    const globalError = document.getElementById('globalError');
+    const serveripInput = document.getElementById('serverip');
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+    const rememberCheck = document.getElementById('remember');
+
+    serveripInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const btn = document.getElementById('actionBtn');
+            if (btn && !btn.disabled) btn.click();
+        }
+    });
+
+    usernameInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const btn = document.getElementById('actionBtn');
+            if (btn && !btn.disabled) btn.click();
+        }
+    });
+
+    passwordInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const btn = document.getElementById('actionBtn');
+            if (btn && !btn.disabled) btn.click();
+        }
+    });
+
+    let currentRequire = 1;
+    let currentStep = 1;          // 后端返回的 current 值，用于 require=7 时的步骤
+    let isVerifying = false;
+    let activeMethod = null;
+    let currentGraphToken = null;
+    let tempUsername = '';
+    let tempPassword = '';
+    let tempRemember = false;
+    let isFetchingGraph = false;
+
+    function showTempMessage(message, type = 'error') {
+        const old = document.querySelector('.toast-temp');
+        if (old) old.remove();
+        const toast = document.createElement('div');
+        toast.className = `toast-temp ${type}`;
+        toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i> <span>${escapeHtml(message)}</span>`;
+        document.body.appendChild(toast);
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 250);
+        }, 3000);
+    }
+    function escapeHtml(str) { return String(str).replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : m === '>' ? '&gt;' : m); }
+    function clearError() { globalError.innerText = ''; }
+    function setButtonLoading(text = '验证中') {
+        actionBtn.disabled = true;
+        actionBtn.classList.remove('error-state');
+        actionBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${text}`;
+    }
+    function resetButton() {
+        actionBtn.disabled = false;
+        actionBtn.classList.remove('error-state');
+        actionBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> 登录';
+        isVerifying = false;
+    }
+    function flashButtonError() {
+        actionBtn.classList.add('error-state');
+        setTimeout(() => {
+            if (!actionBtn.disabled) actionBtn.classList.remove('error-state');
+            resetButton();
+        }, 1000);
+    }
+
+    function switchToPanel(panelId) {
+        if (panelId === 'panel1') {
+            panel1.classList.add('active');
+            panel2.classList.remove('active');
+            actionBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> 登录';
+            actionBtn.onclick = performInitialLogin;
+            resetButton();
+        } else {
+            panel1.classList.remove('active');
+            panel2.classList.add('active');
+            actionBtn.innerHTML = '<i class="fas fa-check-circle"></i> 验证';
+            actionBtn.onclick = performSecondFactor;
+            resetButton();
+        }
+        clearError();
+    }
+
+    function buildCodeInputs(containerId, length, isAlphanumeric = false, autoSubmit = true) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        container.innerHTML = '';
+        const inputs = [];
+        for (let i = 0; i < length; i++) {
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.maxLength = 1;
+            input.classList.add('code-digit');
+            if (isAlphanumeric) {
+                input.classList.add('alphanum');
+                input.inputMode = 'text';
+                input.pattern = '[A-Za-z0-9]';
+            } else {
+                input.inputMode = 'numeric';
+                input.pattern = '\\d*';
+            }
+            container.appendChild(input);
+            inputs.push(input);
+        }
+        inputs.forEach((inp, idx) => {
+            inp.addEventListener('input', (e) => {
+                let val = e.target.value;
+                if (!isAlphanumeric) val = val.replace(/[^0-9]/g, '');
+                else val = val.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+                e.target.value = val;
+                if (val.length === 1 && idx < length - 1) inputs[idx + 1]?.focus();
+                // 自动提交：当最后一位输入完成后
+                if (autoSubmit && idx === length - 1 && val.length === 1) {
+                    setTimeout(() => {
+                        const btn = document.getElementById('actionBtn');
+                        if (btn && !btn.disabled) btn.click();
+                    }, 100);
+                }
+            });
+            inp.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && inp.value.length === 0 && idx > 0) inputs[idx - 1]?.focus();
+            });
+        });
+    }
+
+    async function fetchGraphCode(imgElement) {
+        // 防止重复请求
+        if (isFetchingGraph) return null;
+
+        const img = imgElement || document.getElementById('graphCaptchaImg');
+        if (!img) return null;
+
+        // 显示骨架动画
+        img.classList.add('skeleton');
+        img.style.backgroundColor = '';
+        img.style.objectFit = 'cover';
+
+        // 清除旧的加载事件
+        img.onload = null;
+        img.onerror = null;
+
+        isFetchingGraph = true;
+
+        try {
+            const res = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username: tempUsername || 'dummy',
+                    password: tempPassword || 'dummy',
+                    verify: { vtype: 'graph', value: null }
+                })
+            });
+            const data = await res.json();
+
+            if (data.status && data.info && data.info.token && data.info.graph) {
+                currentGraphToken = data.info.token;
+                // 图片加载成功
+                img.onload = () => {
+                    img.classList.remove('skeleton');
+                    isFetchingGraph = false;
+                };
+                img.onerror = () => {
+                    img.classList.remove('skeleton');
+                    img.style.backgroundColor = '#282C34';
+                    img.style.objectFit = 'none';
+                    img.alt = '加载失败，点击重试';
+                    isFetchingGraph = false;
+                    showTempMessage('验证码图片加载失败，请点击重试', 'error');
+                };
+                img.src = data.info.graph;
+                return data.info.graph;
+            } else {
+                // 后端返回失败
+                img.classList.remove('skeleton');
+                img.style.backgroundColor = '#282C34';
+                img.style.objectFit = 'none';
+                img.alt = '获取失败，点击重试';
+                showTempMessage(data.message || '获取图形验证码失败', 'error');
+                isFetchingGraph = false;
+                return null;
+            }
+        } catch (e) {
+            img.classList.remove('skeleton');
+            img.style.backgroundColor = '#282C34';
+            img.style.objectFit = 'none';
+            img.alt = '网络错误，点击重试';
+            showTempMessage('网络错误，获取图形验证码失败', 'error');
+            isFetchingGraph = false;
+            return null;
+        }
+    }
+
+    // 渲染面板2内容
+    function renderDynamicAuthContent(requireLevel, verifyInfo = null) {
+        // verifyInfo 包含后端返回的 current (用于 require=7 的步骤) 和可能的其他信息
+        const current = verifyInfo?.current || 1;
+        if (verifyInfo && verifyInfo.current) currentStep = verifyInfo.current;
+        if (requireLevel === 7) {
+            actionBtn.onclick = performSecondFactor;
+            actionBtn.innerHTML = '<i class="fas fa-check-circle"></i> 验证';
+            // 根据后端 current 显示相应步骤：1=邮箱验证, 3=2FA
+            if (current === 1) {
+                // 邮箱验证界面
+                let html = `<div class="auth-card">
+                    <div class="auth-title"><i class="fas fa-shield-alt"></i> 邮箱验证</div>
+                    <div style="margin-bottom: 16px;">
+                        <label style="font-size:12px; color:#8b949e;"><i class="fas fa-shield-alt"></i> 图形验证码</label>
+                        <div class="captcha-row">
+                            <input type="text" id="graphCodeInput" placeholder="graphic verification code" maxlength="5" autocomplete="off" style="flex:1; background:#010409; border:1px solid #30363d; border-radius:6px; padding:8px; color:#e6edf3; font-size:13px;">
+                            <img id="graphCaptchaImg" class="captcha-img skeleton" alt="" style="height:42px;">
+                        </div>
+                    </div>
+                    <div class="email-code-row">
+                        <label style="font-size:12px; color:#8b949e;"><i class="fas fa-envelope"></i> 邮箱验证码</label>
+                        <div class="code-inputs-group" id="emailCodeGroup"></div>
+                        <button id="sendEmailCodeBtn" class="send-code-btn"><i class="fas fa-paper-plane"></i> 发送验证码</button>
+                    </div>
+                    <div class="secure-link"><a id="useSecureCodeLink7">使用安全码直接登录</a></div>
+                </div>`;
+                document.getElementById('dynamicAuthContent').innerHTML = html;
+
+                document.getElementById('graphCodeInput').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const btn = document.getElementById('sendEmailCodeBtn');
+                        if (btn && !btn.disabled) btn.click();
+                    }
+                });
+
+                const secureInput = document.getElementById('secureCodeInput');
+                if (secureInput) {
+                    secureInput.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            const btn = document.getElementById('actionBtn');
+                            if (btn && !btn.disabled) btn.click();
+                        }
+                    });
+                }
+
+                // 图形验证码
+                const img = document.getElementById('graphCaptchaImg');
+                const refreshGraph = () => fetchGraphCode(img);
+                img.addEventListener('click', refreshGraph);
+                refreshGraph();
+                buildCodeInputs('emailCodeGroup', 5, true);
+
+                // 发送验证码
+                const sendBtn = document.getElementById('sendEmailCodeBtn');
+                sendBtn.addEventListener('click', async () => {
+                    const graphInput = document.getElementById('graphCodeInput');
+                    const graphCode = graphInput ? graphInput.value.trim() : '';
+                    if (!graphCode) { showTempMessage('请填写图形验证码', 'error'); return; }
+                    setButtonLoading('发送中');
+                    try {
+                        const res = await fetch('/api/login', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                username: tempUsername,
+                                password: tempPassword,
+                                remember: tempRemember,
+                                verify: { vtype: 'graph', value: { token: currentGraphToken, code: graphCode } }
+                            })
+                        });
+                        const data = await res.json();
+                        if (data.status && data.code === 200) {
+                            showTempMessage('验证码已发送至邮箱', 'success');
+                            document.getElementById('emailCodeGroup').querySelector('input').focus();
+                        } else {
+                            showTempMessage(data.message || '图形验证码错误', 'error');
+                            document.getElementById('graphCaptchaImg')?.click();
+                        }
+                    } catch(e) { showTempMessage('网络错误', 'error'); }
+                    finally { resetButton(); }
+                });
+
+                const secureLink = document.getElementById('useSecureCodeLink7');
+                secureLink.addEventListener('click', () => showSecureCodeUI('7-1'));
+                return;
+            } else if (current === 3) {
+                // 2FA 界面
+                let html = `<div class="auth-card">
+                    <div class="auth-title"><i class="fas fa-mobile-alt"></i> 2FA 验证</div>
+                    <label style="font-size:12px; color:#8b949e;"><i class="fas fa-clock"></i> 6位动态验证码</label>
+                    <div class="code-inputs-group" id="totpCodeGroup"></div>
+                    <div style="font-size:11px; color:#8b949e; margin-top:6px;">请输入 Google Authenticator 中的6位数字</div>
+                    <div class="secure-link"><a id="useSecureCodeLink7step2">使用安全码直接登录</a></div>
+                </div>`;
+                document.getElementById('dynamicAuthContent').innerHTML = html;
+                buildCodeInputs('totpCodeGroup', 6, false);
+                document.getElementById('totpCodeGroup').querySelector('input').focus();
+                const secureLink = document.getElementById('useSecureCodeLink7step2');
+                secureLink.addEventListener('click', () => showSecureCodeUI('7-2'));
+                return;
+            }
+        } else if (requireLevel === 3 || requireLevel === 5) {
+            // 正常方法选择器
+            let method = (requireLevel === 3 ? 'email' : 'totp');
+            if (activeMethod && activeMethod !== 'email' && activeMethod !== 'totp' && activeMethod !== 'securecode') activeMethod = method;
+            else if (!activeMethod) activeMethod = method;
+            let html = `<div class="auth-card">`;
+            if (requireLevel === 3) {
+                html += `<div class="auth-title"><i class="fas fa-exchange-alt"></i> 选择验证方式</div>
+                         <div class="method-selector" id="methodSelector">
+                            <button class="method-btn ${activeMethod === 'email' ? 'active' : ''}" data-method="email"><i class="fas fa-envelope"></i> 邮箱验证码</button>
+                            <button class="method-btn ${activeMethod === 'totp' ? 'active' : ''}" data-method="totp"><i class="fas fa-clock"></i> 2FA 动态码</button>
+                            <button class="method-btn ${activeMethod === 'securecode' ? 'active' : ''}" data-method="securecode"><i class="fas fa-key"></i> 安全码</button>
+                         </div>`;
+            } else {
+                html += `<div class="auth-title"><i class="fas fa-lock"></i> 双因素认证</div>
+                         <div class="method-selector" id="methodSelector">
+                            <button class="method-btn ${activeMethod === 'totp' ? 'active' : ''}" data-method="totp"><i class="fas fa-clock"></i> 动态口令</button>
+                            <button class="method-btn ${activeMethod === 'securecode' ? 'active' : ''}" data-method="securecode"><i class="fas fa-key"></i> 安全码</button>
+                         </div>`;
+            }
+
+            if (activeMethod === 'email') {
+                html += `<div id="emailPanel">
+                            <div style="margin-bottom:16px;">
+                                <label style="font-size:12px; color:#8b949e;"><i class="fas fa-shield-alt"></i> 图形验证码</label>
+                                <div class="captcha-row">
+                                    <input type="text" id="graphCodeInput" placeholder="graphic verification code" maxlength="5" autocomplete="off" style="flex:1; background:#010409; border:1px solid #30363d; border-radius:6px; padding:8px; color:#e6edf3; font-size:13px;">
+                                    <img id="graphCaptchaImg" class="captcha-img skeleton" alt="" style="height:42px;">
+                                </div>
+                            </div>
+                            <div class="email-code-row">
+                                <label style="font-size:12px; color:#8b949e;"><i class="fas fa-envelope"></i> 邮箱验证码</label>
+                                <div class="code-inputs-group" id="emailCodeGroup"></div>
+                                <button id="sendEmailCodeBtn" class="send-code-btn"><i class="fas fa-paper-plane"></i> 发送验证码</button>
+                            </div>
+                        </div>`;
+            } else if (activeMethod === 'totp') {
+                html += `<div id="totpPanel">
+                            <label style="font-size:12px; color:#8b949e;"><i class="fas fa-clock"></i> 6位动态验证码</label>
+                            <div class="code-inputs-group" id="totpCodeGroup"></div>
+                            <div style="font-size:11px; color:#8b949e; margin-top:6px;">使用 Google Authenticator 等应用获取</div>
+                        </div>`;
+            } else if (activeMethod === 'securecode') {
+                html += `<div id="securePanel">
+                            <label style="font-size:12px; color:#8b949e;"><i class="fas fa-key"></i> 安全码 (Secure Code)</label>
+                            <input type="text" id="secureCodeInput" placeholder="secure code" autocomplete="off" style="width:100%; background:#010409; border:1px solid #30363d; border-radius:8px; padding:10px 12px; color:#e6edf3; font-family:monospace; font-size:13px;">
+                        </div>`;
+            }
+            html += `</div>`;
+            document.getElementById('dynamicAuthContent').innerHTML = html;
+
+            const secureInput = document.getElementById('secureCodeInput');
+            if (secureInput) {
+                secureInput.focus();
+                secureInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const btn = document.getElementById('actionBtn');
+                        if (btn && !btn.disabled) btn.click();
+                    }
+                });
+            }
+
+            if (activeMethod === 'email') {
+                const img = document.getElementById('graphCaptchaImg');
+                const refresh = () => fetchGraphCode(img);
+                img.addEventListener('click', refresh);
+                refresh();
+                buildCodeInputs('emailCodeGroup', 5, true);
+                document.getElementById('emailCodeGroup').querySelector('input').focus();
+                const sendBtn = document.getElementById('sendEmailCodeBtn');
+                sendBtn.addEventListener('click', async () => {
+                    const graphInput = document.getElementById('graphCodeInput');
+                    const graphCode = graphInput ? graphInput.value.trim() : '';
+                    if (!graphCode) { showTempMessage('请填写图形验证码', 'error'); return; }
+                    setButtonLoading('发送中');
+                    try {
+                        const res = await fetch('/api/login', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                username: tempUsername,
+                                password: tempPassword,
+                                remember: tempRemember,
+                                verify: { vtype: 'graph', value: { token: currentGraphToken, code: graphCode } }
+                            })
+                        });
+                        const data = await res.json();
+                        if (data.status && data.code === 200) showTempMessage('验证码已发送', 'success');
+                        else { showTempMessage(data.message || '图形验证码错误', 'error'); document.getElementById('graphCaptchaImg')?.click(); }
+                    } catch(e) { showTempMessage('网络错误', 'error'); }
+                    finally { resetButton(); }
+                });
+            } else if (activeMethod === 'totp') {
+                buildCodeInputs('totpCodeGroup', 6, false);
+                document.getElementById('totpCodeGroup').querySelector('input').focus();
+            }
+
+            // 绑定方法切换
+            const btns = document.querySelectorAll('.method-btn');
+            btns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const method = btn.getAttribute('data-method');
+                    if (method) {
+                        activeMethod = method;
+                        renderDynamicAuthContent(requireLevel, verifyInfo);
+                    }
+                });
+            });
+            return;
+        }
+    }
+
+    // 安全码通用界面（绕过所有步骤）
+    function showSecureCodeUI(fromStep) {
+        const savedRequire = currentRequire;
+        const savedVerifyInfo = { require: currentRequire, current: (currentRequire === 7 ? currentStep : null) };
+        const savedActiveMethod = activeMethod;
+        let html = `<div class="auth-card">
+            <div class="auth-title"><i class="fas fa-key"></i> 安全码登录</div>
+            <input type="text" id="secureCodeInput" placeholder="secure code" autocomplete="off" style="width:100%; background:#010409; border:1px solid #30363d; border-radius:8px; padding:10px 12px; color:#e6edf3; font-family:monospace; font-size:13px;">
+            <div class="secure-link" style="margin-top:12px;"><a id="backLink">返回</a></div>
+        </div>`;
+        document.getElementById('dynamicAuthContent').innerHTML = html;
+        const secureInput = document.getElementById('secureCodeInput');
+        if (secureInput) {
+            secureInput.focus();
+            secureInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const btn = document.getElementById('actionBtn');
+                    if (btn && !btn.disabled) btn.click();
+                }
+            });
+        }
+        const backLink = document.getElementById('backLink');
+        backLink.addEventListener('click', () => {
+            // 恢复按钮行为
+            actionBtn.onclick = performSecondFactor;
+            actionBtn.innerHTML = '<i class="fas fa-check-circle"></i> 验证';
+            // 恢复之前保存的状态
+            currentRequire = savedRequire;
+            activeMethod = savedActiveMethod;
+            if (savedRequire === 7) {
+                renderDynamicAuthContent(savedRequire, { require: savedRequire, current: savedVerifyInfo.current });
+            } else {
+                renderDynamicAuthContent(savedRequire, null);
+            }
+        });
+        // 修改主按钮行为为安全码验证
+        const oldOnClick = actionBtn.onclick;
+        actionBtn.onclick = async () => {
+            const codeInput = document.getElementById('secureCodeInput');
+            const secureCode = codeInput ? codeInput.value.trim() : '';
+            if (!secureCode) { showTempMessage('请输入安全码', 'error'); return; }
+            setButtonLoading('验证中');
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: tempUsername,
+                        password: secureCode,
+                        remember: tempRemember,
+                        verify: null
+                    })
+                });
+                const data = await res.json();
+                if (data.status && data.authenticated === true) {
+                    window.location.href = currentpathname;
+                    return;
+                } else {
+                    showTempMessage(data.message || '安全码验证失败', 'error');
+                    resetButton();
+                }
+            } catch(e) { showTempMessage('网络错误', 'error'); resetButton(); }
+        };
+    }
+
+    function getCurrentVerifyValue() {
+        if (currentRequire === 7) {
+            const currentStepElem = document.querySelector('.auth-card'); // 简单判断当前显示的卡片类型
+            if (document.getElementById('emailCodeGroup')) {
+                const digits = document.querySelectorAll('#emailCodeGroup .code-digit');
+                let code = '';
+                digits.forEach(d => code += d.value);
+                if (!code || code.length !== 5) return null;
+                return { vtype: 'email', value: code };
+            } else if (document.getElementById('totpCodeGroup')) {
+                const digits = document.querySelectorAll('#totpCodeGroup .code-digit');
+                let totp = '';
+                digits.forEach(d => totp += d.value);
+                if (!totp || totp.length !== 6) return null;
+                return { vtype: 'TOTP', value: totp };
+            } else if (document.getElementById('secureCodeInput')) {
+                const input = document.getElementById('secureCodeInput');
+                const code = input ? input.value.trim() : '';
+                if (!code) return null;
+                return { vtype: 'securecode', value: code };
+            }
+            return null;
+        } else {
+            if (activeMethod === 'email') {
+                const digits = document.querySelectorAll('#emailCodeGroup .code-digit');
+                let code = '';
+                digits.forEach(d => code += d.value);
+                if (!code || code.length !== 5) return null;
+                return { vtype: 'email', value: code };
+            } else if (activeMethod === 'totp') {
+                const digits = document.querySelectorAll('#totpCodeGroup .code-digit');
+                let totp = '';
+                digits.forEach(d => totp += d.value);
+                if (!totp || totp.length !== 6) return null;
+                return { vtype: 'TOTP', value: totp };
+            } else if (activeMethod === 'securecode') {
+                const input = document.getElementById('secureCodeInput');
+                const code = input ? input.value.trim() : '';
+                if (!code) return null;
+                return { vtype: 'securecode', value: code };
+            }
+            return null;
+        }
+    }
+
+    async function performInitialLogin() {
+        const serverip = serveripInput.value.trim();
+        const username = usernameInput.value.trim();
+        const password = passwordInput.value.trim();
+        const remember = rememberCheck.checked;
+        if (!serverip || !username || !password) {
+            showTempMessage('请填写服务器 IP、用户名和密码', 'error');
+            return;
+        }
+        setButtonLoading('登录中');
+        clearError();
+        try {
+            const res = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ serverip, username, password, remember })
+            });
+            const data = await res.json();
+            if (data.status) {
+                if (data.authenticated === true) {
+                    window.location.href = currentpathname;
+                    return;
+                }
+                currentRequire = data.verify?.require || 1;
+                if (currentRequire === 1) {
+                    window.location.href = currentpathname;
+                    return;
+                }
+                tempUsername = username;
+                tempPassword = password;
+                tempRemember = remember;
+                if (currentRequire === 7) {
+                    // 使用后端返回的 current
+                    renderDynamicAuthContent(7, data.verify);
+                } else if (currentRequire === 5 || currentRequire === 3) {
+                    renderDynamicAuthContent(currentRequire, data.verify);
+                }
+                switchToPanel('panel2');
+                resetButton();
+            } else {
+                flashButtonError();
+                globalError.innerText = data.message || '用户名或密码错误';
+                resetButton();
+            }
+        } catch (e) {
+            flashButtonError();
+            globalError.innerText = '网络错误，请重试';
+            resetButton();
+        }
+    }
+
+    async function performSecondFactor() {
+        if (isVerifying) return;
+        const verifyData = getCurrentVerifyValue();
+        if (!verifyData) {
+            showTempMessage('请完整填写验证信息', 'error');
+            return;
+        }
+        isVerifying = true;
+        setButtonLoading('验证中');
+
+        if (currentRequire === 7) {
+            // 根据当前界面类型发送对应验证
+            let payload = {};
+            if (verifyData.vtype === 'email') payload = { vtype: 'email', value: verifyData.value };
+            else if (verifyData.vtype === 'TOTP') payload = { vtype: 'TOTP', value: verifyData.value };
+            else if (verifyData.vtype === 'securecode') {
+                // 安全码已在安全码界面单独处理，此处不应出现
+                isVerifying = false;
+                resetButton();
+                return;
+            }
+            const res = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username: tempUsername,
+                    password: tempPassword,
+                    remember: tempRemember,
+                    verify: payload
+                })
+            });
+            const data = await res.json();
+            if (data.status && data.authenticated === true) {
+                window.location.href = currentpathname;
+                return;
+            } else if (data.verify && data.verify.current) {
+                // 步骤更新，重新渲染界面
+                currentRequire = data.verify.require;
+                renderDynamicAuthContent(currentRequire, data.verify);
+                isVerifying = false;
+                resetButton();
+                return;
+            } else {
+                showTempMessage(data.message || '验证失败', 'error');
+                isVerifying = false;
+                resetButton();
+                return;
+            }
+        } else {
+            // require=3 或 5
+            if (verifyData.vtype === 'securecode') {
+                const secureRes = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: tempUsername,
+                        password: verifyData.value,
+                        remember: tempRemember,
+                        verify: null
+                    })
+                });
+                const secureData = await secureRes.json();
+                if (secureData.status && secureData.authenticated === true) {
+                    window.location.href = currentpathname;
+                    return;
+                } else {
+                    showTempMessage(secureData.message || '安全码验证失败', 'error');
+                    isVerifying = false;
+                    resetButton();
+                    return;
+                }
+            } else {
+                let payload = {};
+                if (verifyData.vtype === 'email') payload = { vtype: 'email', value: verifyData.value };
+                else if (verifyData.vtype === 'TOTP') payload = { vtype: 'TOTP', value: verifyData.value };
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: tempUsername,
+                        password: tempPassword,
+                        remember: tempRemember,
+                        verify: payload
+                    })
+                });
+                const data = await res.json();
+                if (data.status && data.authenticated === true) {
+                    window.location.href = currentpathname;
+                    return;
+                } else {
+                    showTempMessage(data.message || '验证失败', 'error');
+                    isVerifying = false;
+                    resetButton();
+                    return;
+                }
+            }
+        }
+    }
+
+    document.getElementById('forgotPasswordLink').addEventListener('click', async (e) => {
+        e.preventDefault();window.location.href = '/reset';
+    });
+
+    switchToPanel('panel1');
+    actionBtn.onclick = performInitialLogin;
+    usernameInput.addEventListener('focus', () => { if (panel2.classList.contains('active')) switchToPanel('panel1'); });
+    passwordInput.addEventListener('focus', () => { if (panel2.classList.contains('active')) switchToPanel('panel1'); });
+</script>
+</body>
+</html>
