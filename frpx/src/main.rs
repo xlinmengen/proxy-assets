@@ -246,12 +246,10 @@ async fn login_handler(
 }
 
 async fn logout_handler(State(state): State<Arc<AppState>>) -> impl IntoResponse {
-    {
-        let mut settings = state.settings.lock().await;
-        settings.reset_all();
-        let _ = settings.save();
-    }
-    Json(json!({ "status": true, "message": "已退出登录", "code": 200, "info": null }))
+    let mut settings = state.settings.lock().await;
+    settings.reset_all();
+    let _ = settings.save();
+    Json(json!({ "status": true, "message": "已退出登录", "code": 200, "info": "" }))
 }
 
 async fn status_handler(State(state): State<Arc<AppState>>) -> impl IntoResponse {
@@ -311,19 +309,25 @@ async fn auth_middleware(
     req: Request,
     next: Next,
 ) -> Result<axum::response::Response, (StatusCode, Json<Value>)> {
-    let settings = state.settings.lock().await;
-    if settings.password.is_empty() {
-        // 未设置密码，放行
+    let password_required = {
+        let settings = state.settings.lock().await;
+        !settings.password.is_empty()
+    };
+    if !password_required {
         return Ok(next.run(req).await);
     }
-    // 检查请求头 X-Password
+
     let password = req.headers()
         .get("X-Password")
         .and_then(|v| v.to_str().ok())
         .unwrap_or("");
-    if password == settings.password {
-        Ok(next.run(req).await)
-    } else {
+
+    let is_valid = {
+        let settings = state.settings.lock().await;
+        settings.password == password
+    };
+
+    if  is_valid { Ok(next.run(req).await) } else {
         Err((StatusCode::UNAUTHORIZED, Json(json!({
             "status": false,
             "message": "需要独立密码认证"
