@@ -131,10 +131,11 @@ sudo pip3 install --break-system-packages google-api-python-client
 
 sudo mkdir -p /opt/repo ; cd $_
 sudo wget https://github.com/xlinmengen/proxy-assets/releases/download/assets/image.zip
-sudo wget https://github.com/xlinmengen/proxy-assets/releases/download/assets/Xray-linux-64.zip
-sudo wget https://github.com/xlinmengen/proxy-assets/releases/download/assets/frp_linux_amd64.zip
-sudo wget https://github.com/xlinmengen/proxy-assets/releases/download/assets/frp_darwin_amd64.zip
-sudo wget https://github.com/xlinmengen/proxy-assets/releases/download/assets/frp_windows_amd64.zip
+sudo wget https://github.com/xlinmengen/proxy-assets/releases/download/assets/frpx-windows-pc-x86_64-gnu.zip
+sudo wget https://github.com/xlinmengen/proxy-assets/releases/download/assets/frpx-linux-unknown-x86_64-musl.tar.xz
+sudo wget https://github.com/xlinmengen/proxy-assets/releases/download/assets/frpx-linux-unknown-aarch64-musl.tar.xz
+sudo wget https://github.com/xlinmengen/proxy-assets/releases/download/assets/frpx-apple-darwin-x86_64.tar.xz
+sudo wget https://github.com/xlinmengen/proxy-assets/releases/download/assets/frpx-apple-darwin-aarch64.tar.xz
 sudo unzip -oq image.zip -d / ; rm -f image.zip
 
 sudo mkdir -p /opt/monitor/datas/custom ; cd $_
@@ -145,6 +146,10 @@ sudo wget https://raw.githubusercontent.com/xlinmengen/proxy-assets/main/ruleset
 sudo chmod -R +rw /opt/
 sudo chmod +x /opt/xray/xray
 sudo chmod +x /opt/frps/frps
+
+sudo chmod -R 700 /opt/xray
+sudo chmod -R 700 /opt/frps
+sudo chmod -R 700 /opt/monitor
 
 uuid=$(cat /proc/sys/kernel/random/uuid | tr -d '\n')
 token=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1 | tr -d '\n')
