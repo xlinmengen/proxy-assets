@@ -2,8 +2,8 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/status-stable-brightgreen">
-  <img src="https://img.shields.io/badge/xray-Reality-1f8ef5">
-  <img src="https://img.shields.io/badge/FRP-0.58.0-ff9800">
+  <img src="https://img.shields.io/badge/Xray-Reality-1f8ef5">
+  <img src="https://img.shields.io/badge/FRP-0.69.0-ff9800">
   <img src="https://img.shields.io/badge/Flask-3.0.3-000000">
   <img src="https://img.shields.io/badge/gRPC-1.78.0-00bcd4">
   <img src="https://img.shields.io/badge/license-MIT-blue">
@@ -18,19 +18,19 @@
 | 类别 | 特性 |
 | :--- | :--- |
 | **代理服务** | Xray Reality (VLESS + TCP) / 多用户隔离 / 等级化策略 / 高并发优化 |
-| **内网穿透** | FRP 服务端 / Token 认证 / 支持 TCP 隧道 / 独立 Web 管理端口 |
-| **管理面板** | 用户 CRUD / 实时流量图表 / 一键配置下载 / 设备感知导入 |
+| **内网穿透** | FRP 服务端 / OIDC 认证 / 支持 TCP 隧道 / 支持 wireProtocol v2 (AEAD 加密) |
+| **管理面板** | 用户 CRUD / 实时流量图表 / 一键配置下载 / 设备感知导入 / 独立密码保护 / DDoS 防护 |
 | **资源代理** | GeoIP / GeoSite / 客户端安装包 / 规则集（内置 CDN 回源） |
 | **安全与证书** | 自动生成自签名 CA / 动态签发服务器证书 / 强制 HTTPS |
-| **可观测性** | gRPC 流量统计（实时速率 + 累计用量） / 月度自动重置 / 系统指标 |
+| **可观测性** | gRPC 流量统计（实时速率 + 累计用量） / 月度自动重置 / 系统指标 / 邮件告警 |
 
 ---
 
 ## 🧩 组件关系
 
-- **Xray** 提供 Reality 协议代理服务（端口 `443`），支持多用户、多等级策略，并通过 gRPC API（端口 `7600`）暴露流量统计数据。
-- **FRP** 作为内网穿透服务端（端口 `10`），与 Xray 路由联动（可将特定域名流量转入 FRP 隧道）。
-- **Monitor** 是基于 Flask 的 Web 面板（端口 `1000`），负责用户管理、配置生成、证书签发、流量可视化，并通过 gRPC 与 Xray 通信。
+- **Xray** 提供 Reality 协议代理服务（端口 `443`），支持多用户、多等级策略，并通过 gRPC API（端口 `15`）暴露流量统计数据。
+- **FRP** 作为内网穿透服务端（端口 `10`），认证方式为 OIDC，与 Xray 路由联动（可将特定域名流量转入 FRP 隧道）。
+- **Monitor** 是基于 Flask 的 Web 面板（端口 `1000`），负责用户管理、配置生成、证书签发、流量可视化，并通过 gRPC 与 Xray 通信。面板内置 DDoS 防护、SMTP 邮件告警和 OIDC 认证服务。
 
 ---
 
@@ -58,10 +58,12 @@ bash <(curl -sSL https://raw.githubusercontent.com/xlinmengen/proxy-assets/main/
 | 服务 | 地址 | 说明 |
 | :--- | :--- | :--- |
 | Web 管理面板 | `https://<VPS_IP>:1000` | 用户管理 / 流量监控 / 配置下载 |
-| FRP 管理面板 | `http://<VPS_IP>:7500` | FRP 服务端状态（用户名/密码同管理员） |
+| FRP 管理面板 | `http://127.0.0.1:1020` | FRP 服务端状态（仅限本地访问，用户名/密码同管理员） |
 | CA 证书下载 | `https://<VPS_IP>:1000/cert` | 用于客户端信任自签名证书 |
 
 > ⚠️ 首次访问需手动信任自签名证书（浏览器会提示不安全，添加例外即可）。
+
+> 💡 FRP 管理面板端口 `1020` 默认仅监听本地，如需外部访问请手动开放防火墙。
 
 ---
 
@@ -84,12 +86,13 @@ bash <(curl -sSL https://raw.githubusercontent.com/xlinmengen/proxy-assets/main/
 
 | 组件 | 版本 | 用途 |
 | :--- | :--- | :--- |
-| [Xray-core](https://github.com/XTLS/Xray-core) | 26.3.27 | 代理核心 (Reality 协议) |
-| [FRP](https://github.com/fatedier/frp) | 0.58.0 | 内网穿透服务端 |
+| [Xray-core](https://github.com/XTLS/Xray-core) | 26.3.27+ | 代理核心 (Reality 协议) |
+| [FRP](https://github.com/fatedier/frp) | 0.69.1 | 内网穿透服务端 (支持 wireProtocol v2) |
 | [Flask](https://flask.palletsprojects.com/) | 3.0.3 | Web 框架 |
 | [gRPC](https://grpc.io/) | 1.78.0 | 与 Xray API 通信 |
-| [Gevent](http://www.gevent.org/) | latest | 高性能 WSGI 服务器 |
+| [Granian](https://github.com/emmett-framework/granian) | latest | 高性能 WSGI 服务器 |
 | [cryptography](https://cryptography.io/) | latest | 证书生成与处理 |
+| [FRPX](https://github.com/xlinmengen/proxy-assets) | 1.0.0 | Rust 编写的 FRPC 客户端管理工具 (跨平台) |
 
 ---
 
@@ -107,7 +110,7 @@ Web 面板中点击 **“一键导入”** 按钮，系统会根据 User-Agent �
 
 ### 手动配置
 
-1. 下载根证书：`https://<VPS_IP>:5000/cert` 并安装为受信任的 CA。
+1. 下载根证书：`https://<VPS_IP>:1000/cert` 并安装为受信任的 CA。
 2. 在 Web 面板中点击 **“下载配置”** 获取 `config.yaml`。
 3. 导入客户端（Clash Meta / Verge / Shadowrocket 均可）。
 
@@ -123,12 +126,14 @@ proxies:
     network: tcp
     tls: true
     flow: xtls-rprx-vision
-    servername: www.microsoft.com
+    servername: www.apple.com          # 推荐伪装目标 (苹果 CDN)
     reality-opts:
       public-key: <服务器公钥>
       short-id: <用户短ID>
     client-fingerprint: chrome
 ```
+
+> 💡 **伪装目标说明**：为避免因过度使用微软域名 (`www.microsoft.com`) 导致的连接干扰，推荐使用 `www.apple.com` 作为 Reality 伪装目标。苹果 CDN 流量巨大且不易被运营商 QoS 策略误伤。
 
 ---
 
@@ -137,10 +142,18 @@ proxies:
 ### 服务端（已自动配置）
 
 - **绑定端口**：`10` (TCP 穿透)
-- **认证方式**：OIDC（自动管理）
-- **管理界面**：`http://<VPS_IP>:1020`（用户名/密码同管理员）
+- **认证方式**：OIDC（自动管理，支持 `transport.wireProtocol = "v2"` 启用 AEAD 加密）
+- **管理界面**：`http://127.0.0.1:1020`（仅限本地访问，用户名/密码同管理员）
 
-> 💡 如需将 FRP 流量通过 Xray 代理（例如走 Reality 隧道），可在 Xray 路由中配置 `domain:work` 定向到 `frp_tunnel` 出站。
+### FRP v2 协议 (可选)
+
+FRP 0.69.0 引入了 `transport.wireProtocol = "v2"`，启用后控制通道使用 AEAD 加密（`xchacha20-poly1305` 或 `aes-256-gcm`）。如需启用，在 `frpc.toml` 中添加：
+
+```toml
+transport.wireProtocol = "v2"
+```
+
+> ⚠️ 启用 v2 需先升级 frps，再升级 frpc，且 v2 的 frpc 无法连接旧版 frps。
 
 ---
 
@@ -160,7 +173,7 @@ proxies:
 ```bash
 systemctl status xray      # Xray 服务
 systemctl status frps      # FRP 服务端
-systemctl status monitor   # Web 面板
+systemctl status monitor   # Web 面板 (含 worker + RPC 服务)
 
 systemctl restart xray frps monitor
 ```
@@ -174,7 +187,13 @@ journalctl -u monitor -f -n 50
 
 ### 防火墙（已预配置）
 
-开放端口：`10`、`80`、`443`、`5000`  
+| 端口 | 用途 | 状态 |
+| :--- | :--- | :--- |
+| `10` | FRP 内网穿透 | ✅ 已开放 |
+| `443` | Xray Reality 代理 | ✅ 已开放 |
+| `1000` | Web 管理面板 | ✅ 已开放 |
+| `1020` | FRP 管理面板 | ❌ 仅限本地 |
+
 查看当前规则：`ufw status verbose`
 
 ### 备份与恢复
@@ -191,30 +210,58 @@ journalctl -u monitor -f -n 50
 ## 📁 目录结构
 
 ```
-/opt/
-├── xray/                     # Xray 服务端
-│   ├── xray                  # 二进制
-│   └── config.json           # 动态生成（用户/密钥）
-├── frps/                     # FRP 服务端
-│   ├── frps                  # 二进制
-│   └── frps.toml             # 配置文件
-├── monitor/                  # Web 面板根目录
-│   ├── main.py               # Flask 主程序
+/opt/monitor/
+├── worker.py                 # Flask 应用入口 (Granian 启动)
+├── service.py                # RPC 服务端 (业务逻辑)
+├── launch.py                 # 启动脚本 (生成证书并启动 Granian)
+├── config.py                 # 全局配置
+├── command/                  # 核心模块
+│   ├── auth.py               # 认证管理 (Session / 多因素)
+│   ├── captcha.py            # 图形验证码生成
+│   ├── ddos.py               # DDoS 防护 (令牌桶 + 自适应限流)
+│   ├── mkcert.py             # CA 与证书签发
+│   ├── oidc.py               # OIDC 认证服务 (/oauth2/token)
+│   ├── rpc.py                # TCP/UDP RPC 框架
 │   ├── settings.py           # 用户/配置管理
-│   ├── xray_stats.py         # gRPC 统计模块
-│   ├── mkcert.py             # 证书生成器
-│   ├── update_assets.py      # 资产后台更新
-│   ├── datas/                # 数据存储
-│   │   ├── settings.json     # 用户、密钥、认证
-│   │   ├── config.yaml       # 客户端配置模板
-│   │   └── database/         # GeoIP 等缓存
-│   ├── certs/                # CA 与服务器证书
-│   ├── static/               # CSS/JS 资源
-│   └── templates/            # HTML 模板
-└── repo/                     # 客户端安装包缓存
-    ├── frp_windows_amd64.zip
-    ├── frp_linux_amd64.zip
-    └── frp_darwin_amd64.zip
+│   ├── smtp.py               # 邮件发送 (SMTP)
+│   ├── update_assets.py      # 资产后台更新 (GeoIP/规则集)
+│   ├── update_blacklist.py   # IP 黑名单自动更新
+│   ├── utils.py              # 通用工具函数
+│   └── xray_stats.py         # gRPC 流量统计 (与 Xray API 通信)
+├── command_pb2/              # gRPC 生成代码 (Xray API)
+│   ├── stats.py
+│   └── stats_grpc.py
+├── database/                 # GeoIP / 规则集缓存
+│   ├── geoip.dat
+│   ├── geosite.dat
+│   ├── country.mmdb
+│   ├── GeoLite2-*.mmdb
+│   └── *.txt
+├── datas/                    # 配置文件 (动态生成)
+│   ├── settings.json         # 用户/密钥/认证
+│   ├── config.json           # Xray 配置 (动态)
+│   ├── config.yaml           # 客户端配置模板
+│   └── frps.toml             # FRP 配置 (动态)
+├── certs/                    # 证书 (动态生成)
+│   ├── ca.crt
+│   ├── ca.key
+│   ├── server.crt
+│   └── server.key
+├── static/                   # 前端静态资源
+│   ├── all.min.css
+│   ├── *.js
+│   └── Fonts/
+└── templates/                # HTML 模板
+    ├── *.html                # 主页面 (login/index/monitor/assets/reset)
+    ├── email/                # 邮件模板
+    │   ├── code.html
+    │   ├── test.html
+    │   └── warn.html
+    └── tools/                # 在线工具模板
+        ├── index.html
+        ├── 2fa.html
+        ├── base64.html
+        └── ...
 ```
 
 ---
@@ -227,14 +274,41 @@ journalctl -u monitor -f -n 50
 | :--- | :--- | :--- |
 | `net.core.default_qdisc` | `fq` | 为 BBR 提供公平队列 |
 | `net.ipv4.tcp_congestion_control` | `bbr` | 启用 BBR 拥塞控制 |
-| `net.core.rmem_max / wmem_max` | 128 MiB | 最大接收/发送缓冲区 |
-| `net.ipv4.tcp_rmem / wmem` | 4K–128M | 动态缓冲区范围 |
+| `net.core.rmem_max / wmem_max` | 256 MiB | 最大接收/发送缓冲区 (适配高 BDP) |
+| `net.ipv4.tcp_rmem / wmem` | 4K–256M | 动态缓冲区范围 |
 | `net.ipv4.tcp_fastopen` | 3 | 启用 TFO |
 | `net.ipv4.tcp_slow_start_after_idle` | 0 | 禁用空闲后慢启动 |
-| `net.ipv4.tcp_keepalive_time` | 300 | 保活探测间隔 |
+| `net.ipv4.tcp_keepalive_time` | 20 | 保活探测间隔 (适配 NAT 超时短的环境) |
+| `net.ipv4.tcp_keepalive_intvl` | 10 | 保活探测间隔 |
+| `net.ipv4.tcp_keepalive_probes` | 3 | 保活探测次数 |
+| `net.ipv4.tcp_ecn` | 0 | 关闭 ECN (避免运营商干扰) |
 | `net.core.somaxconn` | 65535 | 监听队列长度 |
+| `net.ipv4.conf.all.rp_filter` | 1 | 反向路径过滤 (安全) |
+| `net.netfilter.nf_conntrack_max` | 524288 | 连接跟踪表 (适配 1GB 内存) |
+| `net.ipv4.tcp_fin_timeout` | 30 | FIN-WAIT-2 超时 |
 
-CPU 调速器设为 `performance`，文件描述符上限提升至 `1024000`。
+---
+
+## 🛡️ 安全与防护
+
+### DDoS 防护
+
+面板内置 DDoS 防护模块（`command/ddos.py`），采用令牌桶 + 自适应限流 + 曲线惩罚机制，支持：
+
+- 动态限流阈值（根据违规次数和全局防御因子）
+- 恶意 Bot 指纹识别（User-Agent 检测）
+- 临时黑名单与衰减解封
+- 全局防御模式（随被封 IP 数量自动增强）
+
+### 防火墙策略
+
+```bash
+ufw default deny incoming
+ufw default allow outgoing
+ufw allow 10/tcp
+ufw allow 443/tcp
+ufw allow 1000/tcp
+```
 
 ---
 
@@ -242,20 +316,25 @@ CPU 调速器设为 `performance`，文件描述符上限提升至 `1024000`。
 
 ### 1. 代理速度远低于 VPS 标称带宽？
 
-- **可能原因**：本地网络（尤其是广电、长城等二级运营商）上行带宽不足。
-- **验证方法**：在家庭服务器上执行 `iperf3 -c <VPS_IP>`，观察上行速率。
-- **解决方案**：更换为电信/联通宽带；或使用 FRP xtcp 模式尝试 P2P 穿透。
+- **可能原因**：本地网络（尤其是广电、长城等二级运营商）上行带宽不足或路由绕路。
+- **验证方法**：使用 `traceroute <VPS_IP>` 查看路由路径，确认是否走了 CN2 GIA (`59.43.x.x`)。
+- **解决方案**：更换为电信/联通宽带（CN2 GIA 对电信用户最优）；或使用 FRP xtcp 模式尝试 P2P 穿透。
 
 ### 2. 浏览器提示“证书不受信任”？
 
-- 下载 `https://<VPS_IP>:5000/cert` 并安装为**受信任的根证书**（Windows 需导入“受信任的根证书颁发机构”）。
+- 下载 `https://<VPS_IP>:1000/cert` 并安装为**受信任的根证书**（Windows 需导入“受信任的根证书颁发机构”）。
 
 ### 3. 流量统计显示为 0 或不准？
 
 - 检查 Xray 配置中 `policy` 是否开启 `statsUserUplink` / `statsUserDownlink`。
-- 确认 Xray API 端口 `7600` 可访问：`netstat -tlnp | grep 7600`。
+- 确认 Xray API 端口 `15` 可访问：`netstat -tlnp | grep 15`。
 
-### 4. 如何更新 Xray 到最新版？
+### 4. 连接突然中断（昨天能用今天不能用）？
+
+- **可能原因**：Reality 伪装域名被运营商特殊关照。
+- **解决方案**：更换 `serverNames` 中的域名，推荐使用 `www.apple.com` 或 `www.bing.com`。可使用 `RealiTLScanner` 扫描同 IP 段的域名作为备选。
+
+### 5. 如何更新 Xray 到最新版？
 
 ```bash
 systemctl stop xray
@@ -265,9 +344,18 @@ chmod +x /opt/xray/xray
 systemctl start xray
 ```
 
-### 5. 是否支持多节点/负载均衡？
+### 6. FRP 管理面板无法访问？
 
-当前版本为单节点设计。多节点可借助外部 DNS 轮询或上游 Nginx 代理实现。
+FRP 管理面板（`1020`）默认仅监听本地，如需外部访问：
+
+```bash
+# 修改 /opt/frps/frps.toml 中的 webServer.addr
+webServer.addr = "0.0.0.0"
+
+# 重启 FRP 并开放防火墙
+systemctl restart frps
+ufw allow 1020/tcp
+```
 
 ---
 
@@ -281,11 +369,13 @@ systemctl start xray
 ## 📄 许可证
 
 [MIT License](https://opensource.org/licenses/MIT)  
-Copyright © 2025 xlinmengen
+Copyright © 2025-2026 xlinmengen
 
 ---
 
 ## 🙏 致谢
 
 - [XTLS/Xray-core](https://github.com/XTLS/Xray-core) – 核心代理引擎
-- [fatedier
+- [fatedier/frp](https://github.com/fatedier/frp) – 内网穿透服务端
+- [Flask](https://flask.palletsprojects.com/) – Web 框架
+- [Granian](https://github.com/emmett-framework/granian) – WSGI 服务器
