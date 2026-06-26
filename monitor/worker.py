@@ -209,6 +209,13 @@ def options(path: str = ''):
     response.headers['Access-Control-Allow-Headers'] = 'Authorization, Content-Type, Depth, If, Destination'
     return response
 
+@app.route('/favicon.ico', methods=['GET'])
+def favicon():
+    if os.path.isfile('./static/Icons/favicon.ico'):
+        return app.send_static_file('Icons/favicon.ico')
+    else:
+        return Response(b'', 200, mimetype='image/vnd.microsoft.icon')
+
 @app.route('/monitor', methods=['GET'])
 def monitor_index():
     return utils.get_index('monitor.html' if auth.is_authenticated() else 'login.html')
