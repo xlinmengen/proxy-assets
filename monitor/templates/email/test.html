@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMTP 配置验证</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background-color: #0d1117;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            padding: 40px 20px;
+        }
+        .email-container {
+            max-width: 560px;
+            margin: 0 auto;
+            background-color: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        }
+        .email-header {
+            background: linear-gradient(135deg, #1a1f2e 0%, #161b22 100%);
+            padding: 36px 32px 28px;
+            text-align: center;
+            border-bottom: 1px solid #30363d;
+        }
+        .status-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 20px;
+            background: #238636;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .status-icon svg {
+            width: 32px;
+            height: 32px;
+            stroke: white;
+            stroke-width: 2;
+        }
+        .email-header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            color: #e6edf3;
+            letter-spacing: -0.3px;
+            margin-bottom: 8px;
+        }
+        .email-header .sub {
+            font-size: 14px;
+            color: #8b949e;
+        }
+        .email-body {
+            padding: 32px;
+        }
+        .success-badge {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+        .success-badge h2 {
+            color: #3fb950;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .success-badge p {
+            color: #8b949e;
+            font-size: 14px;
+        }
+        .info-grid {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin-bottom: 24px;
+        }
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+        }
+        .info-item:first-child {
+            padding-top: 0;
+        }
+        .info-item:last-child {
+            padding-bottom: 0;
+        }
+        .info-label {
+            color: #8b949e;
+            font-size: 13px;
+        }
+        .info-value {
+            color: #e6edf3;
+            font-family: 'ui-monospace', 'SFMono-Regular', monospace;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .feature-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 12px 16px;
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 10px;
+        }
+        .feature-icon {
+            width: 36px;
+            height: 36px;
+            background: #21262d;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .feature-text {
+            flex: 1;
+        }
+        .feature-text strong {
+            display: block;
+            color: #e6edf3;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+        .feature-text span {
+            display: block;
+            color: #8b949e;
+            font-size: 12px;
+        }
+        .info-note {
+            background: #0d1117;
+            border-radius: 10px;
+            padding: 16px 20px;
+            border-left: 3px solid #3fb950;
+        }
+        .info-note p {
+            color: #8b949e;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+        .info-note .mail-meta {
+            font-family: monospace;
+            color: #6e7681;
+            margin-top: 10px;
+            font-size: 11px;
+        }
+        .email-footer {
+            padding: 20px 32px;
+            background: #0d1117;
+            border-top: 1px solid #30363d;
+            text-align: center;
+        }
+        .email-footer p {
+            color: #6e7681;
+            font-size: 11px;
+        }
+        .green-dot {
+            color: #3fb950;
+        }
+        .divider {
+            height: 1px;
+            background: #21262d;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="email-header">
+            <div class="status-icon">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20 6L9 17L4 12" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <h1>SMTP 服务验证</h1>
+            <div class="sub">邮件推送服务配置测试</div>
+        </div>
+
+        <div class="email-body">
+            <div class="success-badge">
+                <h2>✓ 配置验证成功</h2>
+                <p>您的 SMTP 邮件服务已正确配置</p>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">服务状态</span>
+                    <span class="info-value"><span class="green-dot">●</span> 正常</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">验证时间</span>
+                    <span class="info-value">#[time]</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">服务节点</span>
+                    <span class="info-value">Asset Cluster Registry</span>
+                </div>
+            </div>
+
+            <div class="feature-list">
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8b949e" stroke-width="1.5">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                            <polyline points="22,6 12,13 2,6"/>
+                        </svg>
+                    </div>
+                    <div class="feature-text">
+                        <strong>邮件传输加密</strong>
+                        <span>TLS 1.2 / STARTTLS 安全信道</span>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8b949e" stroke-width="1.5">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                            <line x1="9" y1="9" x2="15" y2="15"/>
+                            <line x1="15" y1="9" x2="9" y2="15"/>
+                        </svg>
+                    </div>
+                    <div class="feature-text">
+                        <strong>身份验证</strong>
+                        <span>SMTP 认证已通过</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-note">
+                <p>这是一封由系统自动发送的测试邮件，用于验证 SMTP 服务配置的正确性。如果您收到此邮件，说明邮件通知功能已就绪，后续将用于发送系统告警、用户通知等重要消息。</p>
+                <p class="mail-meta">邮件 ID: SMTP-VERIFY-#[email_id]</p>
+            </div>
+        </div>
+
+        <div class="email-footer">
+            <p>Asset Cluster Registry · 高可用资源节点</p>
+            <p style="margin-top: 6px;">本邮件由系统自动发送，请勿直接回复</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,1 +1,272 @@
-.
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>邮箱代码</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #0d1117;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+            line-height: 1.5;
+            padding: 40px 20px;
+        }
+
+        /* 主容器 */
+        .email-container {
+            max-width: 520px;
+            margin: 0 auto;
+            background-color: #1a1e24;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5);
+            border: 1px solid #2c313a;
+        }
+
+        /* 头部区域 */
+        .email-header {
+            padding: 32px 32px 24px;
+            text-align: center;
+            border-bottom: 1px solid #2c313a;
+        }
+
+        .logo-icon {
+            width: 56px;
+            height: 56px;
+            margin: 0 auto 20px;
+            background: #2c313a;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-icon svg {
+            width: 28px;
+            height: 28px;
+            stroke: #c4cdd5;
+            stroke-width: 1.5;
+        }
+
+        .email-header h1 {
+            font-size: 22px;
+            font-weight: 600;
+            color: #ffffff;
+            letter-spacing: -0.2px;
+            margin-bottom: 6px;
+        }
+
+        .email-header .sub {
+            font-size: 13px;
+            color: #8b949e;
+        }
+
+        /* 正文区域 */
+        .email-body {
+            padding: 32px;
+        }
+
+        /* 提示区块 */
+        .alert-box {
+            background: #151a21;
+            border-left: 3px solid #2c313a;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 28px;
+            color: #c4cdd5;
+            font-size: 13px;
+        }
+
+        /* 代码卡片 - Steam风格大号数字 */
+        .code-card {
+            background: #0d1117;
+            border: 1px solid #2c313a;
+            border-radius: 12px;
+            padding: 28px 20px;
+            margin-bottom: 28px;
+            text-align: center;
+        }
+
+        .code-label {
+            color: #8b949e;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 16px;
+            font-weight: 500;
+        }
+
+        .verification-code {
+            font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+            font-size: 42px;
+            font-weight: 800;
+            letter-spacing: 10px;
+            color: #ffffff;
+            background: #000000;
+            padding: 16px 24px;
+            border-radius: 8px;
+            display: inline-block;
+            border: 1px solid #2c313a;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.1);
+        }
+
+        .expire-note {
+            margin-top: 16px;
+            font-size: 12px;
+            color: #8b949e;
+        }
+
+        .expire-note strong {
+            color: #c4cdd5;
+            font-weight: 600;
+        }
+
+        /* 信息列表 */
+        .info-list {
+            background: #0d1117;
+            border: 1px solid #2c313a;
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin-bottom: 28px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            padding: 10px 0;
+            border-bottom: 1px solid #21262d;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .info-row:first-child {
+            padding-top: 0;
+        }
+
+        .info-label {
+            color: #8b949e;
+            font-size: 12px;
+        }
+
+        .info-value {
+            color: #c4cdd5;
+            font-size: 13px;
+            font-weight: 500;
+            font-family: monospace;
+            word-break: break-all;
+            text-align: right;
+        }
+
+        /* 底部安全提示 */
+        .security-note {
+            background: #151a21;
+            border-radius: 10px;
+            padding: 16px 20px;
+            border: 1px solid #2c313a;
+        }
+
+        .security-note p {
+            color: #8b949e;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .security-note .meta {
+            font-family: monospace;
+            color: #6e7681;
+            margin-top: 12px;
+            font-size: 11px;
+            padding-top: 8px;
+            border-top: 1px solid #2c313a;
+        }
+
+        /* 底部页脚 */
+        .email-footer {
+            padding: 20px 32px;
+            background: #0d1117;
+            border-top: 1px solid #2c313a;
+            text-align: center;
+        }
+
+        .email-footer p {
+            color: #6e7681;
+            font-size: 11px;
+        }
+
+        .email-footer a {
+            color: #6e7681;
+            text-decoration: none;
+        }
+
+        .highlight {
+            color: #c4cdd5;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="email-header">
+            <div class="logo-icon">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20 12V8H4V12M20 12L12 18L4 12M20 12H4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M4 8V6H20V8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+            </div>
+            <h1>验证您的邮箱地址</h1>
+            <div class="sub">请输入代码完成验证</div>
+        </div>
+
+        <div class="email-body">
+            <div class="alert-box">
+                您正在尝试进行账户安全验证，请使用以下代码。
+            </div>
+
+            <div class="code-card">
+                <div class="code-label">代码</div>
+                <div class="verification-code">#[code]</div>
+                <div class="expire-note">
+                    此代码将在 <strong>#[expire]</strong> 分钟后失效
+                </div>
+            </div>
+
+            <div class="info-list">
+                <div class="info-row">
+                    <span class="info-label">目标邮箱</span>
+                    <span class="info-value">#[email]</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">请求时间</span>
+                    <span class="info-value">#[time]</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">来源 IP</span>
+                    <span class="info-value">#[ip]</span>
+                </div>
+            </div>
+
+            <div class="security-note">
+                <p>🔒 为了保障您的账户安全，请勿将代码透露给他人。如果您没有进行此操作，请忽略本邮件，您的账户不会受到任何影响。</p>
+                <div class="meta">
+                    请求 ID: #[request_id]
+                </div>
+            </div>
+        </div>
+
+        <div class="email-footer">
+            <p>Asset Cluster Registry · 高可用资源节点</p>
+            <p>本邮件由系统自动发送，请勿直接回复</p>
+        </div>
+    </div>
+</body>
+</html>

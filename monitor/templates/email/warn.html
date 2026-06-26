@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>系统资源告警</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f7fa;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 520px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+        .header {
+            background: #f8fafc;
+            padding: 20px 24px;
+            border-bottom: 1px solid #e2e8f0;
+            text-align: center;
+        }
+        .header h2 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 600;
+            color: #0f172a;
+        }
+        .content {
+            padding: 28px 24px;
+        }
+        .info-row {
+            background: #f8fafc;
+            border-left: 3px solid #dc2626;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            border-radius: 6px;
+        }
+        .info-row p {
+            margin: 0;
+            font-size: 14px;
+            color: #334155;
+        }
+        .info-item {
+            margin-bottom: 20px;
+        }
+        .info-item .label {
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 6px;
+        }
+        .info-item .value {
+            font-size: 28px;
+            font-weight: 600;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+            color: #0f172a;
+        }
+        .info-item .value.critical {
+            color: #dc2626;
+        }
+        .info-item .value.warning {
+            color: #f59e0b;
+        }
+        .info-item .unit {
+            font-size: 14px;
+            font-weight: normal;
+            color: #94a3b8;
+        }
+        .threshold {
+            background: #f1f5f9;
+            border-radius: 8px;
+            padding: 14px 16px;
+            margin: 20px 0;
+            font-size: 13px;
+            color: #475569;
+        }
+        .threshold span {
+            font-weight: 600;
+            color: #1e293b;
+        }
+        .footer {
+            border-top: 1px solid #e2e8f0;
+            padding: 16px 24px;
+            text-align: center;
+            font-size: 12px;
+            color: #94a3b8;
+            background: #fafcff;
+        }
+        .footer a {
+            color: #3b82f6;
+            text-decoration: none;
+        }
+        .badge {
+            display: inline-block;
+            background: #dc2626;
+            color: white;
+            font-size: 12px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h2>系统资源告警</h2>
+    </div>
+    <div class="content">
+        <div class="info-row">
+            <p><strong>告警时间：</strong> #[time]</p>
+        </div>
+
+        <div class="info-item">
+            <div class="label">CPU 使用率</div>
+            <div class="value #[cpu_class]">#[cpu_percent]<span class="unit">%</span></div>
+        </div>
+
+        <div class="info-item">
+            <div class="label">内存使用率</div>
+            <div class="value #[memory_class]">#[memory_percent]<span class="unit">%</span></div>
+        </div>
+
+        <div class="threshold">
+            <strong>告警阈值</strong><br>
+            CPU：<span>#[cpu_threshold]%</span><br>
+            内存：<span>#[memory_threshold]%</span>
+        </div>
+
+        <div class="badge">请及时处理</div>
+    </div>
+    <div class="footer">
+        <p>此邮件由监控系统自动发送，请勿回复。</p>
+        <p>如需调整阈值，请登录 <a href="#">管理控制台</a> → 功能中心 → 监控配置</p>
+    </div>
+</div>
+</body>
+</html>
