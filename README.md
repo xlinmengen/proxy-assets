@@ -3,7 +3,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/status-stable-brightgreen">
   <img src="https://img.shields.io/badge/Xray-Reality-1f8ef5">
-  <img src="https://img.shields.io/badge/FRP-0.69.0-ff9800">
+  <img src="https://img.shields.io/badge/FRP-0.69.1-ff9800">
   <img src="https://img.shields.io/badge/Flask-3.0.3-000000">
   <img src="https://img.shields.io/badge/gRPC-1.78.0-00bcd4">
   <img src="https://img.shields.io/badge/license-MIT-blue">
@@ -31,6 +31,7 @@
 - **Xray** 提供 Reality 协议代理服务（端口 `443`），支持多用户、多等级策略，并通过 gRPC API（端口 `15`）暴露流量统计数据。
 - **FRP** 作为内网穿透服务端（端口 `10`），认证方式为 OIDC，与 Xray 路由联动（可将特定域名流量转入 FRP 隧道）。
 - **Monitor** 是基于 Flask 的 Web 面板（端口 `1000`），负责用户管理、配置生成、证书签发、流量可视化，并通过 gRPC 与 Xray 通信。面板内置 DDoS 防护、SMTP 邮件告警和 OIDC 认证服务。
+- **FRPX** 是 Rust 编写的跨平台 FRPC 客户端管理工具，与服务端配合使用，提供自动配置、进程守护和证书管理功能。
 
 ---
 
@@ -137,6 +138,67 @@ proxies:
 
 ---
 
+## 🔧 FRPX — FRPC 客户端管理工具
+
+**FRPX** 是一个用 Rust 编写的 FRPC 客户端管理工具，提供跨平台的 frpc 进程管理、自动配置生成、证书签发和进程守护功能。
+
+### 特性
+
+| 特性 | 说明 |
+| :--- | :--- |
+| **跨平台支持** | Windows / Linux / macOS (x86_64 / ARM64) |
+| **自动配置生成** | 自动从服务端获取认证信息，生成 `frpc.toml` |
+| **进程守护** | frpc 异常退出后自动重启（可配置间隔） |
+| **证书管理** | 自动签发和更新客户端证书 |
+| **独立密码保护** | Web 管理界面支持独立密码认证 |
+| **轻量高效** | Rust 编写，内存占用低，启动迅速 |
+
+### 下载
+
+从 [Releases](https://github.com/xlinmengen/proxy-assets/releases) 下载对应平台的 FRPX 二进制文件：
+
+| 平台 | 文件 |
+| :--- | :--- |
+| Linux (x86_64) | `frpx-linux-unknown-x86_64-musl.tar.xz` |
+| Linux (ARM64) | `frpx-linux-unknown-aarch64-musl.tar.xz` |
+| Windows (x86_64) | `frpx-windows-pc-x86_64-gnu.zip` |
+| macOS (Intel) | `frpx-apple-darwin-x86_64.tar.xz` |
+| macOS (Apple Silicon) | `frpx-apple-darwin-aarch64.tar.xz` |
+
+### 快速使用
+
+```bash
+# 1. 解压并运行（以 Linux 为例）
+tar -xf frpx-linux-unknown-x86_64-musl.tar.xz
+chmod +x frpx
+./frpx
+
+# 2. 首次运行会自动生成配置并启动 frpc
+# 3. 访问 http://127.0.0.1:9500 管理 FRPC 代理
+```
+
+### 配置说明
+
+FRPX 启动后会在当前目录创建以下文件：
+
+| 文件 | 说明 |
+| :--- | :--- |
+| `frpc/frpc.toml` | 自动生成的 FRPC 配置文件 |
+| `cert/ca.crt` | CA 根证书 |
+| `cert/client.crt` | 客户端证书 |
+| `cert/client.key` | 客户端私钥 |
+| `data.db` | 登录凭证存储 |
+
+### 与 FRPX 配合使用
+
+FRPX 与 `worker.py` 面板配合，用户可在 Web 面板中：
+
+1. 查看 FRPC 代理状态
+2. 添加/编辑/删除 TCP/HTTP/HTTPS/STCP/XTCP/SUDP 代理
+3. 管理访客 (Visitor) 配置
+
+---
+
 ## 🔌 内网穿透 (FRP)
 
 ### 服务端（已自动配置）
@@ -147,7 +209,7 @@ proxies:
 
 ### FRP v2 协议 (可选)
 
-FRP 0.69.0 引入了 `transport.wireProtocol = "v2"`，启用后控制通道使用 AEAD 加密（`xchacha20-poly1305` 或 `aes-256-gcm`）。如需启用，在 `frpc.toml` 中添加：
+FRP 0.69.1 引入了 `transport.wireProtocol = "v2"`，启用后控制通道使用 AEAD 加密（`xchacha20-poly1305` 或 `aes-256-gcm`）。如需启用，在 `frpc.toml` 中添加：
 
 ```toml
 transport.wireProtocol = "v2"
@@ -261,6 +323,7 @@ journalctl -u monitor -f -n 50
         ├── index.html
         ├── 2fa.html
         ├── base64.html
+        ├── crypto.html
         └── ...
 ```
 
@@ -276,7 +339,7 @@ journalctl -u monitor -f -n 50
 | `net.ipv4.tcp_congestion_control` | `bbr` | 启用 BBR 拥塞控制 |
 | `net.core.rmem_max / wmem_max` | 256 MiB | 最大接收/发送缓冲区 (适配高 BDP) |
 | `net.ipv4.tcp_rmem / wmem` | 4K–256M | 动态缓冲区范围 |
-| `net.ipv4.tcp_fastopen` | 3 | 启用 TFO |
+| `net.ipv4.tcp_fastopen` | 0 | 禁用 TFO (保证兼容性) |
 | `net.ipv4.tcp_slow_start_after_idle` | 0 | 禁用空闲后慢启动 |
 | `net.ipv4.tcp_keepalive_time` | 20 | 保活探测间隔 (适配 NAT 超时短的环境) |
 | `net.ipv4.tcp_keepalive_intvl` | 10 | 保活探测间隔 |
@@ -356,6 +419,12 @@ webServer.addr = "0.0.0.0"
 systemctl restart frps
 ufw allow 1020/tcp
 ```
+
+### 7. FRPX 无法启动 frpc？
+
+- 检查 `frpc/` 目录下是否存在 `frpc` 可执行文件（FRPX 不会自动下载 frpc，需要用户自行放置）。
+- 查看 FRPX 日志输出，确认认证信息是否正确。
+- 确保服务端 `1000` 端口可访问。
 
 ---
 
