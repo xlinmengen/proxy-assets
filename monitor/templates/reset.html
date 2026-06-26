@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>重置密码 · Infra-Red Assets</title>
+    <link rel="stylesheet" href="/static/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #0a0c10;
+            color: #e2e8f0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            font-size: 14px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .reset-container {
+            max-width: 400px;
+            width: 100%;
+            background: #13171c;
+            border: 1px solid #2a313c;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .reset-header {
+            padding: 24px 28px 20px;
+            text-align: center;
+            border-bottom: 1px solid #2a313c;
+            background: linear-gradient(135deg, #1a1f2e 0%, #13171c 100%);
+        }
+
+        .reset-header h1 {
+            font-size: 22px;
+            font-weight: 600;
+            color: #e2e8f0;
+        }
+
+        .reset-header p {
+            font-size: 13px;
+            color: #94a3b8;
+            margin-top: 6px;
+        }
+
+        .reset-content {
+            position: relative;
+            overflow: hidden;
+            min-height: 200px;
+        }
+
+        .reset-panel {
+            padding: 28px;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            width: 100%;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 10px 14px;
+            background: #0a0c10;
+            border: 1px solid #2a313c;
+            border-radius: 6px;
+            color: #e2e8f0;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .modal-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        .captcha-row {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .captcha-row .modal-input {
+            flex: 1;
+        }
+
+        .captcha-img {
+            height: 40px;
+            border-radius: 6px;
+            border: 1px solid #2a313c;
+            cursor: pointer;
+            background: #0a0c10;
+            width: auto;
+            min-width: 115.56px;
+        }
+
+        .code-inputs {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-bottom: 28px;
+        }
+
+        .code-input {
+            width: 48px;
+            height: 52px;
+            text-align: center;
+            font-size: 22px;
+            font-weight: 600;
+            font-family: 'ui-monospace', 'SFMono-Regular', monospace;
+            background: #0a0c10;
+            border: 1px solid #2a313c;
+            border-radius: 8px;
+            color: #e2e8f0;
+            transition: 0.2s;
+        }
+
+        .code-input.alphanum {
+            text-transform: uppercase;
+        }
+
+        .code-input:focus {
+            border-color: #3b82f6;
+            outline: none;
+            box-shadow: 0 0 0 1px #3b82f6;
+        }
+
+        /* 密码强度组件 */
+        .strength-meter {
+            margin-top: 10px;
+            background: #0a0c10;
+            border-radius: 9999px;
+            height: 4px;
+            overflow: hidden;
+        }
+
+        .strength-bar {
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease, background-color 0.3s ease;
+            border-radius: 9999px;
+        }
+
+        .strength-text {
+            font-size: 11px;
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .strength-text.weak {
+            color: #ef4444;
+        }
+
+        .strength-text.medium {
+            color: #eab308;
+        }
+
+        .strength-text.strong {
+            color: #22c55e;
+        }
+
+        .password-requirements {
+            margin-top: 12px;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 6px;
+            font-size: 11px;
+        }
+
+        .password-requirements .req {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+            transition: color 0.2s ease;
+        }
+
+        .password-requirements .req:last-child {
+            margin-bottom: 0;
+        }
+
+        .password-requirements .req i {
+            width: 14px;
+            font-size: 10px;
+            transition: color 0.2s ease;
+        }
+
+        .password-requirements .req.valid {
+            color: #22c55e;
+        }
+
+        .password-requirements .req.valid i {
+            color: #22c55e;
+        }
+
+        .password-requirements .req.invalid {
+            color: #94a3b8;
+        }
+
+        .password-requirements .req.invalid i {
+            color: #6c757d;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid #2a313c;
+            color: #94a3b8;
+        }
+
+        .btn-outline:hover {
+            border-color: #3b82f6;
+            color: #3b82f6;
+        }
+
+        .btn-secondary {
+            background: #1a1f26;
+            border: 1px solid #2a313c;
+            color: #94a3b8;
+        }
+
+        .btn-secondary:hover {
+            border-color: #3b82f6;
+            color: #3b82f6;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .button-group .btn {
+            flex: 1;
+        }
+
+        .error-message {
+            color: #ef4444;
+            font-size: 12px;
+            margin-top: 12px;
+            text-align: center;
+            padding: 8px;
+            background: rgba(239, 68, 68, 0.1);
+            border-radius: 6px;
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #13171c;
+            border: 1px solid #2a313c;
+            border-radius: 6px;
+            padding: 12px 20px;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            z-index: 1000;
+            font-size: 13px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .toast.success {
+            border-left: 4px solid #22c55e;
+        }
+
+        .toast.error {
+            border-left: 4px solid #ef4444;
+        }
+
+        /* 骨架屏动画 */
+        @keyframes skeleton-loading {
+            0%   { background-position:  200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .captcha-img.skeleton {
+            background: linear-gradient(90deg, #1a1f2e 25%, #2a313c 50%, #1a1f2e 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s infinite;
+            border-color: #2a313c;
+        }
+
+        @media (max-width: 480px) {
+            .reset-container {
+                max-width: 95%;
+            }
+
+            .code-input {
+                width: 45px;
+                height: 50px;
+                font-size: 24px;
+            }
+
+            .code-inputs {
+                gap: 8px;
+            }
+
+            .reset-panel {
+                padding: 20px;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .button-group .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="reset-container">
+    <div class="reset-header">
+        <h1><i class="fas fa-key"></i> 重置密码</h1>
+        <p>通过验证后重置您的账户密码</p>
+    </div>
+
+    <div class="reset-content">
+        <!-- 界面1：邮箱 + 图形验证码 -->
+        <div id="panel1" class="reset-panel">
+            <div class="form-group">
+                <label><i class="fas fa-envelope"></i> 邮箱地址</label>
+                <input type="email" id="resetEmail" class="modal-input" placeholder="username@example.com" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-shield-alt"></i> 图形验证码</label>
+                <div class="captcha-row">
+                    <input type="text" id="captchaCode" class="modal-input" placeholder="graphic verification code" maxlength="5" autocomplete="off">
+                    <img id="captchaImg" class="captcha-img skeleton" alt="" style="height: 40px;">
+                </div>
+            </div>
+            <div class="button-group">
+                <button class="btn btn-outline" id="backToLoginBtn"><i class="fas fa-arrow-left"></i> 返回登录</button>
+                <button class="btn btn-primary" id="sendCodeBtn"><i class="fas fa-paper-plane"></i> 下一步</button>
+            </div>
+            <div id="panel1Error" class="error-message" style="display: none;"></div>
+        </div>
+
+        <!-- 界面2：Steam 风格验证码输入 -->
+        <div id="panel2" class="reset-panel" style="display: none;">
+            <div class="code-inputs" id="codeInputs">
+                <input type="text" class="code-input alphanum" maxlength="1" inputmode="text" pattern="[A-Za-z0-9]" data-index="0">
+                <input type="text" class="code-input alphanum" maxlength="1" inputmode="text" pattern="[A-Za-z0-9]" data-index="1">
+                <input type="text" class="code-input alphanum" maxlength="1" inputmode="text" pattern="[A-Za-z0-9]" data-index="2">
+                <input type="text" class="code-input alphanum" maxlength="1" inputmode="text" pattern="[A-Za-z0-9]" data-index="3">
+                <input type="text" class="code-input alphanum" maxlength="1" inputmode="text" pattern="[A-Za-z0-9]" data-index="4">
+            </div>
+            <div class="form-group" style="margin-top: 10px; text-align: center;">
+                <select id="authMethodSelect" class="modal-input" style="width: auto; margin: 0 auto; cursor: pointer;">
+                    <option value="email">其它验证方式</option>
+                    <option value="totp">TOTP 验证</option>
+                    <option value="securecode">安全码验证</option>
+                </select>
+            </div>
+            <div class="button-group">
+                <button class="btn btn-outline" id="backToPanel1Btn"><i class="fas fa-arrow-left"></i> 返回</button>
+                <button class="btn btn-primary" id="verifyCodeBtn"><i class="fas fa-check"></i> 验证代码</button>
+            </div>
+            <div id="panel2Error" class="error-message" style="display: none;"></div>
+        </div>
+
+        <!-- 界面3：设置新密码 -->
+        <div id="panel3" class="reset-panel" style="display: none;">
+            <div class="form-group">
+                <label><i class="fas fa-lock"></i> 新密码</label>
+                <input type="password" id="newPassword" class="modal-input" placeholder="至少8位，包含大小写和数字" autocomplete="off">
+                <div class="strength-meter">
+                    <div class="strength-bar" id="strengthBar"></div>
+                </div>
+                <div class="strength-text" id="strengthText">
+                    <i class="fas fa-info-circle"></i> <span>请输入密码</span>
+                </div>
+                <div class="password-requirements" id="passwordRequirements">
+                    <div class="req" id="reqLength" data-original="至少 8 个字符"><i class="fas fa-circle"></i> 至少 8 个字符</div>
+                    <div class="req" id="reqLower" data-original="包含小写字母 a-z"><i class="fas fa-circle"></i> 包含小写字母 a-z</div>
+                    <div class="req" id="reqUpper" data-original="包含大写字母 A-Z"><i class="fas fa-circle"></i> 包含大写字母 A-Z</div>
+                    <div class="req" id="reqDigit" data-original="包含数字 0-9"><i class="fas fa-circle"></i> 包含数字 0-9</div>
+                    <div class="req" id="reqSpecial" data-original="包含特殊字符（可选）"><i class="fas fa-circle"></i> 包含特殊字符（可选）</div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-check-circle"></i> 确认密码</label>
+                <input type="password" id="confirmPassword" class="modal-input" placeholder="请再次输入新密码" autocomplete="off">
+            </div>
+            <div class="button-group">
+                <button class="btn btn-outline" id="backToPanel2Btn"><i class="fas fa-arrow-left"></i> 返回</button>
+                <button class="btn btn-primary" id="resetPasswordBtn"><i class="fas fa-save"></i> 重置密码</button>
+            </div>
+            <div id="panel3Error" class="error-message" style="display: none;"></div>
+        </div>
+
+        <!-- 界面4：验证 TOTP 代码-->
+        <div id="panel4" class="reset-panel" style="display: none;">
+            <div class="code-inputs" id="TOTPcodeInputs">
+                <input type="text" class="code-input alphanum" maxlength="1" inputmode="text" pattern="[0-9]" data-index="0">
+                <input type="text" class="code-input alphanum" maxlength="1" inputmode="text" pattern="[0-9]" data-index="1">
+                <input type="text" class="code-input alphanum" maxlength="1" inputmode="text" pattern="[0-9]" data-index="2">
+                <input type="text" class="code-input alphanum" maxlength="1" inputmode="text" pattern="[0-9]" data-index="3">
+                <input type="text" class="code-input alphanum" maxlength="1" inputmode="text" pattern="[0-9]" data-index="4">
+                <input type="text" class="code-input alphanum" maxlength="1" inputmode="text" pattern="[0-9]" data-index="5">
+            </div>
+            <div class="button-group">
+                <button class="btn btn-outline" id="backToPanel2Btn_4"><i class="fas fa-arrow-left"></i> 返回</button>
+                <button class="btn btn-primary" id="verifyTOTPCodeBtn"><i class="fas fa-check"></i> 验证代码</button>
+            </div>
+            <div id="panel4Error" class="error-message" style="display: none;"></div>
+        </div>
+
+        <!-- 界面5：验证 安全码-->
+        <div id="panel5" class="reset-panel" style="display: none;">
+            <div class="form-group">
+                <label><i class="fas fa-shield-alt"></i> 安全码 </label>
+                <input id="secureCodeInput" class="modal-input" placeholder="secure code" autocomplete="off"></input>
+            </div>
+            <div class="button-group">
+                <button class="btn btn-outline" id="backToPanel2Btn_5"><i class="fas fa-arrow-left"></i> 返回</button>
+                <button class="btn btn-primary" id="verifySecureCodeBtn"><i class="fas fa-check"></i> 验证代码</button>
+            </div>
+            <div id="panel5Error" class="error-message" style="display: none;"></div>
+        </div>
+    </div>
+</div>
+
+<div id="toast" class="toast"><i id="toastIcon"></i><span id="toastMessage"></span></div>
+
+<script>
+    // 按钮 loading 管理
+    let btnLoading = false;
+    let isFetchingCaptcha = false;
+    function setButtonLoading(btn, isLoading, text) {
+        if (isLoading) {
+            btnLoading = true;
+            btn.disabled = true;
+            btn.dataset.originalHtml = btn.innerHTML;
+            btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${text}`;
+        } else {
+            btnLoading = false;
+            btn.disabled = false;
+            if (btn.dataset.originalHtml) {
+                btn.innerHTML = btn.dataset.originalHtml;
+            }
+        }
+    }
+    // 按钮 回车触发器
+    document.getElementById('resetEmail').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const btn = document.getElementById('sendCodeBtn');
+            if (btn && !btn.disabled) btn.click();
+        }
+    });
+    document.getElementById('captchaCode').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const btn = document.getElementById('sendCodeBtn');
+            if (btn && !btn.disabled) btn.click();
+        }
+    });
+    // ========== 工具函数 ==========
+    function showToast(message, type = 'success') {
+        const toast = document.getElementById('toast');
+        toast.className = `toast ${type}`;
+        document.getElementById('toastMessage').innerText = message;
+        toast.style.display = 'flex';
+        setTimeout(() => {
+            toast.style.display = 'none';
+        }, 3000);
+    }
+
+    function showError(element, message) {
+        if (element) {
+            element.innerText = message;
+            element.style.display = 'block';
+            setTimeout(() => {
+                if (element.innerText === message) element.style.display = 'none';
+            }, 5000);
+        }
+    }
+
+    // 更新密码强度 + 视觉反馈
+    function updatePasswordStrength(password) {
+        const lengthValid = password.length >= 8;
+        const hasLower = /[a-z]/.test(password);
+        const hasUpper = /[A-Z]/.test(password);
+        const hasDigit = /[0-9]/.test(password);
+        const hasSpecial = /[^A-Za-z0-9]/.test(password);
+
+        // 更新每条要求的状态
+        const reqLength = document.getElementById('reqLength');
+        const reqLower = document.getElementById('reqLower');
+        const reqUpper = document.getElementById('reqUpper');
+        const reqDigit = document.getElementById('reqDigit');
+        const reqSpecial = document.getElementById('reqSpecial');
+
+        function updateReq(element, valid) {
+            const originalText = element.getAttribute('data-original');
+            if (valid) {
+                element.className = 'req valid';
+                element.innerHTML = '<i class="fas fa-check-circle"></i> ' + originalText;
+            } else {
+                element.className = 'req invalid';
+                element.innerHTML = '<i class="fas fa-circle"></i> ' + originalText;
+            }
+        }
+
+        updateReq(reqLength, lengthValid);
+        updateReq(reqLower, hasLower);
+        updateReq(reqUpper, hasUpper);
+        updateReq(reqDigit, hasDigit);
+        updateReq(reqSpecial, hasSpecial);
+
+        const strengthBar = document.getElementById('strengthBar');
+        const strengthTextDiv = document.getElementById('strengthText');
+
+        let level = 0;   // 0:弱,1:中,2:强
+        let text = '';
+        let color = '';
+        let widthPercent = 0;
+
+        if (password.length === 0) {
+            text = '请输入密码';
+            color = 'transparent';
+            widthPercent = 0;
+            level = -1;
+        } else {
+            const coreMet = lengthValid && hasLower && hasUpper && hasDigit;
+            if (coreMet) {
+                level = 2;
+                text = '强密码 ✓';
+                color = '#22c55e';
+                widthPercent = 100;
+            } else if ((lengthValid && (hasLower || hasUpper) && hasDigit) ||
+                       (lengthValid && hasLower && hasUpper) ||
+                       (lengthValid && hasDigit && (hasLower || hasUpper))) {
+                level = 1;
+                text = '中密码';
+                color = '#eab308';
+                widthPercent = 66;
+            } else {
+                level = 0;
+                text = '弱密码';
+                color = '#ef4444';
+                widthPercent = 33;
+            }
+        }
+
+        strengthBar.style.width = widthPercent + '%';
+        strengthBar.style.backgroundColor = color;
+        strengthTextDiv.innerHTML = '<i class="fas fa-chart-line"></i> <span>' + text + '</span>';
+
+        if (level === 2) strengthTextDiv.className = 'strength-text strong';
+        else if (level === 1) strengthTextDiv.className = 'strength-text medium';
+        else strengthTextDiv.className = 'strength-text weak';
+
+        return { level, coreMet: level === 2, score: level };
+    }
+
+    // 获取图形验证码
+    async function refreshCaptcha() {
+        // 防止重复请求
+        if (isFetchingCaptcha) return;
+        
+        const img = document.getElementById('captchaImg');
+        // 显示骨架动画
+        img.classList.add('skeleton');
+        // 清除之前的失败背景
+        img.style.backgroundColor = '';
+        img.style.objectFit = 'cover';
+        // 移除旧的事件监听，避免残留
+        img.onload = null;
+        img.onerror = null;
+        
+        isFetchingCaptcha = true;
+        
+        try {
+            const res = await fetch('/api/reset/get_graph_code', { method: 'POST' });
+            const data = await res.json();
+            
+            if (data.status) {
+                currentCaptchaToken = data.info.token;
+                // 图片加载成功
+                img.onload = () => {
+                    img.classList.remove('skeleton');
+                    isFetchingCaptcha = false;
+                };
+                // 图片加载失败（如网络问题导致图片无法显示）
+                img.onerror = () => {
+                    img.classList.remove('skeleton');
+                    img.style.backgroundColor = '#282C34';
+                    img.style.objectFit = 'none';
+                    img.alt = '加载失败，点击重试';
+                    isFetchingCaptcha = false;
+                    showToast('验证码图片加载失败，请点击重试', 'error');
+                };
+                img.src = data.info.graph;
+            } else {
+                // 后端返回失败
+                img.classList.remove('skeleton');
+                img.style.backgroundColor = '#282C34';
+                img.style.objectFit = 'none';
+                img.alt = '获取失败，点击重试';
+                showToast(data.message || '获取验证码失败', 'error');
+                isFetchingCaptcha = false;
+            }
+        } catch (e) {
+            // 网络请求异常
+            img.classList.remove('skeleton');
+            img.style.backgroundColor = '#282C34';
+            img.style.objectFit = 'none';
+            img.alt = '网络错误，点击重试';
+            showToast('网络错误，获取验证码失败', 'error');
+            isFetchingCaptcha = false;
+        }
+    }
+
+    function initCodeInputs() {
+        const inputs = document.querySelectorAll('.code-input');
+        inputs.forEach((input, idx) => {
+            input.addEventListener('input', (e) => {
+                let val = e.target.value;
+                val = val.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+                e.target.value = val;
+                if (val.length === 1 && idx < 4) {
+                    inputs[idx + 1].focus();
+                }
+                if (val.length === 1 && idx === 4) {
+                    const verifyBtn = document.getElementById('verifyCodeBtn');
+                    if (verifyBtn && !verifyBtn.disabled && !btnLoading) {
+                        setTimeout(() => verifyBtn.click(), 100);
+                    }
+                }
+            });
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && e.target.value.length === 0 && idx > 0) {
+                    inputs[idx - 1].focus();
+                }
+            });
+        });
+    }
+
+    function initTOTPInputs() {
+        const totpInputs = document.querySelectorAll('#TOTPcodeInputs .code-input');
+        totpInputs.forEach((input, idx) => {
+            input.addEventListener('input', (e) => {
+                let val = e.target.value.replace(/[^0-9]/g, ''); // 只允许数字
+                e.target.value = val;
+                if (val.length === 1 && idx < 5) {
+                    totpInputs[idx + 1].focus();
+                }
+                if (val.length === 1 && idx === 5) {
+                    const verifyBtn = document.getElementById('verifyTOTPCodeBtn');
+                    if (verifyBtn && !verifyBtn.disabled && !btnLoading) {
+                        setTimeout(() => verifyBtn.click(), 100);
+                    }
+                }
+            });
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && e.target.value.length === 0 && idx > 0) {
+                    totpInputs[idx - 1].focus();
+                }
+            });
+        });
+    }
+
+    function getCodeFromInputs() {
+        let code = '';
+        document.querySelectorAll('.code-input').forEach(input => {
+            code += input.value;
+        });
+        return code;
+    }
+
+    function clearCodeInputs() {
+        document.querySelectorAll('.code-input').forEach(input => {
+            input.value = '';
+        });
+        document.querySelectorAll('.code-input')[0]?.focus();
+    }
+
+    // 面板切换动画
+    function switchToPanel(panelId) {
+        const panels = {
+            panel1: document.getElementById('panel1'),
+            panel2: document.getElementById('panel2'),
+            panel3: document.getElementById('panel3'),
+            panel4: document.getElementById('panel4'),
+            panel5: document.getElementById('panel5')
+        };
+        for (const [id, panel] of Object.entries(panels)) {
+            if (id === panelId) {
+                panel.style.display = 'block';
+                panel.style.opacity = '0';
+                panel.style.transform = 'translateX(0)';
+                setTimeout(() => {
+                    panel.style.opacity = '1';
+                }, 10);
+            } else {
+                panel.style.display = 'none';
+                panel.style.opacity = '0';
+            }
+        }
+        // 清除错误提示
+        ['panel1Error', 'panel2Error', 'panel3Error', 'panel4Error', 'panel5Error'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+        });
+    }
+
+    // ========== 界面1：发送验证码 ==========
+    const sendBtn = document.getElementById('sendCodeBtn');
+    sendBtn.addEventListener('click', async () => {
+        if (btnLoading) return;
+        const email = document.getElementById('resetEmail').value.trim();
+        const captcha = document.getElementById('captchaCode').value.trim();
+        const errorDiv = document.getElementById('panel1Error');
+        if (!email) {
+            showError(errorDiv, '请输入邮箱地址');
+            return;
+        }
+        if (!captcha) {
+            showError(errorDiv, '请输入图形验证码');
+            return;
+        }
+        if (!currentCaptchaToken) {
+            showError(errorDiv, '请刷新验证码重试');
+            return;
+        }
+        errorDiv.style.display = 'none';
+        setButtonLoading(sendBtn, true, '发送中...');
+        try {
+            const res = await fetch('/api/reset/get_email_code', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    token: currentCaptchaToken,
+                    code: captcha,
+                    email: email
+                })
+            });
+            const data = await res.json();
+            if (data.status) {
+                showToast(data.message || '验证码已发送', 'success');
+                switchToPanel('panel2');
+                clearCodeInputs();
+            } else if (data.code === 401){
+                showError(errorDiv, data.message || '验证已通过，无法发送');
+                document.getElementById('captchaCode').value = '';
+                setTimeout(() => {
+                    switchToPanel('panel3');
+                }, 5000);
+            } else {
+                showError(errorDiv, data.message || '验证码错误');
+                refreshCaptcha();
+                document.getElementById('captchaCode').value = '';
+            }
+        } catch (e) {
+            showError(errorDiv, '网络错误');
+        } finally {
+            setButtonLoading(sendBtn, false);
+        }
+    });
+
+    document.getElementById('captchaImg')?.addEventListener('click', refreshCaptcha);
+
+    // ========== 界面2：校验邮箱验证码 ==========
+    const verifyBtn = document.getElementById('verifyCodeBtn');
+    verifyBtn.addEventListener('click', async () => {
+        if (btnLoading) return;
+        const code = getCodeFromInputs();
+        const errorDiv = document.getElementById('panel2Error');
+        if (code.length !== 5) {
+            showError(errorDiv, '请输入完整的5位验证码');
+            return;
+        }
+        errorDiv.style.display = 'none';
+        setButtonLoading(verifyBtn, true, '验证中...');
+        try {
+            const email = document.getElementById('resetEmail').value.trim();
+            const res = await fetch('/api/reset/check_code', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email, code: code })
+            });
+            const data = await res.json();
+            if (data.status) {
+                switchToPanel('panel3');
+                document.getElementById('newPassword').value = '';
+                document.getElementById('confirmPassword').value = '';
+                updatePasswordStrength('');
+            } else {
+                showError(errorDiv, '验证码错误，请重试');
+                clearCodeInputs();
+            }
+        } catch (e) {
+            showError(errorDiv, '网络错误');
+        } finally {
+            setButtonLoading(verifyBtn, false);
+        }
+    });
+
+    // 监听密码输入，实时更新强度和清单反馈
+    document.getElementById('newPassword').addEventListener('input', function (e) {
+        updatePasswordStrength(e.target.value);
+    });
+
+    // ========== 界面3：重置密码 ==========
+    const resetPwdBtn = document.getElementById('resetPasswordBtn');
+    resetPwdBtn.addEventListener('click', async () => {
+        if (btnLoading) return;
+        const newPwd = document.getElementById('newPassword').value;
+        const confirmPwd = document.getElementById('confirmPassword').value;
+        const errorDiv = document.getElementById('panel3Error');
+        if (!newPwd || !confirmPwd) {
+            showError(errorDiv, '请填写新密码和确认密码');
+            return;
+        }
+        if (newPwd !== confirmPwd) {
+            showError(errorDiv, '两次输入的密码不一致');
+            return;
+        }
+        const strength = updatePasswordStrength(newPwd);
+        if (strength.level < 1) {
+            showError(errorDiv, '密码强度太弱，请使用至少8位且包含大小写和数字的密码');
+            return;
+        }
+        errorDiv.style.display = 'none';
+        setButtonLoading(resetPwdBtn, true, '重置中...');
+        try {
+            const res = await fetch('/api/reset/reset_account_password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ new_password: newPwd })
+            });
+            const data = await res.json();
+            if (data.status) {
+                showToast('密码重置成功，2秒后跳转登录页', 'success');
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 2000);
+            } else {
+                showError(errorDiv, data.message || '重置失败，请重试');
+            }
+        } catch (e) {
+            showError(errorDiv, '网络错误');
+        } finally {
+            setButtonLoading(resetPwdBtn, false);
+        }
+    });
+
+    // ========== 界面4：验证 TOTP 代码 ==========
+    document.getElementById('verifyTOTPCodeBtn')?.addEventListener('click', async () => {
+        if (btnLoading) return;
+        let code = '';
+        document.querySelectorAll('#TOTPcodeInputs .code-input').forEach(inp => code += inp.value);
+        const errorDiv = document.getElementById('panel4Error');
+        if (code.length !== 6) {
+            showError(errorDiv, '请输入完整的6位TOTP验证码');
+            return;
+        }
+        errorDiv.style.display = 'none';
+        setButtonLoading(document.getElementById('verifyTOTPCodeBtn'), true, '验证中...');
+        try {
+            const email = document.getElementById('resetEmail').value.trim();
+            const res = await fetch('/api/reset/check_code', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email, code: code })
+            });
+            const data = await res.json();
+            if (data.status) {
+                switchToPanel('panel3');
+                document.getElementById('newPassword').value = '';
+                document.getElementById('confirmPassword').value = '';
+                updatePasswordStrength('');
+            } else {
+                showError(errorDiv, 'TOTP验证失败，请重试');
+                document.querySelectorAll('#TOTPcodeInputs .code-input').forEach(inp => inp.value = '');
+                document.querySelector('#TOTPcodeInputs .code-input')?.focus();
+            }
+        } catch (e) {
+            showError(errorDiv, '网络错误');
+        } finally {
+            setButtonLoading(document.getElementById('verifyTOTPCodeBtn'), false);
+        }
+    });
+
+    // ========== 界面5：验证 安全码 ==========
+    document.getElementById('verifySecureCodeBtn')?.addEventListener('click', async () => {
+        if (btnLoading) return;
+        const code = document.getElementById('secureCodeInput').value.trim();
+        const errorDiv = document.getElementById('panel5Error');
+        if (!code) {
+            showError(errorDiv, '请输入安全码');
+            return;
+        }
+        errorDiv.style.display = 'none';
+        setButtonLoading(document.getElementById('verifySecureCodeBtn'), true, '验证中...');
+        try {
+            const email = document.getElementById('resetEmail').value.trim();
+            const res = await fetch('/api/reset/check_code', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email, code: code })
+            });
+            const data = await res.json();
+            if (data.status) {
+                switchToPanel('panel3');
+                document.getElementById('newPassword').value = '';
+                document.getElementById('confirmPassword').value = '';
+                updatePasswordStrength('');
+            } else {
+                showError(errorDiv, '安全码验证失败');
+                document.getElementById('secureCodeInput').value = '';
+            }
+        } catch (e) {
+            showError(errorDiv, '网络错误');
+        } finally {
+            setButtonLoading(document.getElementById('verifySecureCodeBtn'), false);
+        }
+    });
+
+    // ========== 下拉框按钮 ==========
+    document.getElementById('authMethodSelect').addEventListener('change', function() {
+        const method = this.value;
+        document.getElementById('authMethodSelect').value = 'email';
+        if (method === 'totp') {
+            switchToPanel('panel4');
+            // 清空并聚焦第一个 TOTP 输入框
+            document.querySelectorAll('#TOTPcodeInputs .code-input').forEach(input => input.value = '');
+            document.querySelector('#TOTPcodeInputs .code-input')?.focus();
+        } else if (method === 'securecode') {
+            switchToPanel('panel5');
+            document.getElementById('secureCodeInput').value = '';
+        } else {
+            switchToPanel('panel2');
+            clearCodeInputs();
+        }
+    });
+
+    // ========== 界面切换按钮 ==========
+    document.getElementById('backToLoginBtn').addEventListener('click', () => {
+        window.location.href = '/';
+    });
+    document.getElementById('backToPanel1Btn').addEventListener('click', () => {
+        switchToPanel('panel1');
+        refreshCaptcha();
+        document.getElementById('captchaCode').value = '';
+        document.getElementById('resetEmail').value = '';
+    });
+    document.getElementById('backToPanel2Btn').addEventListener('click', () => {
+        switchToPanel('panel2');
+        clearCodeInputs();
+    });
+    document.getElementById('backToPanel2Btn_4').addEventListener('click', () => {
+        switchToPanel('panel2');
+        clearCodeInputs();
+    });
+    document.getElementById('backToPanel2Btn_5').addEventListener('click', () => {
+        switchToPanel('panel2');
+        clearCodeInputs();
+    });
+
+    // 初始化
+    refreshCaptcha();
+    initCodeInputs();
+    initTOTPInputs();
+    updatePasswordStrength('');
+    
+    document.addEventListener("DOMContentLoaded", async () => {
+        try {
+            const email = document.getElementById('resetEmail').value.trim();
+            const res = await fetch('/api/reset/check_code', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: '', code: null })
+            });
+            const data = await res.json();
+            if (data.status) {
+                switchToPanel('panel3');
+                document.getElementById('newPassword').value = '';
+                document.getElementById('confirmPassword').value = '';
+                updatePasswordStrength('');
+            } else {
+                switchToPanel('panel1');
+            }
+        } catch (e) {
+            switchToPanel('panel1');
+        }
+    });
+</script>
+</body>
+</html>
