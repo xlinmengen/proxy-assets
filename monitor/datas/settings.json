@@ -1,0 +1,20 @@
+{
+  "users": {
+    "#[uuid]": {
+      "email": "#[email]",
+      "shortid": "#[shortid]",
+      "password": "#[password]",
+      "user_level": 0,
+      "xray_level": 0
+    }
+  },
+  "key": {
+    "private": "#[privatekey]",
+    "public": "#[passwordkey]"
+  },
+  "auth": {
+    "audience": "#[token]",
+    "username": "#[email]",
+    "password": "#[password]"
+  },"serverip": "#[serverip]"
+}
