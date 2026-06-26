@@ -1,0 +1,31 @@
+bindAddr = "0.0.0.0"
+bindPort = 10
+vhostHTTPPort  = 11
+vhostHTTPSPort = 12
+
+auth.method = "oidc"
+auth.oidc.issuer = "#[issuer]"
+auth.oidc.audience = "#[audience]"
+
+webServer.addr = "0.0.0.0"
+webServer.port = 1020
+webServer.user = "#[username]"
+webServer.password = "#[password]"
+webServer.pprofEnable = true
+
+allowPorts = [{ start = 1024 , end = 65535 }]
+
+log.to = "/var/log/frps/frps.log"
+log.level = "info"
+log.maxDays = 3
+
+transport.tcpMux = true
+transport.tcpMuxKeepaliveInterval = 30
+
+transport.maxPoolCount = 20
+transport.heartbeatTimeout = 90
+
+transport.tls.force = true
+transport.tls.certFile = "/opt/frps/certs/server.crt"
+transport.tls.keyFile  = "/opt/frps/certs/server.key"
+transport.tls.trustedCaFile = "/opt/monitor/certs/ca.crt"

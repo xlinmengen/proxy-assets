@@ -1,0 +1,181 @@
+allow-lan: true
+mixed-port: 7890
+socks-port: 7891
+bind-address: "*"
+mode: rule
+ipv6: false
+log-level: info
+
+tcp-concurrent: true
+tcp-fast-open: false
+udp-fragment: false
+geodata-mode: true
+
+geo-update-interval: 24
+keep-alive-interval: 30
+keep-alive-idle: 600
+
+tls:
+  custom-certifactes:
+    - |
+      #[ca]
+
+geox-url:
+  geoip: "https://#[serverip]:1000/assets/geoip"
+  geosite: "https://#[serverip]:1000/assets/geosite"
+  header:
+    Authorization: 
+      - "#[authorization]"
+
+dns:
+  enable: true
+  ipv6: false
+  prefer-h3: true
+  enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.1/16
+
+  listen: 0.0.0.0:53
+  dns-hijack:
+    - 'any:53'
+
+  proxy-server-nameserver:
+    - 8.8.8.8
+    - 1.1.1.1
+  nameserver-policy:
+    "geosite:google,youtube,telegram,github,twitter,tiktok,netflix": [8.8.8.8, 1.1.1.1]
+    "geosite:cn": [223.5.5.5, 180.184.1.1]
+  nameserver:
+    - 223.5.5.5
+    - 8.8.8.8
+  fallback:
+    - 223.5.5.5
+    - 180.184.1.1
+
+  fake-ip-filter:
+    - "stun.*"
+    - "+.msftconnecttest.com"
+    - "+.apple.com"
+
+proxies:
+  - name: "WORK-REMOTE"
+    type: vless
+    server: #[serverip]
+    port: 443
+    uuid: "#[uuid]"
+    network: tcp
+    tls: true
+    udp: true
+    flow: xtls-rprx-vision
+    servername: www.apple.com
+    reality-opts:
+      public-key: "#[publickey]"
+      short-id: "#[shortid]"
+    client-fingerprint: chrome
+    alpn: [h2, http/1.1]
+
+proxy-groups:
+  - name: "WORK-TRAFFIC"
+    type: select
+    proxies:
+      - "WORK-REMOTE"
+      - DIRECT
+
+rule-providers:
+  reject:
+    type: http
+    behavior: domain
+    url: "https://#[serverip]:1000/assets/reject"
+    path: ./ruleset/reject.yaml
+    interval: 86400
+    header:
+      Authorization: 
+        - "#[authorization]"
+  proxy:
+    type: http
+    behavior: domain
+    url: "https://#[serverip]:1000/assets/proxy"
+    path: ./ruleset/proxy.yaml
+    interval: 86400
+    header:
+      Authorization: 
+        - "#[authorization]"
+  direct:
+    type: http
+    behavior: domain
+    url: "https://#[serverip]:1000/assets/direct"
+    path: ./ruleset/direct.yaml
+    interval: 86400
+    header:
+      Authorization: 
+        - "#[authorization]"
+  cncidr:
+    type: http
+    behavior: ipcidr
+    url: "https://#[serverip]:1000/assets/cncidr"
+    path: ./ruleset/cncidr.yaml
+    interval: 86400
+    header:
+      Authorization: 
+        - "#[authorization]"
+  A-reject:
+    type: http
+    behavior: domain
+    url: "https://#[serverip]:1000/custom/reject"
+    path: ./ruleset/custom/reject.yaml
+    interval: 30
+    header:
+      Authorization: 
+        - "#[authorization]"
+  A-proxy:
+    type: http
+    behavior: domain
+    url: "https://#[serverip]:1000/custom/proxy"
+    path: ./ruleset/custom/proxy.yaml
+    interval: 30
+    header:
+      Authorization: 
+        - "#[authorization]"
+  A-direct:
+    type: http
+    behavior: domain
+    url: "https://#[serverip]:1000/custom/direct"
+    path: ./ruleset/custom/direct.yaml
+    interval: 30
+    header:
+      Authorization: 
+        - "#[authorization]"
+
+rules:
+  # ========== 内网穿透 ==========
+  - DST-PORT,10,DIRECT
+  - NETWORK,udp,DIRECT
+
+  # ========== 本地网络 ==========
+  - DOMAIN-SUFFIX,local,DIRECT,no-resolve
+  - IP-CIDR,127.0.0.0/8,DIRECT,no-resolve
+  - IP-CIDR,192.168.0.0/16,DIRECT,no-resolve
+  - IP-CIDR,10.0.0.0/8,DIRECT,no-resolve
+  - IP-CIDR,172.16.0.0/12,DIRECT,no-resolve
+  - IP-CIDR,169.254.0.0/16,DIRECT,no-resolve
+
+  # ========== 代理服务 ==========
+  - IP-CIDR,#[serverip]/32,WORK-REMOTE,no-resolve
+
+  # ========== 分流规则 ==========
+  - RULE-SET,A-reject,REJECT,no-resolve
+  - RULE-SET,A-direct,DIRECT,no-resolve
+  - RULE-SET,A-proxy,WORK-TRAFFIC,no-resolve
+
+  - DOMAIN-SUFFIX,work,WORK-REMOTE,no-resolve
+
+  # ========== 广告屏蔽 ==========
+  - GEOSITE,category-ads-all,REJECT,no-resolve
+
+  # ========== 最终规则 ==========
+  - RULE-SET,reject,REJECT,no-resolve
+  - RULE-SET,direct,DIRECT,no-resolve
+  - RULE-SET,cncidr,DIRECT,no-resolve
+  - RULE-SET,proxy,WORK-TRAFFIC,no-resolve
+
+  - GEOIP,CN,DIRECT
+  - MATCH,WORK-TRAFFIC

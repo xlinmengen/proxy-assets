@@ -1,0 +1,119 @@
+{
+  "inbounds": [
+    {
+      "port": 443,
+      "protocol": "vless",
+      "allocate": {
+        "strategy": "always",
+        "refresh": 5,
+        "concurrency": 10
+      },
+      "settings": {
+        "clients": [],
+        "disableInsecureEncryption": false,
+        "decryption": "none"
+      },
+      "streamSettings": {
+        "network": "tcp",
+        "security": "reality",
+        "realitySettings": {
+          "dest": "www.apple.com:443",
+          "serverNames": ["www.apple.com"],
+          "privateKey": "",
+          "shortIds":  [],
+          "fingerprint": "chrome",
+          "alpn": ["h2", "http/1.1"],
+          "maxTimeDiff": 30000,
+          "spiderX": "/"
+        }
+      },
+      "sniffing": {"enabled": true,"destOverride": ["http", "tls", "quic"]},
+      "tag": "reality-inbound"
+    }
+  ],
+  "outbounds": [
+    {"protocol": "freedom", "tag": "direct"},
+    {"protocol": "blackhole","tag": "block"},
+    {
+      "protocol": "freedom", "tag": "frp_tunnel_http",
+      "settings": {"redirect": "127.0.0.1:11"}
+    },
+    {
+      "protocol": "freedom", "tag": "frp_tunnel_https",
+      "settings": {"redirect": "127.0.0.1:12"}
+    }
+  ],
+  "routing": {
+    "domainStrategy": "IPIfNonMatch",
+    "rules": [
+      {"type": "field","port": "10,11,12,1000","outboundTag": "direct"},
+      {"type": "field","ip": ["100.64.0.0/10"],"outboundTag": "direct"},
+      {"type": "field","ip": ["geoip:private"],"outboundTag": "direct"},
+      {"type": "field","domain": ["domain:work"],"port": "80" ,"outboundTag": "frp_tunnel_http" },
+      {"type": "field","domain": ["domain:work"],"port": "443","outboundTag": "frp_tunnel_https"}
+    ]
+  },
+  "policy": {
+    "levels": {
+      "0": {
+        "handshake": 1,
+        "connIdle": 7200,
+        "uplinkOnly": 0,
+        "downlinkOnly": 0,
+        "statsUserUplink": true,
+        "statsUserDownlink": true,
+        "bufferSize": 16777216,
+        "cellSize": 262144,
+        "cellCount": 256,
+        "timeouts": {
+          "tcpKeepAlive": 30,
+          "tcpKeepAliveInterval": 5,
+          "udpTimeout": 120
+        }
+      },
+      "1": {
+        "handshake": 3,
+        "connIdle": 3600,
+        "uplinkOnly": 2,
+        "downlinkOnly": 2,
+        "statsUserUplink": true,
+        "statsUserDownlink": true,
+        "bufferSize": 8388608,
+        "cellSize": 131072,
+        "cellCount": 128,
+        "timeouts": {
+          "tcpKeepAlive": 120,
+          "tcpKeepAliveInterval": 30,
+          "udpTimeout": 60
+        }
+      },
+      "2": {
+        "handshake": 5,
+        "connIdle": 1800,
+        "uplinkOnly": 3,
+        "downlinkOnly": 4,
+        "statsUserUplink": true,
+        "statsUserDownlink": true,
+        "bufferSize": 4194304,
+        "cellSize": 65535,
+        "cellCount": 64,
+        "timeouts": {
+          "tcpKeepAlive": 300,
+          "tcpKeepAliveInterval": 60,
+          "udpTimeout": 30
+        }
+      }
+    },
+    "system": {
+      "statsInboundUplink": true,
+      "statsInboundDownlink": true
+    }
+  },
+  "api": {
+    "listen": "127.0.0.1:15",
+    "services": [
+      "StatsService",
+      "HandlerService"
+    ],"tag": "api"
+  },"stats": {}
+}
