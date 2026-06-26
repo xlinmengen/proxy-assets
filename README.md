@@ -29,9 +29,8 @@
 ## 🧩 组件关系
 
 - **Xray** 提供 Reality 协议代理服务（端口 `443`），支持多用户、多等级策略，并通过 gRPC API（端口 `7600`）暴露流量统计数据。
-- **FRP** 作为内网穿透服务端（端口 `20`），与 Xray 路由联动（可将特定域名流量转入 FRP 隧道）。
-- **Monitor** 是基于 Flask 的 Web 面板（端口 `5000`），负责用户管理、配置生成、证书签发、流量可视化，并通过 gRPC 与 Xray 通信。
-- **Assets Proxy** 内置资源代理（端口 `80`），用于分发 GeoIP 数据库、客户端安装包、分流规则集，支持客户端一键更新。
+- **FRP** 作为内网穿透服务端（端口 `10`），与 Xray 路由联动（可将特定域名流量转入 FRP 隧道）。
+- **Monitor** 是基于 Flask 的 Web 面板（端口 `1000`），负责用户管理、配置生成、证书签发、流量可视化，并通过 gRPC 与 Xray 通信。
 
 ---
 
@@ -41,7 +40,7 @@
 
 - Linux (Debian/Ubuntu 20.04+ 推荐)
 - root 权限
-- 开放端口：`20`、`80`、`443`、`5000`
+- 开放端口：`10`、`443`、`1000`
 
 ### 一键安装
 
@@ -58,9 +57,9 @@ bash <(curl -sSL https://raw.githubusercontent.com/xlinmengen/proxy-assets/main/
 
 | 服务 | 地址 | 说明 |
 | :--- | :--- | :--- |
-| Web 管理面板 | `https://<VPS_IP>:5000` | 用户管理 / 流量监控 / 配置下载 |
+| Web 管理面板 | `https://<VPS_IP>:1000` | 用户管理 / 流量监控 / 配置下载 |
 | FRP 管理面板 | `http://<VPS_IP>:7500` | FRP 服务端状态（用户名/密码同管理员） |
-| CA 证书下载 | `https://<VPS_IP>:5000/cert` | 用于客户端信任自签名证书 |
+| CA 证书下载 | `https://<VPS_IP>:1000/cert` | 用于客户端信任自签名证书 |
 
 > ⚠️ 首次访问需手动信任自签名证书（浏览器会提示不安全，添加例外即可）。
 
@@ -137,24 +136,9 @@ proxies:
 
 ### 服务端（已自动配置）
 
-- **绑定端口**：`20` (TCP 穿透)
-- **认证方式**：Token（自动生成）
-- **管理界面**：`http://<VPS_IP>:7500`（用户名/密码同管理员）
-
-### 客户端配置 (`frpc.toml`)
-
-```toml
-serverAddr = "<VPS_IP>"
-serverPort = 20
-auth.token = "<面板中的Token>"
-
-[[proxies]]
-name = "example-ssh"
-type = "tcp"
-localIP = "127.0.0.1"
-localPort = 22
-remotePort = 6000
-```
+- **绑定端口**：`10` (TCP 穿透)
+- **认证方式**：OIDC（自动管理）
+- **管理界面**：`http://<VPS_IP>:1020`（用户名/密码同管理员）
 
 > 💡 如需将 FRP 流量通过 Xray 代理（例如走 Reality 隧道），可在 Xray 路由中配置 `domain:work` 定向到 `frp_tunnel` 出站。
 
@@ -190,7 +174,7 @@ journalctl -u monitor -f -n 50
 
 ### 防火墙（已预配置）
 
-开放端口：`20`、`80`、`443`、`5000`  
+开放端口：`10`、`80`、`443`、`5000`  
 查看当前规则：`ufw status verbose`
 
 ### 备份与恢复
