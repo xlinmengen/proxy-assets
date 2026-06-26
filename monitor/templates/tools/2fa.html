@@ -1,0 +1,2496 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes" />
+    <title>2FA 双因素认证 · 开发者工具箱</title>
+    <link rel="stylesheet" href="/static/all.min.css" />
+    <!-- QRCode.js -->
+    <script src="/static/qrcode.min.js">
+    </script>
+    <style>
+        /* ===== 全局重置 & 暗色主题 ===== */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg-primary: #0b0914;
+            --bg-secondary: #12101e;
+            --bg-surface: #181625;
+            --bg-surface-hover: #221f35;
+            --bg-elevated: #1f1c30;
+            --border-subtle: #2a2740;
+            --border-strong: #3d385a;
+            --text-primary: #edeff5;
+            --text-secondary: #b8bfd9;
+            --text-muted: #7a83a3;
+            --text-dim: #94a3b8;
+            --accent: #6366f1;
+            --accent-light: #818cf8;
+            --accent-dark: #4f46e5;
+            --accent-glow: rgba(99, 102, 241, 0.3);
+            --success: #34d399;
+            --success-bg: rgba(52, 211, 153, 0.12);
+            --error: #f87171;
+            --error-bg: rgba(248, 113, 113, 0.12);
+            --warning: #fbbf24;
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 14px;
+            --radius-full: 9999px;
+            --shadow-soft: 0 8px 30px rgba(0, 0, 0, 0.5);
+            --shadow-glow: 0 0 30px var(--accent-glow);
+            --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --space-xs: 4px;
+            --space-sm: 8px;
+            --space-md: 14px;
+            --space-lg: 20px;
+            --space-xl: 28px;
+        }
+
+        html {
+            font-size: 15px;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            padding: 24px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            line-height: 1.6;
+            user-select: none;
+        }
+
+        .result-text,
+        .result-box .value,
+        .code-area {
+            user-select: text;
+        }
+
+        body *:not(input):not(textarea):not(.modal-input):not(.result-text):not(.code-area):not(.regex-content):not(.regex-content *) {
+            user-select: none;
+        }
+
+        /* ===== 滚动条 ===== */
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+            border-radius: 999px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-strong);
+            border-radius: 999px;
+            transition: background 0.2s;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent);
+        }
+
+        .app {
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        /* ===== 头部 ===== */
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0 20px 0;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .app-header .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .app-header .brand i {
+            font-size: 28px;
+            color: var(--accent-light);
+            filter: drop-shadow(0 0 8px var(--accent-glow));
+        }
+        .app-header .brand h1 {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            background: linear-gradient(135deg, #ffffff 40%, var(--accent-light));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .app-header .brand .version {
+            font-size: 13px;
+            color: var(--text-muted);
+            -webkit-text-fill-color: var(--text-muted);
+            background: var(--bg-surface);
+            padding: 0 10px;
+            border-radius: 999px;
+            border: 1px solid var(--border-subtle);
+            font-weight: 500;
+            margin-left: 4px;
+        }
+
+        .app-header .status-group {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .app-header .back-btn {
+            font-size: 13px;
+            color: var(--text-secondary);
+            background: var(--bg-surface);
+            padding: 4px 14px;
+            border-radius: 999px;
+            border: 1px solid var(--border-subtle);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            transition: all var(--transition);
+            white-space: nowrap;
+        }
+        .app-header .back-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent-light);
+            box-shadow: 0 0 16px var(--accent-glow);
+        }
+
+        .app-header .badge {
+            background: var(--success-bg);
+            color: var(--success);
+            padding: 5px 16px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid rgba(52, 211, 153, 0.2);
+            white-space: nowrap;
+        }
+        .app-header .badge i {
+            font-size: 12px;
+        }
+
+        /* ===== 标签页 ===== */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: 0;
+        }
+        .tab-btn {
+            background: transparent;
+            border: none;
+            padding: 10px 22px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-dim);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all var(--transition);
+            font-family: inherit;
+        }
+        .tab-btn:hover {
+            color: var(--text-primary);
+        }
+        .tab-btn.active {
+            color: var(--accent-light);
+            border-bottom-color: var(--accent-light);
+        }
+
+        /* ===== 面板 ===== */
+        .panel {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 20px 22px 22px;
+            transition: border-color var(--transition), box-shadow var(--transition);
+            height: 540px;
+            resize: vertical;
+            overflow: hidden;
+            min-height: 380px;
+            display: flex;
+            flex-direction: column;
+        }
+        .panel:hover {
+            border-color: var(--border-strong);
+        }
+
+        .panel-title {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .panel-title i {
+            font-size: 14px;
+            color: var(--accent-light);
+        }
+
+        /* ===== 算法选择器 ===== */
+        .algo-selector {
+            display: flex;
+            gap: var(--space-sm);
+            margin-bottom: 14px;
+            flex-shrink: 0;
+            border-radius: var(--radius-md);
+            background: var(--bg-secondary);
+            padding: 4px;
+            border: 1px solid var(--border-subtle);
+        }
+        .algo-selector .algo-btn {
+            background: transparent;
+            border: none;
+            border-radius: var(--radius-sm);
+            padding: 6px 20px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all var(--transition);
+            font-size: 13px;
+            font-weight: 500;
+            font-family: inherit;
+            flex: 1;
+            text-align: center;
+        }
+        .algo-selector .algo-btn:hover {
+            color: var(--text-primary);
+            background: var(--bg-surface-hover);
+        }
+        .algo-selector .algo-btn.active {
+            background: var(--accent);
+            color: #fff;
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        /* ===== 主体布局 ===== */
+        .crypto-body {
+            display: flex;
+            flex: 1;
+            gap: 20px;
+            min-height: 0;
+        }
+        @media (max-width: 820px) {
+            .crypto-body {
+                flex-direction: column;
+                gap: 14px;
+            }
+        }
+
+        .crypto-left {
+            flex: 0 0 48%;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+        .crypto-right {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+        @media (max-width: 820px) {
+            .crypto-left {
+                flex: 1;
+            }
+        }
+
+        /* ===== 滚动内容区 ===== */
+        .scroll-content {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+        .scroll-content::-webkit-scrollbar {
+            width: 4px;
+        }
+        .scroll-content::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+            border-radius: 999px;
+        }
+        .scroll-content::-webkit-scrollbar-thumb {
+            background: var(--border-strong);
+            border-radius: 999px;
+        }
+        .scroll-content::-webkit-scrollbar-thumb:hover {
+            background: var(--accent);
+        }
+
+        /* ===== 控件组 ===== */
+        .ctrl-group {
+            margin-bottom: var(--space-md);
+        }
+        .ctrl-group:last-child {
+            margin-bottom: 0;
+        }
+        .ctrl-group .group-label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            margin-bottom: var(--space-xs);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .ctrl-group .group-label i {
+            font-size: 11px;
+            color: var(--accent-light);
+        }
+
+        .ctrl-group label {
+            display: block;
+            font-size: 12px;
+            color: var(--text-dim);
+            margin-bottom: var(--space-xs);
+            font-weight: 500;
+        }
+
+        .ctrl-group select,
+        .ctrl-group input[type="text"],
+        .ctrl-group input[type="number"] {
+            width: 100%;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+            font-size: 13px;
+            padding: var(--space-sm) var(--space-md);
+            transition: border var(--transition), box-shadow var(--transition);
+            outline: none;
+        }
+        .ctrl-group select:focus,
+        .ctrl-group input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+        .ctrl-group .hint {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: var(--space-xs);
+        }
+
+        /* ===== 行内控件 ===== */
+        .row-controls {
+            display: flex;
+            gap: var(--space-sm);
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .row-controls .ctrl-group {
+            flex: 1;
+            min-width: 80px;
+            margin-bottom: 0;
+        }
+        .row-controls .ctrl-group.shrink {
+            flex: 0 0 auto;
+            min-width: auto;
+        }
+
+        /* ===== 按钮 ===== */
+        .btn-group {
+            display: flex;
+            gap: var(--space-sm);
+            flex-wrap: wrap;
+            margin-top: var(--space-sm);
+            flex-shrink: 0;
+        }
+        .btn-group .btn {
+            background: var(--accent);
+            border: none;
+            border-radius: var(--radius-md);
+            color: #fff;
+            padding: 6px 18px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            min-height: 34px;
+            font-family: inherit;
+        }
+        .btn-group .btn:hover {
+            background: var(--accent-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px var(--accent-glow);
+        }
+        .btn-group .btn:active {
+            transform: translateY(0);
+        }
+        .btn-group .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+        }
+        .btn-group .btn-outline:hover {
+            border-color: var(--accent);
+            color: var(--accent-light);
+            background: rgba(99, 102, 241, 0.05);
+            box-shadow: none;
+        }
+
+        /* ===== 生成按钮 ===== */
+        .btn-success {
+            background: var(--success);
+            color: #0b0914;
+            border: none;
+            transition: all var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-weight: 600;
+        }
+        .btn-success:hover {
+            background: #2dd4a0;
+            box-shadow: 0 4px 12px rgba(52, 211, 153, 0.3);
+            transform: translateY(-1px);
+        }
+        .btn-success:active {
+            transform: translateY(0);
+        }
+        .btn-success:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+        .btn-success i {
+            font-size: 12px;
+        }
+        .btn-success.btn-sm {
+            padding: 4px 14px;
+            font-size: 12px;
+            min-height: 28px;
+            white-space: nowrap;
+            flex-shrink: 0;
+            line-height: 1.4;
+        }
+
+        .inline-toolbar {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .inline-toolbar .btn-sm {
+            flex-shrink: 0;
+        }
+
+        /* ===== 结果区域 ===== */
+        .result-box {
+            flex: 1;
+            min-height: 60px;
+            overflow-y: auto;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            margin-bottom: var(--space-sm);
+        }
+        .result-box::-webkit-scrollbar {
+            width: 4px;
+        }
+        .result-box::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+            border-radius: 999px;
+        }
+        .result-box::-webkit-scrollbar-thumb {
+            background: var(--border-strong);
+            border-radius: 999px;
+        }
+        .result-box::-webkit-scrollbar-thumb:hover {
+            background: var(--accent);
+        }
+
+        .result-box .result-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: var(--space-xs) 0;
+            border-bottom: 1px solid var(--border-subtle);
+            font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+            font-size: 12px;
+            gap: var(--space-sm);
+        }
+        .result-box .result-row:last-child {
+            border-bottom: none;
+        }
+        .result-box .result-row .label {
+            color: var(--text-muted);
+            min-width: 70px;
+            font-weight: 500;
+            flex-shrink: 0;
+            padding-top: 1px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .result-box .result-row .value {
+            color: var(--text-primary);
+            flex: 1;
+            text-align: right;
+            word-break: break-all;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+        .result-box .result-row .copy-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 0 4px;
+            border-radius: var(--radius-sm);
+            transition: all var(--transition);
+            font-size: 12px;
+            flex-shrink: 0;
+            line-height: 1;
+            margin-top: 1px;
+        }
+        .result-box .result-row .copy-btn:hover {
+            color: var(--accent-light);
+            background: rgba(99, 102, 241, 0.08);
+        }
+        .result-box .result-row .copy-btn.copied {
+            color: var(--success);
+        }
+        .result-box .result-row.status-row {
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: var(--space-sm);
+            margin-bottom: var(--space-xs);
+        }
+        .result-box .result-row.status-row .label {
+            color: var(--accent-light);
+            font-weight: 600;
+        }
+        .result-box .result-row.status-row .value {
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        .result-empty {
+            color: var(--text-muted);
+            text-align: center;
+            padding: var(--space-md) 0;
+            font-size: 13px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+        .result-empty i {
+            font-size: 28px;
+            margin-bottom: var(--space-sm);
+            color: var(--border-subtle);
+        }
+
+        .result-stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-lg);
+            padding: var(--space-xs) var(--space-md);
+            background: var(--bg-surface);
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            color: var(--text-muted);
+            border: 1px solid var(--border-subtle);
+            flex-shrink: 0;
+            min-height: 34px;
+            align-items: center;
+        }
+        .result-stats span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .result-stats i {
+            font-size: 12px;
+            color: var(--accent-light);
+        }
+        .result-stats .copy-all-btn {
+            margin-left: auto;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 12px;
+            transition: color var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            border-radius: var(--radius-sm);
+        }
+        .result-stats .copy-all-btn:hover {
+            color: var(--accent-light);
+            background: rgba(99, 102, 241, 0.06);
+        }
+        .result-stats .copy-all-btn.copied {
+            color: var(--success);
+        }
+
+        /* ===== TOTP 进度条 ===== */
+        .totp-timer {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            margin-top: var(--space-xs);
+            padding-top: var(--space-xs);
+            border-top: 1px solid var(--border-subtle);
+        }
+        .totp-timer .progress-wrap {
+            flex: 1;
+            height: 4px;
+            background: var(--bg-secondary);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .totp-timer .progress-wrap .progress-bar {
+            height: 100%;
+            background: var(--accent);
+            border-radius: 2px;
+            transition: width 0.5s linear;
+            width: 100%;
+        }
+        .totp-timer .time-text {
+            font-size: 12px;
+            color: var(--text-muted);
+            min-width: 30px;
+            text-align: center;
+            font-family: 'SF Mono', monospace;
+        }
+
+        /* ===== 二维码容器 ===== */
+        #qrcode-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: var(--space-sm);
+            background: #fff;
+            border-radius: var(--radius-md);
+            min-height: 120px;
+            min-width: 120px;
+            margin: var(--space-xs) 0;
+        }
+        #qrcode-container canvas,
+        #qrcode-container img {
+            display: block;
+            max-width: 100%;
+        }
+
+        /* ===== 快捷键提示 ===== */
+        .shortcut-hint {
+            font-size: 11px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 2px 10px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-full);
+            border: 1px solid var(--border-subtle);
+        }
+        .shortcut-hint kbd {
+            background: var(--bg-primary);
+            padding: 0 6px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-family: inherit;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-subtle);
+        }
+
+        /* ===== 验证输入行 ===== */
+        .verify-row {
+            display: flex;
+            gap: var(--space-sm);
+            align-items: center;
+            margin-top: var(--space-sm);
+        }
+        .verify-row input {
+            flex: 1;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-family: 'SF Mono', monospace;
+            font-size: 18px;
+            padding: var(--space-xs) var(--space-sm);
+            text-align: center;
+            letter-spacing: 4px;
+            min-width: 80px;
+            outline: none;
+            transition: border var(--transition), box-shadow var(--transition);
+        }
+        .verify-row input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+        .verify-row .verify-result {
+            font-size: 14px;
+            font-weight: 600;
+            min-width: 60px;
+            text-align: center;
+        }
+        .verify-row .verify-result.valid {
+            color: var(--success);
+        }
+        .verify-row .verify-result.invalid {
+            color: var(--error);
+        }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 820px) {
+            .panel {
+                height: auto;
+                min-height: 400px;
+                resize: vertical;
+                overflow-y: auto;
+            }
+            .crypto-body {
+                flex-direction: column;
+                gap: 14px;
+            }
+            .crypto-left {
+                flex: none;
+            }
+            .row-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .row-controls .ctrl-group {
+                flex: none;
+            }
+            .algo-selector .algo-btn {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+            .result-stats .copy-all-btn {
+                margin-left: 0;
+            }
+            .inline-toolbar .btn-sm {
+                font-size: 11px;
+                padding: 3px 10px;
+                min-height: 24px;
+            }
+            .btn-group .btn {
+                font-size: 12px;
+                padding: 5px 14px;
+                min-height: 32px;
+            }
+            .shortcut-hint {
+                font-size: 10px;
+                padding: 2px 8px;
+            }
+            .shortcut-hint kbd {
+                font-size: 9px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 12px;
+            }
+            .app-header {
+                padding: 12px 0 16px 0;
+                margin-bottom: 14px;
+                gap: 10px;
+            }
+            .app-header .brand i {
+                font-size: 22px;
+            }
+            .app-header .brand h1 {
+                font-size: 18px;
+            }
+            .app-header .brand .version {
+                font-size: 11px;
+                padding: 0 8px;
+            }
+            .app-header .status-group {
+                gap: 10px;
+            }
+            .app-header .back-btn {
+                font-size: 11px;
+                padding: 2px 8px;
+            }
+            .app-header .badge {
+                font-size: 10px;
+                padding: 2px 10px;
+            }
+            .panel {
+                padding: 12px 12px 16px;
+                height: auto;
+                min-height: 300px;
+            }
+            .panel-title {
+                font-size: 10px;
+                margin-bottom: 10px;
+            }
+            .ctrl-group {
+                margin-bottom: var(--space-sm);
+            }
+            .btn-group {
+                gap: var(--space-xs);
+            }
+            .btn-group .btn {
+                font-size: 11px;
+                padding: 4px 10px;
+                min-height: 28px;
+                gap: 4px;
+            }
+            .btn-group .btn-sm {
+                font-size: 11px;
+                padding: 3px 10px;
+                min-height: 24px;
+            }
+            .result-box .result-row {
+                font-size: 11px;
+                flex-wrap: wrap;
+                gap: var(--space-xs);
+            }
+            .result-box .result-row .label {
+                min-width: 44px;
+                font-size: 10px;
+            }
+            .result-box .result-row .value {
+                font-size: 11px;
+            }
+            .result-stats {
+                font-size: 11px;
+                gap: var(--space-sm);
+                padding: var(--space-xs) var(--space-sm);
+            }
+            .algo-selector {
+                flex-wrap: wrap;
+                gap: 4px;
+                padding: 3px;
+            }
+            .algo-selector .algo-btn {
+                flex: 1;
+                min-width: 60px;
+                padding: 4px 8px;
+                font-size: 11px;
+            }
+            .tab-btn {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+            .inline-toolbar {
+                gap: 4px;
+            }
+            .inline-toolbar .btn-sm {
+                font-size: 11px;
+                padding: 2px 10px;
+                min-height: 24px;
+            }
+            .scroll-content {
+                padding-right: 2px;
+            }
+            .shortcut-hint {
+                font-size: 9px;
+                padding: 2px 6px;
+            }
+            .shortcut-hint kbd {
+                font-size: 8px;
+            }
+            #qrcode-container {
+                min-height: 80px;
+                min-width: 80px;
+            }
+            .verify-row input {
+                font-size: 16px;
+                letter-spacing: 2px;
+            }
+            .verify-row .verify-result {
+                font-size: 12px;
+                min-width: 40px;
+            }
+        }
+
+        @media (max-width: 380px) {
+            body {
+                padding: 8px;
+            }
+            .panel {
+                padding: 10px 8px 12px;
+                min-height: 260px;
+            }
+            .btn-group .btn {
+                font-size: 10px;
+                padding: 3px 8px;
+                min-height: 24px;
+            }
+            .algo-selector .algo-btn {
+                font-size: 10px;
+                padding: 3px 6px;
+                min-width: 50px;
+            }
+            .ctrl-group select,
+            .ctrl-group input {
+                font-size: 12px;
+                padding: var(--space-xs) var(--space-sm);
+            }
+            .result-box .result-row {
+                font-size: 10px;
+            }
+            .result-box .result-row .label {
+                min-width: 36px;
+                font-size: 9px;
+            }
+            .result-box .result-row .value {
+                font-size: 10px;
+            }
+            .inline-toolbar .btn-sm {
+                font-size: 10px;
+                padding: 2px 8px;
+                min-height: 22px;
+            }
+            #qrcode-container {
+                min-height: 60px;
+                min-width: 60px;
+            }
+            .verify-row input {
+                font-size: 14px;
+                letter-spacing: 2px;
+            }
+        }
+
+        /* ===== 教程样式 ===== */
+        .tutorial-card {
+            height: 500px;
+            min-height: 450px;
+            max-height: 850px;
+            resize: vertical;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+        }
+        .tutorial-card .card-header {
+            padding: var(--space-md) var(--space-lg);
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 0;
+            flex-shrink: 0;
+        }
+        .tutorial-body {
+            display: flex;
+            flex: 1;
+            min-height: 0;
+        }
+        .tutorial-sidebar {
+            width: 250px;
+            flex-shrink: 0;
+            background: var(--bg-primary);
+            border-right: 1px solid var(--border-subtle);
+            display: flex;
+            flex-direction: column;
+            padding: var(--space-md);
+        }
+        .tutorial-sidebar .search-box {
+            margin-bottom: var(--space-md);
+        }
+        .tutorial-sidebar .search-box input {
+            width: 100%;
+            padding: var(--space-sm) var(--space-md);
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-size: 13px;
+            outline: none;
+            transition: border var(--transition);
+        }
+        .tutorial-sidebar .search-box input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px var(--accent-glow);
+        }
+        .tutorial-sidebar .bookmark-list {
+            flex: 1;
+            overflow-y: auto;
+            margin: 0 -8px;
+            padding: 0 8px;
+        }
+        .tutorial-sidebar .bookmark-list::-webkit-scrollbar {
+            width: 4px;
+        }
+        .bookmark-item {
+            padding: 5px 12px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: all var(--transition);
+            font-size: 13px;
+            border-left: 2px solid transparent;
+            margin-bottom: 1px;
+        }
+        .bookmark-item:hover {
+            background: var(--bg-surface-hover);
+            color: var(--text-primary);
+        }
+        .bookmark-item.active {
+            color: var(--accent-light);
+            background: rgba(99, 102, 241, 0.12);
+            border-left-color: var(--accent);
+        }
+        .bookmark-item .chapter-tag {
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-right: 6px;
+            opacity: 0.6;
+        }
+        .tutorial-content {
+            flex: 1;
+            padding: var(--space-lg);
+            overflow-y: auto;
+            min-height: 0;
+        }
+        .tutorial-content::-webkit-scrollbar {
+            width: 4px;
+        }
+        .tutorial-content h2 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--space-md);
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: var(--space-sm);
+        }
+        .tutorial-content h3 {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--accent-light);
+            margin: var(--space-md) 0 var(--space-sm);
+        }
+        .tutorial-content p {
+            color: var(--text-secondary);
+            line-height: 1.8;
+            margin-bottom: var(--space-md);
+        }
+        .tutorial-content pre {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: var(--space-md) var(--space-lg);
+            overflow-x: auto;
+            font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+            font-size: 12.5px;
+            color: var(--text-primary);
+            margin: var(--space-md) 0;
+            line-height: 1.7;
+        }
+        .tutorial-content pre code {
+            display: block;
+            white-space: pre;
+        }
+        .tutorial-content ul {
+            padding-left: var(--space-xl);
+            color: var(--text-secondary);
+            margin-bottom: var(--space-md);
+        }
+        .tutorial-content ul li {
+            margin-bottom: var(--space-xs);
+        }
+        .tutorial-content .note {
+            background: rgba(99, 102, 241, 0.06);
+            border-left: 3px solid var(--accent);
+            padding: var(--space-sm) var(--space-md);
+            border-radius: var(--radius-sm);
+            margin: var(--space-md) 0;
+            color: var(--text-dim);
+            font-size: 13px;
+        }
+        .tutorial-content .note.warning {
+            border-left-color: var(--warning);
+            background: rgba(251, 191, 36, 0.06);
+        }
+        .tutorial-content .note.danger {
+            border-left-color: var(--error);
+            background: rgba(239, 68, 68, 0.06);
+        }
+        .tutorial-content .note.success {
+            border-left-color: var(--success);
+            background: rgba(52, 211, 153, 0.06);
+        }
+
+        @media (max-width: 820px) {
+            .tutorial-card {
+                height: 600px;
+                min-height: 400px;
+            }
+            .tutorial-body {
+                flex-direction: column;
+            }
+            .tutorial-sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid var(--border-subtle);
+                max-height: 180px;
+                flex-shrink: 0;
+            }
+            .tutorial-content {
+                padding: var(--space-md);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .tutorial-card {
+                height: 500px;
+                min-height: 350px;
+            }
+            .tutorial-sidebar .bookmark-item {
+                font-size: 12px;
+                padding: 4px 10px;
+            }
+            .tutorial-content h2 {
+                font-size: 17px;
+            }
+            .tutorial-content h3 {
+                font-size: 14px;
+            }
+            .tutorial-content pre {
+                font-size: 11px;
+                padding: var(--space-sm) var(--space-md);
+            }
+        }
+
+        /* ===== Toast ===== */
+        #toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(12px);
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 12px 24px;
+            font-size: 13px;
+            display: none;
+            align-items: center;
+            gap: 12px;
+            box-shadow: var(--shadow-soft);
+            z-index: 999;
+            backdrop-filter: blur(12px);
+            max-width: 92vw;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        #toast.show {
+            display: flex;
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        #toast.success {
+            border-left: 4px solid var(--success);
+            color: var(--success);
+        }
+        #toast.error {
+            border-left: 4px solid var(--error);
+            color: var(--error);
+        }
+        #toast i {
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app">
+        <!-- ===== 头部 ===== -->
+        <header class="app-header">
+            <div class="brand">
+                <i class="fas fa-shield-alt"></i>
+                <h1>2FA 双因素认证</h1>
+                <span class="version">v2.0</span>
+            </div>
+            <div class="status-group">
+                <a href="/tools" class="back-btn" title="返回工具箱">
+                    <i class="fas fa-arrow-left"></i> 返回
+                </a>
+                <span class="badge">
+                    <i class="fas fa-lock"></i> 纯前端本地
+                </span>
+            </div>
+        </header>
+
+        <!-- ===== 标签页 ===== -->
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="test">生成 &amp; 验证</button>
+            <button class="tab-btn" data-tab="tutorial">教程</button>
+        </div>
+
+        <!-- ===== 标签内容：生成 & 验证 ===== -->
+        <div id="testTab" class="tab-content">
+            <div class="panel">
+                <div class="panel-title"><i class="fas fa-shield-alt"></i> 2FA 操作</div>
+
+                <!-- 算法选择器 -->
+                <div class="algo-selector">
+                    <button class="algo-btn active" data-algo="totp">TOTP (基于时间)</button>
+                    <button class="algo-btn" data-algo="hotp">HOTP (基于计数器)</button>
+                </div>
+
+                <!-- 主体 -->
+                <div class="crypto-body">
+                    <div class="crypto-left">
+                        <div class="scroll-content" id="inputPanel">
+                            <!-- 由 JS 动态渲染 -->
+                        </div>
+                    </div>
+                    <div class="crypto-right">
+                        <div class="result-box" id="resultBox">
+                            <div class="result-empty">
+                                <i class="fas fa-shield-alt"></i>
+                                配置参数后生成验证码
+                            </div>
+                        </div>
+                        <div class="result-stats" id="resultStats">
+                            <span><i class="fas fa-tag"></i> 状态: <span id="statusDisplay">就绪</span></span>
+                            <button class="copy-all-btn" id="copyAllBtn"><i class="fas fa-copy"></i> 复制全部</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== 标签内容：教程 ===== -->
+        <div id="tutorialTab" class="tab-content" style="display: none;">
+            <div class="panel tutorial-card">
+                <div class="card-header">
+                    <i class="fas fa-book" style="font-size:20px;color:var(--accent-light);margin-right:8px;"></i>
+                    <h3 style="display:inline-block;font-size:18px;font-weight:600;color:var(--text-main);">2FA 相关教程</h3>
+                    <span style="float:right;font-size:12px;color:var(--text-muted);">共 7 章</span>
+                </div>
+                <div class="tutorial-body">
+                    <div class="tutorial-sidebar">
+                        <div class="search-box">
+                            <input type="text" id="tutorialSearch" placeholder="搜索章节..." />
+                        </div>
+                        <div class="bookmark-list" id="bookmarkList"></div>
+                    </div>
+                    <div class="tutorial-content" id="tutorialContent"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== Toast ===== -->
+        <div id="toast">
+            <i id="toastIcon"></i>
+            <span id="toastMsg"></span>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // ================================================================
+            // 依赖检查
+            // ================================================================
+            if (typeof QRCode === 'undefined') {
+                console.warn('QRCode 库未加载，二维码功能不可用');
+            }
+
+            // ================================================================
+            // DOM 引用
+            // ================================================================
+            var algoBtns = document.querySelectorAll('.algo-btn');
+            var inputPanel = document.getElementById('inputPanel');
+            var resultBox = document.getElementById('resultBox');
+            var statusDisplay = document.getElementById('statusDisplay');
+            var copyAllBtn = document.getElementById('copyAllBtn');
+            var testTab = document.getElementById('testTab');
+            var tutorialTab = document.getElementById('tutorialTab');
+            var tabBtns = document.querySelectorAll('.tab-btn');
+
+            // 教程
+            var tutorialSearch = document.getElementById('tutorialSearch');
+            var bookmarkList = document.getElementById('bookmarkList');
+            var tutorialContent = document.getElementById('tutorialContent');
+
+            // Toast
+            var toast = document.getElementById('toast');
+            var toastIcon = document.getElementById('toastIcon');
+            var toastMsg = document.getElementById('toastMsg');
+            var toastTimer = null;
+
+            // ================================================================
+            // 全局状态
+            // ================================================================
+            var currentAlgo = 'totp';
+            var currentResults = [];
+            var totpTimer = null; // 用于 TOTP 的定时器
+            var hotpCounter = 0; // 用于 HOTP 的计数器状态
+
+            // 每个算法的状态（保存输入值）
+            var algoState = {
+                totp: {
+                    secret: '',
+                    issuer: 'MyApp',
+                    account: 'user@example.com',
+                    algorithm: 'SHA1',
+                    digits: '6',
+                    period: 30,
+                    code: '',
+                    remaining: 30
+                },
+                hotp: {
+                    secret: '',
+                    issuer: 'MyApp',
+                    account: 'user@example.com',
+                    algorithm: 'SHA1',
+                    digits: '6',
+                    counter: 0,
+                    code: ''
+                }
+            };
+
+            // ================================================================
+            // Toast
+            // ================================================================
+            function showToast(msg, type) {
+                type = type || 'success';
+                if (toastTimer) {
+                    clearTimeout(toastTimer);
+                    toastTimer = null;
+                }
+                toastIcon.className = type === 'error' ? 'fas fa-exclamation-circle' : 'fas fa-check-circle';
+                toastMsg.textContent = msg;
+                toast.className = type === 'error' ? 'error' : 'success';
+                toast.classList.add('show');
+                toastTimer = setTimeout(function() {
+                    toast.classList.remove('show');
+                    toastTimer = null;
+                }, 2500);
+            }
+
+            // ================================================================
+            // 复制功能
+            // ================================================================
+            function copyText(text, btn) {
+                if (!text) {
+                    showToast('没有内容可复制', 'error');
+                    return;
+                }
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text).then(function() {
+                        showToast('已复制', 'success');
+                        if (btn) {
+                            btn.classList.add('copied');
+                            setTimeout(function() { btn.classList.remove('copied'); }, 1500);
+                        }
+                    }).catch(function() {
+                        fallbackCopy(text, btn);
+                    });
+                } else {
+                    fallbackCopy(text, btn);
+                }
+            }
+
+            function fallbackCopy(text, btn) {
+                var textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                try {
+                    document.execCommand('copy');
+                    showToast('已复制', 'success');
+                    if (btn) {
+                        btn.classList.add('copied');
+                        setTimeout(function() { btn.classList.remove('copied'); }, 1500);
+                    }
+                } catch (e) {
+                    showToast('复制失败，请手动复制', 'error');
+                }
+                document.body.removeChild(textarea);
+            }
+
+            // ================================================================
+            // Base32 编解码
+            // ================================================================
+            var base32Chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+
+            function base32Encode(bytes) {
+                var bits = 0,
+                    value = 0,
+                    output = '';
+                for (var i = 0; i < bytes.length; i++) {
+                    value = (value << 8) | bytes[i];
+                    bits += 8;
+                    while (bits >= 5) {
+                        output += base32Chars[(value >>> (bits - 5)) & 31];
+                        bits -= 5;
+                    }
+                }
+                if (bits > 0) {
+                    output += base32Chars[(value << (5 - bits)) & 31];
+                }
+                while (output.length % 8 !== 0) {
+                    output += '=';
+                }
+                return output;
+            }
+
+            function base32Decode(str) {
+                str = str.replace(/=+$/, '').toUpperCase();
+                var bytes = [];
+                var bits = 0,
+                    value = 0;
+                for (var i = 0; i < str.length; i++) {
+                    var idx = base32Chars.indexOf(str[i]);
+                    if (idx === -1) continue;
+                    value = (value << 5) | idx;
+                    bits += 5;
+                    if (bits >= 8) {
+                        bytes.push((value >>> (bits - 8)) & 255);
+                        bits -= 8;
+                    }
+                }
+                return new Uint8Array(bytes);
+            }
+
+            function generateRandomSecret(length) {
+                length = length || 20;
+                var bytes = new Uint8Array(length);
+                if (crypto && crypto.getRandomValues) {
+                    crypto.getRandomValues(bytes);
+                } else {
+                    for (var i = 0; i < length; i++) {
+                        bytes[i] = Math.floor(Math.random() * 256);
+                    }
+                }
+                return base32Encode(bytes);
+            }
+
+            // ================================================================
+            // HMAC 计算 (Web Crypto API)
+            // ================================================================
+            async function hmac(algorithm, key, message) {
+                var keyBuf = new TextEncoder().encode(key);
+                var msgBuf = new TextEncoder().encode(message);
+                var algoName = algorithm === 'SHA1' ? 'SHA-1' :
+                    algorithm === 'SHA256' ? 'SHA-256' :
+                    'SHA-512';
+                var cryptoKey = await crypto.subtle.importKey('raw', keyBuf, { name: 'HMAC', hash: algoName }, false, ['sign']);
+                var sig = await crypto.subtle.sign('HMAC', cryptoKey, msgBuf);
+                return new Uint8Array(sig);
+            }
+
+            function dynamicTruncate(hash) {
+                var offset = hash[hash.length - 1] & 0x0f;
+                var binary = ((hash[offset] & 0x7f) << 24) |
+                    ((hash[offset + 1] & 0xff) << 16) |
+                    ((hash[offset + 2] & 0xff) << 8) |
+                    (hash[offset + 3] & 0xff);
+                return binary;
+            }
+
+            async function generateOTP(secret, algorithm, digits, counter) {
+                var keyBytes = base32Decode(secret);
+                var key = '';
+                for (var i = 0; i < keyBytes.length; i++) {
+                    key += String.fromCharCode(keyBytes[i]);
+                }
+                var msg = '';
+                var counterBig = BigInt(counter);
+                for (var j = 7; j >= 0; j--) {
+                    msg += String.fromCharCode(Number((counterBig >> BigInt(j * 8)) & BigInt(0xff)));
+                }
+                var hash = await hmac(algorithm, key, msg);
+                var binary = dynamicTruncate(hash);
+                var code = binary % Math.pow(10, parseInt(digits));
+                return code.toString().padStart(parseInt(digits), '0');
+            }
+
+            // ================================================================
+            // 渲染输入面板
+            // ================================================================
+            function renderInputPanel(algo) {
+                var html = '';
+                if (algo === 'totp') {
+                    var state = algoState.totp;
+                    html = `
+                        <!-- 密钥 -->
+                        <div class="ctrl-group">
+                            <div class="group-label"><i class="fas fa-key"></i> 密钥 (Base32)</div>
+                            <div class="inline-toolbar">
+                                <input type="text" id="totpSecret" value="${escapeHtml(state.secret)}" style="flex:1;min-width:80px;font-size:12px;" />
+                                <button class="btn btn-success btn-sm" id="totpGenSecret"><i class="fas fa-sync-alt"></i> 生成</button>
+                            </div>
+                            <div class="hint">留空将自动生成 160 位密钥</div>
+                        </div>
+
+                        <!-- 发行人 & 账户 -->
+                        <div class="row-controls">
+                            <div class="ctrl-group">
+                                <label for="totpIssuer">发行人</label>
+                                <input type="text" id="totpIssuer" value="${escapeHtml(state.issuer)}" />
+                            </div>
+                            <div class="ctrl-group">
+                                <label for="totpAccount">账户</label>
+                                <input type="text" id="totpAccount" value="${escapeHtml(state.account)}" />
+                            </div>
+                        </div>
+
+                        <!-- 参数 -->
+                        <div class="row-controls">
+                            <div class="ctrl-group shrink">
+                                <label for="totpAlgorithm">算法</label>
+                                <select id="totpAlgorithm">
+                                    <option value="SHA1" ${state.algorithm === 'SHA1' ? 'selected' : ''}>SHA1</option>
+                                    <option value="SHA256" ${state.algorithm === 'SHA256' ? 'selected' : ''}>SHA256</option>
+                                    <option value="SHA512" ${state.algorithm === 'SHA512' ? 'selected' : ''}>SHA512</option>
+                                </select>
+                            </div>
+                            <div class="ctrl-group shrink">
+                                <label for="totpDigits">位数</label>
+                                <select id="totpDigits">
+                                    <option value="6" ${state.digits === '6' ? 'selected' : ''}>6</option>
+                                    <option value="8" ${state.digits === '8' ? 'selected' : ''}>8</option>
+                                </select>
+                            </div>
+                            <div class="ctrl-group shrink">
+                                <label for="totpPeriod">步长(秒)</label>
+                                <input type="number" id="totpPeriod" value="${state.period}" min="10" max="120" style="width:70px;" />
+                            </div>
+                        </div>
+
+                        <!-- 操作按钮 -->
+                        <div style="display:flex;flex-wrap:wrap;gap:var(--space-sm);align-items:center;margin-top:var(--space-sm);flex-shrink:0;">
+                            <div class="btn-group" style="margin-top:0;flex:1;">
+                                <button class="btn" id="totpGenerateBtn"><i class="fas fa-sync-alt"></i> 生成验证码</button>
+                                <button class="btn btn-outline" id="totpVerifyBtn"><i class="fas fa-check"></i> 验证</button>
+                            </div>
+                            <span class="shortcut-hint"><kbd>Ctrl</kbd> + <kbd>Enter</kbd> 生成</span>
+                        </div>
+
+                        <!-- 验证输入 -->
+                        <div class="verify-row">
+                            <input type="text" id="totpVerifyInput" placeholder="输入验证码" maxlength="8" />
+                            <span class="verify-result" id="totpVerifyResult"></span>
+                        </div>
+                    `;
+                } else {
+                    var state = algoState.hotp;
+                    html = `
+                        <!-- 密钥 -->
+                        <div class="ctrl-group">
+                            <div class="group-label"><i class="fas fa-key"></i> 密钥 (Base32)</div>
+                            <div class="inline-toolbar">
+                                <input type="text" id="hotpSecret" value="${escapeHtml(state.secret)}" style="flex:1;min-width:80px;font-size:12px;" />
+                                <button class="btn btn-success btn-sm" id="hotpGenSecret"><i class="fas fa-sync-alt"></i> 生成</button>
+                            </div>
+                            <div class="hint">留空将自动生成 160 位密钥</div>
+                        </div>
+
+                        <!-- 发行人 & 账户 -->
+                        <div class="row-controls">
+                            <div class="ctrl-group">
+                                <label for="hotpIssuer">发行人</label>
+                                <input type="text" id="hotpIssuer" value="${escapeHtml(state.issuer)}" />
+                            </div>
+                            <div class="ctrl-group">
+                                <label for="hotpAccount">账户</label>
+                                <input type="text" id="hotpAccount" value="${escapeHtml(state.account)}" />
+                            </div>
+                        </div>
+
+                        <!-- 参数 -->
+                        <div class="row-controls">
+                            <div class="ctrl-group shrink">
+                                <label for="hotpAlgorithm">算法</label>
+                                <select id="hotpAlgorithm">
+                                    <option value="SHA1" ${state.algorithm === 'SHA1' ? 'selected' : ''}>SHA1</option>
+                                    <option value="SHA256" ${state.algorithm === 'SHA256' ? 'selected' : ''}>SHA256</option>
+                                    <option value="SHA512" ${state.algorithm === 'SHA512' ? 'selected' : ''}>SHA512</option>
+                                </select>
+                            </div>
+                            <div class="ctrl-group shrink">
+                                <label for="hotpDigits">位数</label>
+                                <select id="hotpDigits">
+                                    <option value="6" ${state.digits === '6' ? 'selected' : ''}>6</option>
+                                    <option value="8" ${state.digits === '8' ? 'selected' : ''}>8</option>
+                                </select>
+                            </div>
+                            <div class="ctrl-group shrink">
+                                <label for="hotpCounter">计数器</label>
+                                <input type="number" id="hotpCounter" value="${state.counter}" min="0" style="width:70px;" />
+                            </div>
+                        </div>
+
+                        <!-- 操作按钮 -->
+                        <div style="display:flex;flex-wrap:wrap;gap:var(--space-sm);align-items:center;margin-top:var(--space-sm);flex-shrink:0;">
+                            <div class="btn-group" style="margin-top:0;flex:1;">
+                                <button class="btn" id="hotpGenerateBtn"><i class="fas fa-sync-alt"></i> 生成验证码</button>
+                                <button class="btn btn-outline" id="hotpVerifyBtn"><i class="fas fa-check"></i> 验证</button>
+                            </div>
+                            <span class="shortcut-hint"><kbd>Ctrl</kbd> + <kbd>Enter</kbd> 生成</span>
+                        </div>
+
+                        <!-- 验证输入 -->
+                        <div class="verify-row">
+                            <input type="text" id="hotpVerifyInput" placeholder="输入验证码" maxlength="8" />
+                            <span class="verify-result" id="hotpVerifyResult"></span>
+                        </div>
+                    `;
+                }
+                inputPanel.innerHTML = html;
+
+                // 绑定事件
+                if (algo === 'totp') {
+                    bindTOTPEvents();
+                } else {
+                    bindHOTPEvents();
+                }
+            }
+
+            function escapeHtml(text) {
+                if (!text) return '';
+                var div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            // ================================================================
+            // 保存当前输入到状态
+            // ================================================================
+            function saveCurrentState() {
+                if (currentAlgo === 'totp') {
+                    var el = document.getElementById('totpSecret');
+                    if (el) algoState.totp.secret = el.value;
+                    el = document.getElementById('totpIssuer');
+                    if (el) algoState.totp.issuer = el.value;
+                    el = document.getElementById('totpAccount');
+                    if (el) algoState.totp.account = el.value;
+                    el = document.getElementById('totpAlgorithm');
+                    if (el) algoState.totp.algorithm = el.value;
+                    el = document.getElementById('totpDigits');
+                    if (el) algoState.totp.digits = el.value;
+                    el = document.getElementById('totpPeriod');
+                    if (el) algoState.totp.period = parseInt(el.value) || 30;
+                } else {
+                    var el = document.getElementById('hotpSecret');
+                    if (el) algoState.hotp.secret = el.value;
+                    el = document.getElementById('hotpIssuer');
+                    if (el) algoState.hotp.issuer = el.value;
+                    el = document.getElementById('hotpAccount');
+                    if (el) algoState.hotp.account = el.value;
+                    el = document.getElementById('hotpAlgorithm');
+                    if (el) algoState.hotp.algorithm = el.value;
+                    el = document.getElementById('hotpDigits');
+                    if (el) algoState.hotp.digits = el.value;
+                    el = document.getElementById('hotpCounter');
+                    if (el) algoState.hotp.counter = parseInt(el.value) || 0;
+                }
+            }
+
+            // ================================================================
+            // 渲染结果
+            // ================================================================
+            function renderResult(title, items) {
+                var html = '';
+                html += '<div class="result-row status-row">' +
+                    '<span class="label">' + title + '</span>' +
+                    '<span class="value">✓</span>' +
+                    '</div>';
+                items.forEach(function(item) {
+                    var val = item.value || '';
+                    html += '<div class="result-row">' +
+                        '<span class="label">' + item.label + '</span>' +
+                        '<span class="value">' + escapeHtml(val) + '</span>' +
+                        '<button class="copy-btn" data-copy="' + escapeHtml(val) + '" title="复制"><i class="fas fa-copy"></i></button>' +
+                        '</div>';
+                });
+                // 移除旧的二维码容器
+                var oldQR = resultBox.querySelector('#qrcode-container');
+                if (oldQR) oldQR.remove();
+                // 移除旧的计时器
+                var oldTimer = resultBox.querySelector('.totp-timer');
+                if (oldTimer) oldTimer.remove();
+
+                resultBox.innerHTML = html;
+                currentResults = items.map(function(item) { return item.value || ''; });
+
+                // 绑定复制事件
+                resultBox.querySelectorAll('.copy-btn').forEach(function(btn) {
+                    btn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        var text = this.dataset.copy;
+                        copyText(text, this);
+                    });
+                });
+
+                // 添加二维码容器
+                var qrContainer = document.createElement('div');
+                qrContainer.id = 'qrcode-container';
+                qrContainer.style.cssText =
+                    'display:flex;justify-content:center;align-items:center;padding:var(--space-sm);background:#fff;border-radius:var(--radius-md);min-height:120px;min-width:120px;margin:var(--space-xs) 0;';
+                resultBox.appendChild(qrContainer);
+
+                // 如果有 OTPAuth URI，生成二维码
+                var otpItem = items.find(function(item) { return item.label === 'OTPAuth URI'; });
+                if (otpItem && typeof QRCode !== 'undefined') {
+                    try {
+                        var qr = new QRCode(qrContainer, {
+                            text: otpItem.value,
+                            width: 120,
+                            height: 120,
+                            colorDark: '#000000',
+                            colorLight: '#ffffff',
+                            correctLevel: QRCode.CorrectLevel.H
+                        });
+                    } catch (e) {
+                        qrContainer.textContent = '二维码生成失败';
+                    }
+                } else {
+                    qrContainer.style.display = 'none';
+                }
+
+                // 如果是 TOTP，添加进度条
+                if (currentAlgo === 'totp' && items.some(function(item) { return item.label === '剩余时间'; })) {
+                    var timerHtml = '<div class="totp-timer">' +
+                        '<div class="progress-wrap"><div class="progress-bar" style="width:100%;"></div></div>' +
+                        '<span class="time-text">30s</span>' +
+                        '</div>';
+                    resultBox.insertAdjacentHTML('beforeend', timerHtml);
+                    // 更新进度条（在 updateTOTPDisplay 中更新）
+                }
+            }
+
+            // ================================================================
+            // TOTP 核心逻辑
+            // ================================================================
+            async function generateTOTP() {
+                var secret = document.getElementById('totpSecret').value.trim();
+                if (!secret) {
+                    showToast('请先生成密钥', 'error');
+                    return;
+                }
+                var algorithm = document.getElementById('totpAlgorithm').value;
+                var digits = document.getElementById('totpDigits').value;
+                var period = parseInt(document.getElementById('totpPeriod').value) || 30;
+
+                try {
+                    var now = Math.floor(Date.now() / 1000);
+                    var counter = Math.floor(now / period);
+                    var code = await generateOTP(secret, algorithm, digits, counter);
+                    var remaining = period - (now % period);
+
+                    // 保存状态
+                    algoState.totp.code = code;
+                    algoState.totp.remaining = remaining;
+
+                    var items = [
+                        { label: 'TOTP 验证码', value: code },
+                        { label: '剩余时间', value: remaining + ' 秒' },
+                        { label: '当前计数器', value: counter.toString() },
+                        { label: '密钥 (Base32)', value: secret }
+                    ];
+
+                    // 生成 OTPAuth URI
+                    var issuer = document.getElementById('totpIssuer').value || 'MyApp';
+                    var account = document.getElementById('totpAccount').value || 'user';
+                    var otpauth = 'otpauth://totp/' + encodeURIComponent(issuer) + ':' + encodeURIComponent(account) +
+                        '?secret=' + secret +
+                        '&issuer=' + encodeURIComponent(issuer) +
+                        '&algorithm=' + algorithm +
+                        '&digits=' + digits +
+                        '&period=' + period;
+                    items.push({ label: 'OTPAuth URI', value: otpauth });
+
+                    renderResult('TOTP 生成成功', items);
+                    statusDisplay.textContent = 'TOTP 已生成';
+                    showToast('TOTP 验证码已生成', 'success');
+
+                    // 更新进度条（由定时器更新）
+                } catch (e) {
+                    showToast('生成失败: ' + e.message, 'error');
+                }
+            }
+
+            function updateTOTPDisplay() {
+                var secret = document.getElementById('totpSecret').value.trim();
+                if (!secret) return;
+                var algorithm = document.getElementById('totpAlgorithm').value;
+                var digits = document.getElementById('totpDigits').value;
+                var period = parseInt(document.getElementById('totpPeriod').value) || 30;
+
+                var now = Math.floor(Date.now() / 1000);
+                var counter = Math.floor(now / period);
+                var remaining = period - (now % period);
+
+                // 如果剩余时间为0，说明正好整秒，重新生成
+                // 异步生成
+                (async function() {
+                    try {
+                        var code = await generateOTP(secret, algorithm, digits, counter);
+                        // 更新验证码显示
+                        var codeRow = resultBox.querySelector('.result-row .value');
+                        if (codeRow) {
+                            // 查找验证码行
+                            var rows = resultBox.querySelectorAll('.result-row');
+                            for (var i = 0; i < rows.length; i++) {
+                                var label = rows[i].querySelector('.label');
+                                if (label && label.textContent === 'TOTP 验证码') {
+                                    var valueEl = rows[i].querySelector('.value');
+                                    if (valueEl) {
+                                        valueEl.textContent = code;
+                                        // 更新复制按钮数据
+                                        var copyBtn = rows[i].querySelector('.copy-btn');
+                                        if (copyBtn) {
+                                            copyBtn.dataset.copy = code;
+                                        }
+                                    }
+                                    break;
+                                }
+                            }
+                            // 更新剩余时间行
+                            var rows2 = resultBox.querySelectorAll('.result-row');
+                            for (var j = 0; j < rows2.length; j++) {
+                                var label2 = rows2[j].querySelector('.label');
+                                if (label2 && label2.textContent === '剩余时间') {
+                                    var valueEl2 = rows2[j].querySelector('.value');
+                                    if (valueEl2) {
+                                        valueEl2.textContent = remaining + ' 秒';
+                                    }
+                                    break;
+                                }
+                            }
+                            // 更新计数器行
+                            var rows3 = resultBox.querySelectorAll('.result-row');
+                            for (var k = 0; k < rows3.length; k++) {
+                                var label3 = rows3[k].querySelector('.label');
+                                if (label3 && label3.textContent === '当前计数器') {
+                                    var valueEl3 = rows3[k].querySelector('.value');
+                                    if (valueEl3) {
+                                        valueEl3.textContent = counter.toString();
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                        // 更新进度条
+                        var progressBar = resultBox.querySelector('.progress-bar');
+                        var timeText = resultBox.querySelector('.time-text');
+                        if (progressBar) {
+                            progressBar.style.width = ((remaining / period) * 100) + '%';
+                        }
+                        if (timeText) {
+                            timeText.textContent = remaining + 's';
+                        }
+                        // 更新状态
+                        algoState.totp.code = code;
+                        algoState.totp.remaining = remaining;
+                    } catch (e) {
+                        // 静默失败
+                    }
+                })();
+            }
+
+            // ================================================================
+            // HOTP 核心逻辑
+            // ================================================================
+            async function generateHOTP() {
+                var secret = document.getElementById('hotpSecret').value.trim();
+                if (!secret) {
+                    showToast('请先生成密钥', 'error');
+                    return;
+                }
+                var algorithm = document.getElementById('hotpAlgorithm').value;
+                var digits = document.getElementById('hotpDigits').value;
+                var counter = parseInt(document.getElementById('hotpCounter').value) || 0;
+
+                try {
+                    var code = await generateOTP(secret, algorithm, digits, counter);
+                    algoState.hotp.code = code;
+                    algoState.hotp.counter = counter;
+
+                    var items = [
+                        { label: 'HOTP 验证码', value: code },
+                        { label: '计数器', value: counter.toString() },
+                        { label: '密钥 (Base32)', value: secret }
+                    ];
+
+                    var issuer = document.getElementById('hotpIssuer').value || 'MyApp';
+                    var account = document.getElementById('hotpAccount').value || 'user';
+                    var otpauth = 'otpauth://hotp/' + encodeURIComponent(issuer) + ':' + encodeURIComponent(account) +
+                        '?secret=' + secret +
+                        '&issuer=' + encodeURIComponent(issuer) +
+                        '&algorithm=' + algorithm +
+                        '&digits=' + digits +
+                        '&counter=' + counter;
+                    items.push({ label: 'OTPAuth URI', value: otpauth });
+
+                    renderResult('HOTP 生成成功', items);
+                    statusDisplay.textContent = 'HOTP 已生成';
+                    showToast('HOTP 验证码已生成', 'success');
+                } catch (e) {
+                    showToast('生成失败: ' + e.message, 'error');
+                }
+            }
+
+            // ================================================================
+            // TOTP 事件绑定
+            // ================================================================
+            function bindTOTPEvents() {
+                document.getElementById('totpGenSecret').addEventListener('click', function() {
+                    var secret = generateRandomSecret(20);
+                    document.getElementById('totpSecret').value = secret;
+                    algoState.totp.secret = secret;
+                    showToast('已生成新密钥', 'success');
+                    generateTOTP();
+                });
+
+                document.getElementById('totpGenerateBtn').addEventListener('click', function() {
+                    generateTOTP();
+                });
+
+                document.getElementById('totpVerifyBtn').addEventListener('click', function() {
+                    verifyTOTP();
+                });
+
+                var verifyInput = document.getElementById('totpVerifyInput');
+                verifyInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        verifyTOTP();
+                    }
+                });
+                verifyInput.addEventListener('input', function() {
+                    var resultEl = document.getElementById('totpVerifyResult');
+                    resultEl.textContent = '';
+                    resultEl.className = 'verify-result';
+                });
+
+                // 参数变化自动重新生成
+                var autoGenEls = ['totpSecret', 'totpAlgorithm', 'totpDigits', 'totpPeriod'];
+                autoGenEls.forEach(function(id) {
+                    var el = document.getElementById(id);
+                    if (!el) return;
+                    el.addEventListener('change', function() {
+                        saveCurrentState();
+                        generateTOTP();
+                    });
+                    el.addEventListener('input', function() {
+                        // 对于文本输入，延迟保存并重新生成
+                        if (id === 'totpSecret' || id === 'totpIssuer' || id === 'totpAccount') {
+                            // 这些变化需要重新生成二维码，但不要频繁触发
+                            clearTimeout(el._timer);
+                            el._timer = setTimeout(function() {
+                                saveCurrentState();
+                                if (id === 'totpSecret' || id === 'totpAlgorithm' || id ===
+                                    'totpDigits' || id === 'totpPeriod') {
+                                    generateTOTP();
+                                }
+                            }, 300);
+                        }
+                    });
+                });
+
+                // 快捷键 Ctrl+Enter
+                document.addEventListener('keydown', function(e) {
+                    if (e.ctrlKey && e.key === 'Enter' && currentAlgo === 'totp' && document.activeElement &&
+                        document.activeElement.closest('#testTab')) {
+                        e.preventDefault();
+                        generateTOTP();
+                    }
+                });
+
+                // 启动定时器
+                if (totpTimer) clearInterval(totpTimer);
+                totpTimer = setInterval(function() {
+                    if (currentAlgo === 'totp' && document.getElementById('totpSecret')) {
+                        var secret = document.getElementById('totpSecret').value.trim();
+                        if (secret) {
+                            updateTOTPDisplay();
+                        }
+                    }
+                }, 1000);
+            }
+
+            // ================================================================
+            // HOTP 事件绑定
+            // ================================================================
+            function bindHOTPEvents() {
+                document.getElementById('hotpGenSecret').addEventListener('click', function() {
+                    var secret = generateRandomSecret(20);
+                    document.getElementById('hotpSecret').value = secret;
+                    algoState.hotp.secret = secret;
+                    showToast('已生成新密钥', 'success');
+                    generateHOTP();
+                });
+
+                document.getElementById('hotpGenerateBtn').addEventListener('click', function() {
+                    generateHOTP();
+                });
+
+                document.getElementById('hotpVerifyBtn').addEventListener('click', function() {
+                    verifyHOTP();
+                });
+
+                var verifyInput = document.getElementById('hotpVerifyInput');
+                verifyInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        verifyHOTP();
+                    }
+                });
+                verifyInput.addEventListener('input', function() {
+                    var resultEl = document.getElementById('hotpVerifyResult');
+                    resultEl.textContent = '';
+                    resultEl.className = 'verify-result';
+                });
+
+                var autoGenEls = ['hotpSecret', 'hotpAlgorithm', 'hotpDigits', 'hotpCounter'];
+                autoGenEls.forEach(function(id) {
+                    var el = document.getElementById(id);
+                    if (!el) return;
+                    el.addEventListener('change', function() {
+                        saveCurrentState();
+                        if (id !== 'hotpCounter') {
+                            generateHOTP();
+                        } else {
+                            // 计数器变化需要重新生成
+                            generateHOTP();
+                        }
+                    });
+                    el.addEventListener('input', function() {
+                        clearTimeout(el._timer);
+                        el._timer = setTimeout(function() {
+                            saveCurrentState();
+                            if (id === 'hotpSecret' || id === 'hotpAlgorithm' || id === 'hotpDigits' ||
+                                id === 'hotpCounter') {
+                                generateHOTP();
+                            }
+                        }, 300);
+                    });
+                });
+
+                document.addEventListener('keydown', function(e) {
+                    if (e.ctrlKey && e.key === 'Enter' && currentAlgo === 'hotp' && document.activeElement &&
+                        document.activeElement.closest('#testTab')) {
+                        e.preventDefault();
+                        generateHOTP();
+                    }
+                });
+            }
+
+            // ================================================================
+            // 验证逻辑
+            // ================================================================
+            async function verifyTOTP() {
+                var input = document.getElementById('totpVerifyInput');
+                var code = input.value.trim();
+                if (!code) {
+                    showToast('请输入验证码', 'error');
+                    return;
+                }
+                var secret = document.getElementById('totpSecret').value.trim();
+                if (!secret) {
+                    showToast('请先生成密钥', 'error');
+                    return;
+                }
+                var algorithm = document.getElementById('totpAlgorithm').value;
+                var digits = parseInt(document.getElementById('totpDigits').value);
+                var period = parseInt(document.getElementById('totpPeriod').value) || 30;
+                var now = Math.floor(Date.now() / 1000);
+                var counter = Math.floor(now / period);
+
+                var resultEl = document.getElementById('totpVerifyResult');
+                // 检查当前及前后各一个步长（容错）
+                var valid = false;
+                for (var offset = -1; offset <= 1; offset++) {
+                    var c = counter + offset;
+                    try {
+                        var genCode = await generateOTP(secret, algorithm, digits, c);
+                        if (genCode === code) {
+                            valid = true;
+                            break;
+                        }
+                    } catch (e) {
+                        // 忽略
+                    }
+                }
+                if (valid) {
+                    resultEl.textContent = '✓ 有效';
+                    resultEl.className = 'verify-result valid';
+                    showToast('验证通过！', 'success');
+                } else {
+                    resultEl.textContent = '✗ 无效';
+                    resultEl.className = 'verify-result invalid';
+                    showToast('验证失败，请重试', 'error');
+                }
+            }
+
+            async function verifyHOTP() {
+                var input = document.getElementById('hotpVerifyInput');
+                var code = input.value.trim();
+                if (!code) {
+                    showToast('请输入验证码', 'error');
+                    return;
+                }
+                var secret = document.getElementById('hotpSecret').value.trim();
+                if (!secret) {
+                    showToast('请先生成密钥', 'error');
+                    return;
+                }
+                var algorithm = document.getElementById('hotpAlgorithm').value;
+                var digits = parseInt(document.getElementById('hotpDigits').value);
+                var counter = parseInt(document.getElementById('hotpCounter').value) || 0;
+
+                var resultEl = document.getElementById('hotpVerifyResult');
+                try {
+                    var genCode = await generateOTP(secret, algorithm, digits, counter);
+                    if (genCode === code) {
+                        resultEl.textContent = '✓ 有效';
+                        resultEl.className = 'verify-result valid';
+                        showToast('验证通过！计数器已增加', 'success');
+                        // 自动增加计数器
+                        var newCounter = counter + 1;
+                        document.getElementById('hotpCounter').value = newCounter;
+                        algoState.hotp.counter = newCounter;
+                        // 自动生成下一个
+                        generateHOTP();
+                    } else {
+                        resultEl.textContent = '✗ 无效';
+                        resultEl.className = 'verify-result invalid';
+                        showToast('验证失败，请重试', 'error');
+                    }
+                } catch (e) {
+                    showToast('验证失败: ' + e.message, 'error');
+                }
+            }
+
+            // ================================================================
+            // 算法切换
+            // ================================================================
+            function switchAlgo(algo) {
+                if (algo === currentAlgo) return;
+                // 保存当前状态
+                saveCurrentState();
+                // 停止 TOTP 定时器
+                if (totpTimer) {
+                    clearInterval(totpTimer);
+                    totpTimer = null;
+                }
+                currentAlgo = algo;
+                algoBtns.forEach(function(btn) {
+                    btn.classList.toggle('active', btn.dataset.algo === algo);
+                });
+                renderInputPanel(algo);
+                // 清空结果
+                resultBox.innerHTML = '<div class="result-empty"><i class="fas fa-shield-alt"></i>配置参数后生成验证码</div>';
+                statusDisplay.textContent = '就绪';
+                currentResults = [];
+                // 自动生成
+                setTimeout(function() {
+                    if (algo === 'totp') {
+                        var secret = document.getElementById('totpSecret').value.trim();
+                        if (!secret) {
+                            document.getElementById('totpGenSecret').click();
+                        } else {
+                            generateTOTP();
+                        }
+                    } else {
+                        var secretH = document.getElementById('hotpSecret').value.trim();
+                        if (!secretH) {
+                            document.getElementById('hotpGenSecret').click();
+                        } else {
+                            generateHOTP();
+                        }
+                    }
+                }, 200);
+            }
+
+            algoBtns.forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    switchAlgo(this.dataset.algo);
+                });
+            });
+
+            // ================================================================
+            // 复制全部
+            // ================================================================
+            copyAllBtn.addEventListener('click', function() {
+                if (currentResults.length === 0) {
+                    showToast('没有可复制的内容', 'error');
+                    return;
+                }
+                var text = currentResults.join('\n');
+                copyText(text, this);
+            });
+
+            // ================================================================
+            // 标签切换
+            // ================================================================
+            tabBtns.forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    tabBtns.forEach(function(b) { b.classList.remove('active'); });
+                    this.classList.add('active');
+                    var tab = this.dataset.tab;
+                    testTab.style.display = tab === 'test' ? 'block' : 'none';
+                    tutorialTab.style.display = tab === 'tutorial' ? 'block' : 'none';
+                    if (tab === 'tutorial') {
+                        renderBookmarks();
+                    }
+                });
+            });
+
+            // ================================================================
+            // 教程数据（7 章）
+            // ================================================================
+            var chapters = [{
+                id: 'intro',
+                title: '2FA 简介',
+                content: `
+                    <h2>双因素认证 (2FA) 简介</h2>
+                    <p>双因素认证 (Two-Factor Authentication) 是一种安全机制，要求用户提供两种不同的认证因素来验证身份。通常包括：</p>
+                    <ul>
+                        <li><strong>知识因素</strong>：密码、PIN 码等</li>
+                        <li><strong>拥有因素</strong>：手机、硬件令牌、软件令牌等</li>
+                    </ul>
+                    <p>本工具实现了基于时间的一次性密码 (TOTP) 和基于计数器的一次性密码 (HOTP)，符合 RFC 6238 和 RFC 4226 标准。</p>
+                    <div class="note success">2FA 显著提高账户安全性，即使密码泄露也能有效防护。</div>
+                `
+            }, {
+                id: 'totp',
+                title: 'TOTP 详解',
+                content: `
+                    <h2>TOTP (基于时间)</h2>
+                    <p>TOTP (Time-based One-Time Password) 根据当前时间生成一次性密码。它使用共享密钥和当前时间戳（按固定步长划分）计算 HMAC 值，然后截断生成数字验证码。</p>
+                    <ul>
+                        <li><strong>密钥</strong>：Base32 编码的共享密钥，通常 160 位 (20 字节) 或更长。</li>
+                        <li><strong>时间步长</strong>：通常为 30 秒，允许一个步长内的时钟偏差。</li>
+                        <li><strong>算法</strong>：HMAC-SHA1/SHA256/SHA512。</li>
+                        <li><strong>位数</strong>：通常 6 位或 8 位。</li>
+                    </ul>
+                    <h3>算法流程</h3>
+                    <pre><code>counter = floor(UnixTimestamp / Period)
+hash = HMAC(Secret, counter)
+offset = hash[last] & 0x0f
+binary = (hash[offset] & 0x7f) << 24 | ... | hash[offset+3]
+otp = binary % 10^Digits</code></pre>
+                    <div class="note">TOTP 广泛用于 Google Authenticator、Microsoft Authenticator 等应用。</div>
+                `
+            }, {
+                id: 'hotp',
+                title: 'HOTP 详解',
+                content: `
+                    <h2>HOTP (基于计数器)</h2>
+                    <p>HOTP (HMAC-based One-Time Password) 基于一个递增计数器生成一次性密码。每次验证后计数器增加，确保每个密码只使用一次。</p>
+                    <ul>
+                        <li><strong>密钥</strong>：Base32 编码的共享密钥。</li>
+                        <li><strong>计数器</strong>：64 位整数，每次验证后递增。</li>
+                        <li><strong>算法</strong>：HMAC-SHA1/SHA256/SHA512。</li>
+                        <li><strong>位数</strong>：通常 6 位或 8 位。</li>
+                    </ul>
+                    <h3>算法流程</h3>
+                    <pre><code>hash = HMAC(Secret, counter)
+offset = hash[last] & 0x0f
+binary = (hash[offset] & 0x7f) << 24 | ... | hash[offset+3]
+otp = binary % 10^Digits</code></pre>
+                    <div class="note warning">HOTP 要求服务端和客户端保持计数器同步，否则会失步。</div>
+                `
+            }, {
+                id: 'code',
+                title: '代码示例 (JavaScript)',
+                content: `
+                    <h2>代码示例 (JavaScript)</h2>
+                    <p>以下代码演示如何使用 Web Crypto API 和 Base32 编解码实现 TOTP/HOTP。</p>
+                    <pre><code>// 生成随机密钥 (Base32)
+function generateSecret() {
+    const bytes = crypto.getRandomValues(new Uint8Array(20));
+    return base32Encode(bytes);
+}
+
+// 生成 OTP (TOTP/HOTP)
+async function generateOTP(secret, algorithm, digits, counter) {
+    const key = base32Decode(secret);
+    const msg = bigIntToBytes(counter, 8);
+    const hash = await hmac(algorithm, key, msg);
+    const offset = hash[hash.length - 1] & 0x0f;
+    const binary = ((hash[offset] & 0x7f) << 24) |
+                   ((hash[offset+1] & 0xff) << 16) |
+                   ((hash[offset+2] & 0xff) << 8) |
+                   (hash[offset+3] & 0xff);
+    return String(binary % Math.pow(10, digits)).padStart(digits, '0');
+}</code></pre>
+                    <div class="note success">本工具完全基于此实现，可在浏览器中直接运行。</div>
+                `
+            }, {
+                id: 'qr',
+                title: '二维码与导入',
+                content: `
+                    <h2>二维码与导入</h2>
+                    <p>为了便于将密钥导入到手机验证器应用（如 Google Authenticator），本工具生成标准的 <code>otpauth://</code> 链接并显示二维码。</p>
+                    <p>URI 格式：</p>
+                    <pre><code>otpauth://totp/Issuer:Account?secret=SECRET&issuer=Issuer&algorithm=SHA1&digits=6&period=30</code></pre>
+                    <p>用户只需扫描二维码即可将账户添加到验证器应用中。</p>
+                    <div class="note">支持 TOTP 和 HOTP 两种类型（URI 中 type 不同）。</div>
+                `
+            }, {
+                id: 'security',
+                title: '安全建议',
+                content: `
+                    <h2>安全建议</h2>
+                    <ul>
+                        <li><strong>密钥保护</strong>：密钥必须安全存储，不要明文传输或存储在不安全的地方。</li>
+                        <li><strong>密钥长度</strong>：建议至少 160 位 (20 字节)，使用随机生成器。</li>
+                        <li><strong>算法选择</strong>：SHA1 足够安全，但 SHA256 或 SHA512 提供更高强度。</li>
+                        <li><strong>备份密钥</strong>：建议用户备份密钥，以防设备丢失。</li>
+                        <li><strong>传输安全</strong>：密钥和验证码应通过 TLS 安全通道传输。</li>
+                    </ul>
+                    <div class="note danger">永远不要将密钥和验证码分享给他人，2FA 仅用于个人身份验证。</div>
+                `
+            }, {
+                id: 'practice',
+                title: '实践与常见问题',
+                content: `
+                    <h2>实践与常见问题</h2>
+                    <ul>
+                        <li><strong>时钟偏差</strong>：允许一个步长偏移，解决客户端与服务器时间不同步问题。</li>
+                        <li><strong>密钥管理</strong>：使用本工具生成的密钥可手动保存或通过二维码导入手机应用。</li>
+                        <li><strong>HOTP 计数器失步</strong>：如果客户端计数器与服务端不一致，会导致验证失败。服务端应允许重新同步。</li>
+                        <li><strong>备份恢复</strong>：建议用户记录密钥或保留二维码截图，以便恢复。</li>
+                    </ul>
+                    <p>本工具可帮助开发人员快速测试 TOTP/HOTP 实现，也可作为个人 2FA 辅助工具。</p>
+                    <div class="note success">熟练掌握 2FA 技术是安全开发的重要技能。</div>
+                `
+            }];
+
+            var activeChapterId = null;
+
+            function renderBookmarks(filter) {
+                filter = filter || '';
+                var list = document.getElementById('bookmarkList');
+                var filtered = filter.trim() === '' ?
+                    chapters :
+                    chapters.filter(function(ch) {
+                        return ch.title.toLowerCase().includes(filter.toLowerCase());
+                    });
+
+                if (filtered.length === 0) {
+                    list.innerHTML =
+                        '<div style="color: var(--text-muted); padding: var(--space-md); text-align: center;">未找到匹配章节</div>';
+                    return;
+                }
+
+                var html = '';
+                filtered.forEach(function(ch) {
+                    var active = (ch.id === activeChapterId) ? 'active' : '';
+                    html += '<div class="bookmark-item ' + active + '" data-id="' + ch.id + '">' +
+                        '<span class="chapter-tag">#</span> ' + ch.title +
+                        '</div>';
+                });
+                list.innerHTML = html;
+
+                list.querySelectorAll('.bookmark-item').forEach(function(el) {
+                    el.addEventListener('click', function() {
+                        var id = this.dataset.id;
+                        var chapter = chapters.find(function(c) { return c.id === id; });
+                        if (chapter) {
+                            activeChapterId = id;
+                            renderContent(chapter);
+                            document.querySelectorAll('.bookmark-item').forEach(function(b) { b.classList
+                                    .remove('active'); });
+                            this.classList.add('active');
+                            document.getElementById('tutorialSearch').value = '';
+                            renderBookmarks();
+                        }
+                    });
+                });
+
+                if (!activeChapterId && chapters.length > 0) {
+                    activeChapterId = chapters[0].id;
+                    renderContent(chapters[0]);
+                    var firstItem = list.querySelector('.bookmark-item');
+                    if (firstItem) firstItem.classList.add('active');
+                }
+            }
+
+            function renderContent(chapter) {
+                var container = document.getElementById('tutorialContent');
+                container.innerHTML = chapter.content;
+                container.scrollTop = 0;
+            }
+
+            tutorialSearch.addEventListener('input', function() {
+                var filter = this.value.trim();
+                renderBookmarks(filter);
+                var items = document.querySelectorAll('#bookmarkList .bookmark-item');
+                if (items.length > 0 && filter !== '') {
+                    items.forEach(function(b) { b.classList.remove('active'); });
+                    items[0].classList.add('active');
+                    var id = items[0].dataset.id;
+                    var chapter = chapters.find(function(c) { return c.id === id; });
+                    if (chapter) {
+                        activeChapterId = id;
+                        renderContent(chapter);
+                    }
+                } else if (filter === '') {
+                    if (activeChapterId) {
+                        var chapter = chapters.find(function(c) { return c.id === activeChapterId; });
+                        if (chapter) renderContent(chapter);
+                    } else if (chapters.length > 0) {
+                        activeChapterId = chapters[0].id;
+                        renderContent(chapters[0]);
+                    }
+                    renderBookmarks();
+                }
+            });
+
+            // ================================================================
+            // 初始化
+            // ================================================================
+            function init() {
+                renderBookmarks();
+                renderInputPanel('totp');
+                testTab.style.display = 'block';
+                tutorialTab.style.display = 'none';
+                // 自动生成密钥和验证码
+                setTimeout(function() {
+                    var genBtn = document.getElementById('totpGenSecret');
+                    if (genBtn) genBtn.click();
+                }, 300);
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+
+        })();
+    </script>
+
+</body>
+</html>

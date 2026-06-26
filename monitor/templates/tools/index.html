@@ -1,1 +1,870 @@
-.
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>工具集 · 开发者工具箱</title>
+    <link rel="stylesheet" href="/static/all.min.css" />
+    <style>
+        /* ===== 全局重置 & 蓝紫暗色主题 ===== */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg-primary: #0b0914;
+            --bg-secondary: #12101e;
+            --bg-surface: #181625;
+            --bg-surface-hover: #221f35;
+            --bg-elevated: #1f1c30;
+            --border-subtle: #2a2740;
+            --border-strong: #3d385a;
+            --text-primary: #edeff5;
+            --text-secondary: #b8bfd9;
+            --text-muted: #7a83a3;
+            --text-dim: #94a3b8;
+            --accent: #6366f1;
+            --accent-light: #818cf8;
+            --accent-dark: #4f46e5;
+            --accent-glow: rgba(99, 102, 241, 0.3);
+            --success: #34d399;
+            --success-bg: rgba(52, 211, 153, 0.12);
+            --error: #f87171;
+            --error-bg: rgba(248, 113, 113, 0.12);
+            --warning: #fbbf24;
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 14px;
+            --radius-full: 9999px;
+            --shadow-soft: 0 8px 30px rgba(0, 0, 0, 0.5);
+            --shadow-glow: 0 0 30px var(--accent-glow);
+            --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --space-xs: 4px;
+            --space-sm: 8px;
+            --space-md: 14px;
+            --space-lg: 20px;
+            --space-xl: 28px;
+            --space-2xl: 36px;
+            --space-3xl: 48px;
+        }
+
+        html {
+            font-size: 15px;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            padding: 24px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            line-height: 1.6;
+            user-select: none;
+        }
+
+        body *:not(input):not(textarea) {
+            user-select: none;
+        }
+
+        /* ===== 滚动条 ===== */
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+            border-radius: 999px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-strong);
+            border-radius: 999px;
+            transition: background 0.2s;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent);
+        }
+
+        .app {
+            max-width: 1440px;
+            width: 100%;
+        }
+
+        /* ===== 头部 ===== */
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0 20px 0;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .app-header .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .app-header .brand i {
+            font-size: 28px;
+            color: var(--accent-light);
+            filter: drop-shadow(0 0 8px var(--accent-glow));
+        }
+        .app-header .brand h1 {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            background: linear-gradient(135deg, #ffffff 40%, var(--accent-light));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .app-header .brand .version {
+            font-size: 13px;
+            color: var(--text-muted);
+            -webkit-text-fill-color: var(--text-muted);
+            background: var(--bg-surface);
+            padding: 0 10px;
+            border-radius: 999px;
+            border: 1px solid var(--border-subtle);
+            font-weight: 500;
+            margin-left: 4px;
+        }
+
+        .app-header .status-group {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .app-header .badge {
+            background: var(--success-bg);
+            color: var(--success);
+            padding: 5px 16px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid rgba(52, 211, 153, 0.2);
+            white-space: nowrap;
+        }
+        .app-header .badge i {
+            font-size: 12px;
+        }
+
+        .app-header .tool-count {
+            font-size: 13px;
+            color: var(--text-secondary);
+            background: var(--bg-surface);
+            padding: 4px 14px;
+            border-radius: 999px;
+            border: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+        .app-header .tool-count i {
+            color: var(--accent-light);
+            font-size: 13px;
+        }
+        .app-header .back-btn {
+            font-size: 13px;
+            color: var(--text-secondary);
+            background: var(--bg-surface);
+            padding: 4px 14px;
+            border-radius: 999px;
+            border: 1px solid var(--border-subtle);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            transition: all var(--transition);
+            white-space: nowrap;
+        }
+        .app-header .back-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent-light);
+            box-shadow: 0 0 16px var(--accent-glow);
+        }
+
+        /* ===== 搜索栏 ===== */
+        .search-bar {
+            margin-bottom: var(--space-xl);
+            position: relative;
+        }
+        .search-bar input {
+            width: 100%;
+            padding: 12px 20px 12px 48px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            color: var(--text-primary);
+            font-size: 15px;
+            outline: none;
+            transition: all var(--transition);
+            font-family: inherit;
+        }
+        .search-bar input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+        .search-bar input::placeholder {
+            color: var(--text-muted);
+        }
+        .search-bar .search-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 18px;
+            pointer-events: none;
+        }
+        .search-bar .search-clear {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            cursor: pointer;
+            display: none;
+            padding: 4px;
+            border-radius: var(--radius-full);
+            transition: all var(--transition);
+            font-size: 14px;
+        }
+        .search-bar .search-clear:hover {
+            color: var(--accent-light);
+        }
+        .search-bar .search-clear.visible {
+            display: block;
+        }
+
+        .search-stats {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: var(--space-sm);
+            display: none;
+        }
+        .search-stats.visible {
+            display: block;
+        }
+
+        /* ===== 分类标题 ===== */
+        .category-section {
+            margin-bottom: var(--space-2xl);
+        }
+        .category-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: var(--space-lg);
+            padding-bottom: var(--space-sm);
+            border-bottom: 1px solid var(--border-subtle);
+        }
+        .category-header i {
+            font-size: 20px;
+            color: var(--accent-light);
+        }
+        .category-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .category-header .count {
+            font-size: 12px;
+            color: var(--text-muted);
+            background: var(--bg-secondary);
+            padding: 0 10px;
+            border-radius: var(--radius-full);
+            margin-left: auto;
+        }
+
+        /* ===== 工具卡片网格 ===== */
+        .tool-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 16px;
+        }
+
+        .tool-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: var(--space-lg);
+            cursor: pointer;
+            transition: all var(--transition);
+            text-decoration: none;
+            color: var(--text-primary);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+        .tool-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.03), transparent);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity var(--transition);
+        }
+        .tool-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(99, 102, 241, 0.12);
+        }
+        .tool-card:hover::before {
+            opacity: 1;
+        }
+        .tool-card:active {
+            transform: scale(0.97);
+        }
+
+        .tool-card .card-icon {
+            font-size: 28px;
+            color: var(--accent-light);
+            margin-bottom: var(--space-sm);
+            flex-shrink: 0;
+        }
+        .tool-card .card-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--space-xs);
+        }
+        .tool-card .card-desc {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.5;
+            flex: 1;
+        }
+        .tool-card .card-tag {
+            font-size: 10px;
+            color: var(--text-muted);
+            background: var(--bg-secondary);
+            padding: 2px 10px;
+            border-radius: var(--radius-full);
+            margin-top: var(--space-sm);
+            align-self: flex-start;
+            border: 1px solid var(--border-subtle);
+            opacity: 0.6;
+        }
+        .tool-card .card-arrow {
+            position: absolute;
+            top: var(--space-md);
+            right: var(--space-md);
+            color: var(--text-muted);
+            font-size: 12px;
+            opacity: 0;
+            transition: all var(--transition);
+        }
+        .tool-card:hover .card-arrow {
+            opacity: 1;
+            transform: translateX(4px);
+            color: var(--accent-light);
+        }
+
+        /* 隐藏状态（搜索过滤） */
+        .tool-card.hidden {
+            display: none;
+        }
+
+        /* ===== 空状态 ===== */
+        .empty-state {
+            text-align: center;
+            padding: var(--space-3xl) var(--space-xl);
+            color: var(--text-muted);
+        }
+        .empty-state i {
+            font-size: 48px;
+            display: block;
+            margin-bottom: var(--space-md);
+            color: var(--border-subtle);
+        }
+        .empty-state .main-text {
+            font-size: 18px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+        .empty-state .sub {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-top: var(--space-sm);
+        }
+
+        /* ===== Footer ===== */
+        .footer {
+            margin-top: var(--space-3xl);
+            padding: var(--space-lg) 0;
+            border-top: 1px solid var(--border-subtle);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: var(--text-muted);
+            flex-wrap: wrap;
+            gap: var(--space-md);
+        }
+        .footer .foot-meta {
+            display: flex;
+            gap: var(--space-xl);
+            flex-wrap: wrap;
+        }
+        .footer .foot-meta span {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .footer .foot-meta i {
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+        .footer .foot-meta b {
+            color: var(--text-main);
+            font-weight: 600;
+        }
+        .footer .clock-wrap {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .footer .clock-wrap i {
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 820px) {
+            .app-header .brand h1 {
+                font-size: 20px;
+            }
+            .app-header .status-group .tool-count {
+                font-size: 12px;
+                padding: 2px 10px;
+            }
+            .app-header .badge {
+                font-size: 11px;
+                padding: 3px 12px;
+            }
+            .tool-grid {
+                grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+                gap: 12px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 12px;
+            }
+            .app-header {
+                padding: 12px 0 16px 0;
+                margin-bottom: 16px;
+                gap: 10px;
+            }
+            .app-header .brand i {
+                font-size: 22px;
+            }
+            .app-header .brand h1 {
+                font-size: 18px;
+            }
+            .app-header .brand .version {
+                font-size: 11px;
+                padding: 0 8px;
+            }
+            .app-header .status-group {
+                gap: 10px;
+            }
+            .app-header .tool-count {
+                font-size: 11px;
+                padding: 2px 8px;
+            }
+            .app-header .badge {
+                font-size: 10px;
+                padding: 2px 10px;
+            }
+            .tool-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+            .tool-card {
+                padding: var(--space-md);
+            }
+            .tool-card .card-icon {
+                font-size: 22px;
+            }
+            .tool-card .card-name {
+                font-size: 13px;
+            }
+            .tool-card .card-desc {
+                font-size: 12px;
+            }
+            .search-bar input {
+                font-size: 14px;
+                padding: 10px 16px 10px 40px;
+            }
+            .category-header h2 {
+                font-size: 16px;
+            }
+            .footer {
+                flex-direction: column;
+                text-align: center;
+                gap: var(--space-sm);
+            }
+            .footer .foot-meta {
+                justify-content: center;
+                gap: var(--space-md);
+            }
+        }
+
+        @media (max-width: 360px) {
+            .tool-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app">
+        <!-- ===== 头部 ===== -->
+        <header class="app-header">
+            <div class="brand">
+                <i class="fas fa-toolbox"></i>
+                <h1>开发者工具箱</h1>
+                <span class="version">v4.0</span>
+            </div>
+            <div class="status-group">
+                <span class="tool-count">
+                    <i class="fas fa-cubes"></i>
+                    <span id="toolCount">0</span> 个工具
+                </span>
+                <a href="/" class="back-btn" title="返回控制台">
+                    <i class="fas fa-arrow-left"></i> 返回
+                </a>
+                <span class="badge">
+                    <i class="fas fa-lock"></i> 纯前端本地操作
+                </span>
+            </div>
+        </header>
+
+        <!-- ===== 搜索栏 ===== -->
+        <div class="search-bar">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" id="searchInput" placeholder="搜索工具名称或描述..." autofocus />
+            <span class="search-clear" id="searchClear">&times;</span>
+            <div class="search-stats" id="searchStats">找到 <strong id="matchedCount">0</strong> 个工具</div>
+        </div>
+
+        <!-- ===== 工具列表 ===== -->
+        <div id="toolContainer"></div>
+
+        <!-- ===== Footer ===== -->
+        <footer class="footer">
+            <div class="foot-meta">
+                <span><i class="fas fa-code"></i> 纯前端 · 本地运行</span>
+                <span><i class="fas fa-shield-alt"></i> 数据不上传</span>
+            </div>
+            <div class="clock-wrap">
+                <i class="far fa-clock"></i>
+                <span id="clock"></span>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // ================================================================
+            // 1. 时钟
+            // ================================================================
+            function updateClock() {
+                document.getElementById('clock').textContent =
+                    new Date().toISOString().replace('T', ' ').substring(0, 19);
+            }
+            updateClock();
+            setInterval(updateClock, 1000);
+
+            // ================================================================
+            // 2. 工具数据
+            // ================================================================
+            var tools = [{
+                id: 'regex',
+                name: '正则表达式测试',
+                desc: '在线正则表达式匹配、替换与调试，支持可视化匹配结果',
+                icon: 'fas fa-code',
+                category: '开发辅助',
+                path: '/tools/regex'
+            }, {
+                id: 'timestamp',
+                name: '时间戳转换',
+                desc: 'Unix 时间戳与日期时间互转，支持毫秒/秒级精度',
+                icon: 'fas fa-clock',
+                category: '开发辅助',
+                path: '/tools/timestamp'
+            }, {
+                id: 'base64',
+                name: 'Base64 编解码',
+                desc: 'Base64 编码与解码，支持 UTF-8 与 GBK 字符集',
+                icon: 'fas fa-arrows-left-right',
+                category: '编码转换',
+                path: '/tools/base64'
+            }, {
+                id: 'urlcode',
+                name: 'URL 编解码',
+                desc: 'URL 百分号编码与解码，支持完整 RFC 3986 规范',
+                icon: 'fas fa-link',
+                category: '编码转换',
+                path: '/tools/urlcode'
+            }, {
+                id: 'color',
+                name: '颜色工具',
+                desc: 'HEX / RGB / HSL / CMYK 颜色转换，调色板与取色器',
+                icon: 'fas fa-palette',
+                category: '设计工具',
+                path: '/tools/color'
+            }, {
+                id: 'md5',
+                name: 'MD5 哈希',
+                desc: '计算字符串或文件的 MD5 / SHA1 / SHA256 哈希值',
+                icon: 'fas fa-fingerprint',
+                category: '安全加密',
+                path: '/tools/md5'
+            }, {
+                id: 'qrcode',
+                name: '二维码 · 条形码生成器',
+                desc: '生成 QR Code 二维码和 CODE128 / EAN 条形码，支持批量',
+                icon: 'fas fa-qrcode',
+                category: '设计工具',
+                path: '/tools/qrcode'
+            }, {
+                id: 'markdown',
+                name: 'Markdown 编辑器',
+                desc: '在线 Markdown 编辑与实时预览，支持导出 HTML',
+                icon: 'fab fa-markdown',
+                category: '开发辅助',
+                path: '/tools/markdown'
+            }, {
+                id: 'cron',
+                name: 'Cron 表达式',
+                desc: '在线生成与解析 Cron 表达式，可视化下一次执行时间',
+                icon: 'fas fa-calendar-alt',
+                category: '开发辅助',
+                path: '/tools/cron'
+            }, {
+                id: 'crypto',
+                name: 'AES / RSA 加解密',
+                desc: 'AES 对称加密与 RSA 非对称加密，支持多种密钥长度',
+                icon: 'fas fa-lock',
+                category: '安全加密',
+                path: '/tools/crypto'
+            }, {
+                id: 'ip',
+                name: 'IP 查询',
+                desc: '查询 IP 地址归属地、运营商、ISP 等信息',
+                icon: 'fas fa-globe',
+                category: '网络工具',
+                path: '/tools/ip'
+            }, {
+                id: 'speedtest',
+                name: '网络测速',
+                desc: '测试下载速度、上传速度及延迟，评估网络质量',
+                icon: 'fas fa-tachometer-alt',
+                category: '网络工具',
+                path: '/tools/speedtest'
+            }, {
+                id: 'request',
+                name: '网络请求',
+                desc: '发送 HTTP 请求（GET/POST/PUT/DELETE），查看响应状态与内容',
+                icon: 'fas fa-paper-plane',
+                category: '网络工具',
+                path: '/tools/request'
+            }, {
+                id: 'radix',
+                name: '进制转换',
+                desc: '二进制 / 八进制 / 十进制 / 十六进制 任意互转',
+                icon: 'fas fa-calculator',
+                category: '编码转换',
+                path: '/tools/radix'
+            }, {
+                id: 'random',
+                name: '随机值生成器',
+                desc: '生成随机数、随机字符串、随机密码、随机颜色等',
+                icon: 'fas fa-dice',
+                category: '开发辅助',
+                path: '/tools/random'
+            }, {
+                id: 'audio',
+                name: '音频可视化',
+                desc: '上传音频文件，实时显示波形图与频谱图',
+                icon: 'fas fa-wave-square',
+                category: '设计工具',
+                path: '/tools/audio'
+            }, {
+                id: '2fa',
+                name: '2FA 双因素认证',
+                desc: 'TOTP（基于时间）与 HOTP（基于计数器）的动态密码生成',
+                icon: 'fas fa-shield-alt',
+                category: '安全加密',
+                path: '/tools/2fa'
+            }, {
+                id: 'sqlite',
+                name: 'SQLite 数据库查看器',
+                desc: '在线查看 SQLite 数据库，支持 SQL 查询、数据编辑、语法教程',
+                icon: 'fas fa-database',
+                category: '开发辅助',
+                path: '/tools/sqlite'
+            }];
+
+            // ================================================================
+            // 3. 分类与渲染
+            // ================================================================
+            var categories = [
+                '开发辅助',
+                '编码转换',
+                '安全加密',
+                '网络工具',
+                '设计工具'
+            ];
+
+            function getCategoryIconFull(cat) {
+                var map = {
+                    '开发辅助': 'fa-code',
+                    '数据库工具': 'fa-database',
+                    '文本处理': 'fa-file-lines',
+                    '编码转换': 'fa-right-left',
+                    '安全加密': 'fa-shield-halved',
+                    '网络工具': 'fa-network-wired',
+                    '设计工具': 'fa-pen-ruler'
+                };
+                return map[cat] || 'fa-folder';
+            }
+
+            function renderTools(filter) {
+                filter = filter || '';
+                var container = document.getElementById('toolContainer');
+                var matched = 0;
+
+                var html = '';
+                for (var ci = 0; ci < categories.length; ci++) {
+                    var cat = categories[ci];
+                    var catTools = tools.filter(function(t) {
+                        return t.category === cat;
+                    });
+
+                    // 过滤
+                    var filtered = catTools.filter(function(t) {
+                        var search = filter.toLowerCase();
+                        return t.name.toLowerCase().includes(search) ||
+                            t.desc.toLowerCase().includes(search) ||
+                            t.category.toLowerCase().includes(search);
+                    });
+
+                    if (filtered.length === 0) continue;
+                    matched += filtered.length;
+
+                    html += '<div class="category-section">';
+                    html += '<div class="category-header">';
+                    html += '<i class="fas ' + getCategoryIconFull(cat) + '"></i>';
+                    html += '<h2>' + cat + '</h2>';
+                    html += '<span class="count">' + filtered.length + ' 个</span>';
+                    html += '</div>';
+
+                    html += '<div class="tool-grid">';
+                    for (var ti = 0; ti < filtered.length; ti++) {
+                        var tool = filtered[ti];
+                        html += '<a class="tool-card" href="' + tool.path + '">';
+                        html += '<i class="' + tool.icon + ' card-icon"></i>';
+                        html += '<div class="card-name">' + tool.name + '</div>';
+                        html += '<div class="card-desc">' + tool.desc + '</div>';
+                        html += '<span class="card-tag">' + tool.category + '</span>';
+                        html += '<i class="fas fa-chevron-right card-arrow"></i>';
+                        html += '</a>';
+                    }
+                    html += '</div>';
+                    html += '</div>';
+                }
+
+                if (matched === 0) {
+                    html = '<div class="empty-state">' +
+                        '<i class="fas fa-search"></i>' +
+                        '<div class="main-text">没有找到匹配的工具</div>' +
+                        '<div class="sub">试试其他关键词，或清除搜索条件</div>' +
+                        '</div>';
+                }
+
+                container.innerHTML = html;
+
+                // 更新计数
+                document.getElementById('toolCount').textContent = tools.length;
+                document.getElementById('matchedCount').textContent = matched;
+
+                var stats = document.getElementById('searchStats');
+                if (filter.trim() !== '' && matched > 0) {
+                    stats.classList.add('visible');
+                } else if (filter.trim() !== '' && matched === 0) {
+                    stats.classList.add('visible');
+                } else {
+                    stats.classList.remove('visible');
+                }
+            }
+
+            // ================================================================
+            // 4. 搜索功能
+            // ================================================================
+            var searchInput = document.getElementById('searchInput');
+            var searchClear = document.getElementById('searchClear');
+
+            function doSearch() {
+                var val = searchInput.value.trim();
+                if (val) {
+                    searchClear.classList.add('visible');
+                } else {
+                    searchClear.classList.remove('visible');
+                }
+                renderTools(val);
+            }
+
+            searchInput.addEventListener('input', doSearch);
+
+            searchClear.addEventListener('click', function() {
+                searchInput.value = '';
+                searchClear.classList.remove('visible');
+                renderTools('');
+                searchInput.focus();
+            });
+
+            // 键盘 ESC 清空
+            searchInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    searchInput.value = '';
+                    searchClear.classList.remove('visible');
+                    renderTools('');
+                    searchInput.blur();
+                }
+            });
+
+            // ================================================================
+            // 5. 启动
+            // ================================================================
+            renderTools('');
+
+        })();
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,2670 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes" />
+    <title>音频可视化 · 开发者工具箱</title>
+    <link rel="stylesheet" href="/static/all.min.css" />
+    <style>
+        /* ===== 全局重置 & 暗色主题 ===== */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg-primary: #0b0914;
+            --bg-secondary: #12101e;
+            --bg-surface: #181625;
+            --bg-surface-hover: #221f35;
+            --bg-elevated: #1f1c30;
+            --border-subtle: #2a2740;
+            --border-strong: #3d385a;
+            --text-primary: #edeff5;
+            --text-secondary: #b8bfd9;
+            --text-muted: #7a83a3;
+            --text-dim: #94a3b8;
+            --accent: #6366f1;
+            --accent-light: #818cf8;
+            --accent-dark: #4f46e5;
+            --accent-glow: rgba(99, 102, 241, 0.3);
+            --success: #34d399;
+            --success-bg: rgba(52, 211, 153, 0.12);
+            --error: #f87171;
+            --error-bg: rgba(248, 113, 113, 0.12);
+            --warning: #fbbf24;
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 14px;
+            --radius-full: 9999px;
+            --shadow-soft: 0 8px 30px rgba(0, 0, 0, 0.5);
+            --shadow-glow: 0 0 30px var(--accent-glow);
+            --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --space-xs: 4px;
+            --space-sm: 8px;
+            --space-md: 14px;
+            --space-lg: 20px;
+            --space-xl: 28px;
+            --space-2xl: 36px;
+        }
+
+        html {
+            font-size: 15px;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            padding: 24px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            line-height: 1.6;
+            user-select: none;
+        }
+
+        body.dragover {
+            position: relative;
+        }
+        body.dragover::after {
+            content: '📂 释放文件以加载';
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--accent-light);
+            background: rgba(11, 9, 20, 0.92);
+            backdrop-filter: blur(8px);
+            z-index: 9999;
+            pointer-events: none;
+            letter-spacing: 2px;
+        }
+
+        .result-text,
+        .result-box .value,
+        .code-area {
+            user-select: text;
+        }
+
+        body *:not(input):not(textarea):not(.modal-input):not(.result-text):not(.code-area):not(.regex-content):not(.regex-content *) {
+            user-select: none;
+        }
+
+        /* ===== 滚动条 ===== */
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+            border-radius: 999px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-strong);
+            border-radius: 999px;
+            transition: background 0.2s;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent);
+        }
+
+        .app {
+            max-width: 1440px;
+            width: 100%;
+        }
+
+        /* ===== 头部 ===== */
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0 20px 0;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .app-header .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .app-header .brand i {
+            font-size: 28px;
+            color: var(--accent-light);
+            filter: drop-shadow(0 0 8px var(--accent-glow));
+        }
+        .app-header .brand h1 {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            background: linear-gradient(135deg, #ffffff 40%, var(--accent-light));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .app-header .brand .version {
+            font-size: 13px;
+            color: var(--text-muted);
+            -webkit-text-fill-color: var(--text-muted);
+            background: var(--bg-surface);
+            padding: 0 10px;
+            border-radius: 999px;
+            border: 1px solid var(--border-subtle);
+            font-weight: 500;
+            margin-left: 4px;
+        }
+
+        .app-header .status-group {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .app-header .back-btn {
+            font-size: 13px;
+            color: var(--text-secondary);
+            background: var(--bg-surface);
+            padding: 4px 14px;
+            border-radius: 999px;
+            border: 1px solid var(--border-subtle);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            transition: all var(--transition);
+            white-space: nowrap;
+        }
+        .app-header .back-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent-light);
+            box-shadow: 0 0 16px var(--accent-glow);
+        }
+
+        .app-header .badge {
+            background: var(--success-bg);
+            color: var(--success);
+            padding: 5px 16px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid rgba(52, 211, 153, 0.2);
+            white-space: nowrap;
+        }
+        .app-header .badge i {
+            font-size: 12px;
+        }
+
+        /* ===== 标签页 ===== */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: 0;
+        }
+        .tab-btn {
+            background: transparent;
+            border: none;
+            padding: 10px 22px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-dim);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all var(--transition);
+            font-family: inherit;
+        }
+        .tab-btn:hover {
+            color: var(--text-primary);
+        }
+        .tab-btn.active {
+            color: var(--accent-light);
+            border-bottom-color: var(--accent-light);
+        }
+
+        /* ===== 面板 ===== */
+        .panel {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 20px 22px 22px;
+            transition: border-color var(--transition), box-shadow var(--transition);
+            height: 620px;
+            resize: vertical;
+            overflow: hidden;
+            min-height: 500px;
+            display: flex;
+            flex-direction: column;
+        }
+        .panel:hover {
+            border-color: var(--border-strong);
+        }
+
+        .panel-title {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .panel-title i {
+            font-size: 14px;
+            color: var(--accent-light);
+        }
+
+        /* ===== 主布局：左右结构 ===== */
+        .audio-layout {
+            display: flex;
+            flex: 1;
+            gap: 20px;
+            min-height: 0;
+        }
+        @media (max-width: 920px) {
+            .audio-layout {
+                flex-direction: column;
+                gap: 14px;
+            }
+        }
+
+        /* ===== 左侧控制区 ===== */
+        .control-panel {
+            flex: 0 0 320px;
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-md);
+            min-height: 0;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+        .control-panel::-webkit-scrollbar {
+            width: 3px;
+        }
+        .control-panel::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+            border-radius: 999px;
+        }
+        .control-panel::-webkit-scrollbar-thumb {
+            background: var(--border-strong);
+            border-radius: 999px;
+        }
+
+        @media (max-width: 920px) {
+            .control-panel {
+                flex: none;
+                flex-direction: row;
+                flex-wrap: wrap;
+                max-height: 200px;
+                overflow-y: auto;
+                padding-bottom: 4px;
+                gap: var(--space-sm);
+            }
+            .control-panel .ctrl-group {
+                flex: 1;
+                min-width: 140px;
+                margin-bottom: 0;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .control-panel {
+                max-height: 260px;
+                flex-direction: column;
+                flex-wrap: nowrap;
+                gap: var(--space-xs);
+            }
+            .control-panel .ctrl-group {
+                min-width: 100%;
+                margin-bottom: var(--space-xs);
+            }
+        }
+
+        /* ===== 控件组 ===== */
+        .ctrl-group {
+            flex-shrink: 0;
+        }
+        .ctrl-group .group-label {
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--text-muted);
+            margin-bottom: var(--space-xs);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .ctrl-group .group-label i {
+            font-size: 11px;
+            color: var(--accent-light);
+        }
+
+        .ctrl-group label {
+            display: block;
+            font-size: 12px;
+            color: var(--text-dim);
+            margin-bottom: var(--space-xs);
+            font-weight: 500;
+        }
+
+        .ctrl-group select,
+        .ctrl-group input[type="text"],
+        .ctrl-group input[type="number"] {
+            width: 100%;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+            font-size: 12px;
+            padding: var(--space-xs) var(--space-sm);
+            transition: border var(--transition), box-shadow var(--transition);
+            outline: none;
+        }
+        .ctrl-group select:focus,
+        .ctrl-group input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+        .ctrl-group .hint {
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-top: var(--space-xs);
+        }
+
+        /* ===== 上传区域 ===== */
+        .upload-area {
+            border: 2px dashed var(--border-subtle);
+            border-radius: var(--radius-sm);
+            padding: var(--space-md);
+            text-align: center;
+            cursor: pointer;
+            transition: all var(--transition);
+            background: var(--bg-secondary);
+            position: relative;
+        }
+        .upload-area:hover {
+            border-color: var(--accent);
+            background: var(--bg-surface-hover);
+        }
+        .upload-area .upload-icon {
+            font-size: 32px;
+            color: var(--accent-light);
+            display: block;
+            margin-bottom: var(--space-xs);
+        }
+        .upload-area .upload-text {
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        .upload-area .upload-hint {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: var(--space-xs);
+        }
+        .upload-area .upload-status {
+            font-size: 12px;
+            color: var(--accent-light);
+            margin-top: var(--space-xs);
+            display: none;
+        }
+        .upload-area .upload-status.active {
+            display: block;
+        }
+        .upload-area input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        /* ===== 文件信息 ===== */
+        .file-info {
+            display: none;
+            padding: var(--space-sm) var(--space-md);
+            background: var(--bg-primary);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-subtle);
+            margin-top: var(--space-xs);
+        }
+        .file-info.visible {
+            display: block;
+        }
+        .file-info .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 2px 0;
+            font-size: 12px;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border-subtle);
+        }
+        .file-info .info-row:last-child {
+            border-bottom: none;
+        }
+        .file-info .info-row .label {
+            color: var(--text-dim);
+        }
+        .file-info .info-row .value {
+            color: var(--text-primary);
+            font-weight: 500;
+            text-align: right;
+            font-family: 'SF Mono', monospace;
+            font-size: 11px;
+        }
+
+        /* ===== 播放控制 - 音乐播放器风格 ===== */
+        .player-controls {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            border: 1px solid var(--border-subtle);
+        }
+
+        .player-controls .player-top {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            margin-bottom: var(--space-sm);
+        }
+
+        .player-controls .player-btn {
+            background: var(--accent);
+            border: none;
+            border-radius: var(--radius-full);
+            color: #fff;
+            width: 40px;
+            height: 40px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .player-controls .player-btn:hover {
+            background: var(--accent-dark);
+            transform: scale(1.05);
+            box-shadow: 0 4px 16px var(--accent-glow);
+        }
+        .player-controls .player-btn:active {
+            transform: scale(0.95);
+        }
+        .player-controls .player-btn.btn-outline {
+            background: transparent;
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+            width: 36px;
+            height: 36px;
+            font-size: 14px;
+        }
+        .player-controls .player-btn.btn-outline:hover {
+            border-color: var(--accent);
+            color: var(--accent-light);
+            background: rgba(99, 102, 241, 0.05);
+            box-shadow: none;
+        }
+        .player-controls .player-btn.btn-stop {
+            background: transparent;
+            border: 1px solid var(--error);
+            color: var(--error);
+            width: 36px;
+            height: 36px;
+            font-size: 14px;
+        }
+        .player-controls .player-btn.btn-stop:hover {
+            background: var(--error);
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(248, 113, 113, 0.3);
+        }
+
+        .player-controls .player-time {
+            font-family: 'SF Mono', monospace;
+            font-size: 13px;
+            color: var(--text-secondary);
+            min-width: 70px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .player-controls .player-progress {
+            flex: 1;
+            height: 6px;
+            background: var(--bg-primary);
+            border-radius: 3px;
+            overflow: hidden;
+            cursor: pointer;
+            position: relative;
+            min-width: 60px;
+        }
+        .player-controls .player-progress .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--accent-light));
+            border-radius: 3px;
+            width: 0%;
+            transition: width 0.05s linear;
+        }
+        .player-controls .player-progress .progress-thumb {
+            position: absolute;
+            top: 50%;
+            left: 0%;
+            transform: translate(-50%, -50%);
+            width: 14px;
+            height: 14px;
+            background: var(--accent-light);
+            border-radius: 50%;
+            border: 2px solid var(--bg-primary);
+            box-shadow: 0 0 12px var(--accent-glow);
+            opacity: 0;
+            transition: opacity var(--transition);
+            pointer-events: none;
+        }
+        .player-controls .player-progress:hover .progress-thumb {
+            opacity: 1;
+        }
+        .player-controls .player-progress.is-dragging .progress-thumb {
+            opacity: 1;
+        }
+
+        .player-controls .player-bottom {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            margin-top: var(--space-sm);
+        }
+        .player-controls .player-volume {
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+            flex: 1;
+        }
+        .player-controls .player-volume i {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+        .player-controls .player-volume input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            flex: 1;
+            height: 4px;
+            border-radius: 2px;
+            background: var(--border-subtle);
+            outline: none;
+            min-width: 40px;
+            padding: 0;
+        }
+        .player-controls .player-volume input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            border: 2px solid var(--bg-primary);
+            box-shadow: 0 0 8px var(--accent-glow);
+        }
+        .player-controls .player-volume input[type="range"]::-moz-range-thumb {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            border: 2px solid var(--bg-primary);
+        }
+
+        .player-controls .player-status-text {
+            font-size: 11px;
+            color: var(--text-muted);
+            flex-shrink: 0;
+            min-width: 40px;
+            text-align: right;
+        }
+
+        /* ===== 参数控件 ===== */
+        .param-row {
+            display: flex;
+            gap: var(--space-sm);
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .param-row .param-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+            flex: 1;
+            min-width: 60px;
+        }
+        .param-row .param-item label {
+            font-size: 11px;
+            color: var(--text-dim);
+            margin: 0;
+            white-space: nowrap;
+        }
+        .param-row .param-item select,
+        .param-row .param-item input[type="range"] {
+            flex: 1;
+            min-width: 40px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-size: 11px;
+            padding: 2px 6px;
+            outline: none;
+            font-family: inherit;
+        }
+        .param-row .param-item input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 3px;
+            border-radius: 2px;
+            background: var(--border-subtle);
+            padding: 0;
+            border: none;
+        }
+        .param-row .param-item input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            border: 2px solid var(--bg-primary);
+            box-shadow: 0 0 6px var(--accent-glow);
+        }
+        .param-row .param-item input[type="range"]::-moz-range-thumb {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            border: 2px solid var(--bg-primary);
+        }
+        .param-row .param-item .range-value {
+            font-size: 11px;
+            color: var(--text-muted);
+            min-width: 28px;
+            text-align: center;
+            font-family: 'SF Mono', monospace;
+        }
+        .param-row .param-item.color-item select {
+            min-width: 80px;
+        }
+        .param-row .param-item.check-item {
+            flex: 0 0 auto;
+            gap: 4px;
+        }
+        .param-row .param-item.check-item label {
+            font-size: 11px;
+            color: var(--text-dim);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+        }
+        .param-row .param-item.check-item input[type="checkbox"] {
+            accent-color: var(--accent);
+            width: 14px;
+            height: 14px;
+            cursor: pointer;
+        }
+
+        /* ===== 右侧可视化区 ===== */
+        .vis-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-sm);
+            min-height: 0;
+        }
+        @media (max-width: 920px) {
+            .vis-panel {
+                min-height: 320px;
+            }
+        }
+
+        .vis-row {
+            display: flex;
+            gap: var(--space-sm);
+            flex: 1;
+            min-height: 0;
+        }
+        .vis-row .vis-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            position: relative;
+        }
+        .vis-row .vis-item .vis-label {
+            font-size: 9px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+            padding: 3px 10px;
+            border-bottom: 1px solid var(--border-subtle);
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--bg-secondary);
+            opacity: 0.7;
+        }
+        .vis-row .vis-item .vis-label i {
+            font-size: 10px;
+            color: var(--accent-light);
+        }
+        .vis-row .vis-item canvas {
+            flex: 1;
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .vis-row .vis-item .vis-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            font-size: 12px;
+            pointer-events: none;
+            flex-direction: column;
+            gap: var(--space-xs);
+            background: rgba(11, 9, 20, 0.88);
+            transition: opacity 0.4s ease;
+        }
+        .vis-row .vis-item .vis-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .vis-row .vis-item .vis-overlay i {
+            font-size: 28px;
+            color: var(--border-subtle);
+        }
+        .vis-row .vis-item .vis-overlay .status-text {
+            font-size: 12px;
+        }
+
+        /* 加载动画 */
+        .vis-row .vis-item .vis-overlay .spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid var(--border-subtle);
+            border-top-color: var(--accent-light);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: var(--space-xs);
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 1100px) {
+            .panel {
+                height: auto;
+                min-height: 520px;
+                resize: vertical;
+                overflow-y: auto;
+            }
+            .vis-row {
+                flex-direction: column;
+                min-height: 300px;
+            }
+            .vis-row .vis-item {
+                min-height: 100px;
+            }
+        }
+
+        @media (max-width: 920px) {
+            .panel {
+                height: auto;
+                min-height: 440px;
+            }
+            .audio-layout {
+                flex-direction: column;
+                gap: 14px;
+            }
+            .control-panel {
+                flex: none;
+                flex-direction: row;
+                flex-wrap: wrap;
+                max-height: 180px;
+                overflow-y: auto;
+                padding-bottom: 4px;
+                gap: var(--space-sm);
+            }
+            .control-panel .ctrl-group {
+                flex: 1;
+                min-width: 120px;
+                margin-bottom: 0;
+            }
+            .control-panel .ctrl-group .group-label {
+                font-size: 9px;
+            }
+            .control-panel .ctrl-group select,
+            .control-panel .ctrl-group input {
+                font-size: 11px;
+                padding: 2px 6px;
+            }
+            .upload-area {
+                padding: var(--space-sm);
+            }
+            .upload-area .upload-icon {
+                font-size: 24px;
+            }
+            .upload-area .upload-text {
+                font-size: 12px;
+            }
+            .upload-area .upload-hint {
+                font-size: 10px;
+            }
+            .file-info .info-row {
+                font-size: 11px;
+                padding: 1px 0;
+            }
+            .file-info .info-row .value {
+                font-size: 10px;
+            }
+            .player-controls {
+                padding: var(--space-sm);
+            }
+            .player-controls .player-btn {
+                width: 34px;
+                height: 34px;
+                font-size: 14px;
+            }
+            .player-controls .player-btn.btn-outline,
+            .player-controls .player-btn.btn-stop {
+                width: 30px;
+                height: 30px;
+                font-size: 12px;
+            }
+            .player-controls .player-time {
+                font-size: 12px;
+                min-width: 60px;
+            }
+            .vis-row {
+                flex-direction: column;
+                min-height: 280px;
+            }
+            .vis-row .vis-item {
+                min-height: 80px;
+            }
+            .vis-row .vis-item .vis-label {
+                font-size: 8px;
+                padding: 2px 8px;
+            }
+            .vis-row .vis-item .vis-label i {
+                font-size: 8px;
+            }
+            .vis-row .vis-item .vis-overlay i {
+                font-size: 20px;
+            }
+            .vis-row .vis-item .vis-overlay .status-text {
+                font-size: 10px;
+            }
+            .param-row {
+                gap: var(--space-xs);
+            }
+            .param-row .param-item {
+                min-width: 50px;
+            }
+            .param-row .param-item label {
+                font-size: 10px;
+            }
+            .param-row .param-item select {
+                font-size: 10px;
+                padding: 1px 4px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 12px;
+            }
+            .app-header {
+                padding: 12px 0 16px 0;
+                margin-bottom: 14px;
+                gap: 10px;
+            }
+            .app-header .brand i {
+                font-size: 22px;
+            }
+            .app-header .brand h1 {
+                font-size: 18px;
+            }
+            .app-header .brand .version {
+                font-size: 11px;
+                padding: 0 8px;
+            }
+            .app-header .status-group {
+                gap: 10px;
+            }
+            .app-header .back-btn {
+                font-size: 11px;
+                padding: 2px 8px;
+            }
+            .app-header .badge {
+                font-size: 10px;
+                padding: 2px 10px;
+            }
+            .panel {
+                padding: 12px 12px 16px;
+                height: auto;
+                min-height: 380px;
+            }
+            .panel-title {
+                font-size: 10px;
+                margin-bottom: 10px;
+            }
+            .tab-btn {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+            .control-panel {
+                max-height: 220px;
+                flex-direction: column;
+                flex-wrap: nowrap;
+                gap: var(--space-xs);
+            }
+            .control-panel .ctrl-group {
+                min-width: 100%;
+                margin-bottom: var(--space-xs);
+            }
+            .control-panel .ctrl-group select,
+            .control-panel .ctrl-group input {
+                font-size: 12px;
+                padding: var(--space-xs) var(--space-sm);
+            }
+            .player-controls .player-btn {
+                width: 32px;
+                height: 32px;
+                font-size: 13px;
+            }
+            .player-controls .player-btn.btn-outline,
+            .player-controls .player-btn.btn-stop {
+                width: 28px;
+                height: 28px;
+                font-size: 11px;
+            }
+            .player-controls .player-time {
+                font-size: 11px;
+                min-width: 50px;
+            }
+            .player-controls .player-progress {
+                height: 4px;
+            }
+            .player-controls .player-progress .progress-thumb {
+                width: 12px;
+                height: 12px;
+            }
+            .vis-row {
+                min-height: 220px;
+            }
+            .vis-row .vis-item {
+                min-height: 60px;
+            }
+            .param-row .param-item {
+                min-width: 40px;
+            }
+            .param-row .param-item label {
+                font-size: 9px;
+            }
+            .param-row .param-item select {
+                font-size: 9px;
+                padding: 1px 4px;
+            }
+            .param-row .param-item .range-value {
+                font-size: 9px;
+                min-width: 20px;
+            }
+            .upload-area .upload-icon {
+                font-size: 20px;
+            }
+            .upload-area .upload-text {
+                font-size: 11px;
+            }
+            .upload-area .upload-hint {
+                font-size: 9px;
+            }
+            .file-info .info-row {
+                font-size: 10px;
+            }
+            .file-info .info-row .value {
+                font-size: 9px;
+            }
+            .vis-row .vis-item .vis-overlay i {
+                font-size: 16px;
+            }
+            .vis-row .vis-item .vis-overlay .status-text {
+                font-size: 9px;
+            }
+            .vis-row .vis-item .vis-overlay .spinner {
+                width: 24px;
+                height: 24px;
+                border-width: 2px;
+            }
+        }
+
+        @media (max-width: 380px) {
+            body {
+                padding: 8px;
+            }
+            .panel {
+                padding: 8px 6px 10px;
+                min-height: 340px;
+            }
+            .vis-row {
+                min-height: 180px;
+            }
+            .vis-row .vis-item {
+                min-height: 50px;
+            }
+            .player-controls .player-btn {
+                width: 28px;
+                height: 28px;
+                font-size: 11px;
+            }
+            .player-controls .player-btn.btn-outline,
+            .player-controls .player-btn.btn-stop {
+                width: 24px;
+                height: 24px;
+                font-size: 10px;
+            }
+            .player-controls .player-time {
+                font-size: 10px;
+                min-width: 40px;
+            }
+            .param-row .param-item {
+                min-width: 30px;
+            }
+            .param-row .param-item label {
+                font-size: 8px;
+            }
+            .param-row .param-item select {
+                font-size: 8px;
+                padding: 1px 3px;
+            }
+        }
+
+        /* ===== 教程样式 ===== */
+        .tutorial-card {
+            height: 500px;
+            min-height: 450px;
+            max-height: 850px;
+            resize: vertical;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+        }
+        .tutorial-card .card-header {
+            padding: var(--space-md) var(--space-lg);
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 0;
+            flex-shrink: 0;
+        }
+        .tutorial-body {
+            display: flex;
+            flex: 1;
+            min-height: 0;
+        }
+        .tutorial-sidebar {
+            width: 250px;
+            flex-shrink: 0;
+            background: var(--bg-primary);
+            border-right: 1px solid var(--border-subtle);
+            display: flex;
+            flex-direction: column;
+            padding: var(--space-md);
+        }
+        .tutorial-sidebar .search-box {
+            margin-bottom: var(--space-md);
+        }
+        .tutorial-sidebar .search-box input {
+            width: 100%;
+            padding: var(--space-sm) var(--space-md);
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-size: 13px;
+            outline: none;
+            transition: border var(--transition);
+        }
+        .tutorial-sidebar .search-box input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px var(--accent-glow);
+        }
+        .tutorial-sidebar .bookmark-list {
+            flex: 1;
+            overflow-y: auto;
+            margin: 0 -8px;
+            padding: 0 8px;
+        }
+        .tutorial-sidebar .bookmark-list::-webkit-scrollbar {
+            width: 4px;
+        }
+        .bookmark-item {
+            padding: 5px 12px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: all var(--transition);
+            font-size: 13px;
+            border-left: 2px solid transparent;
+            margin-bottom: 1px;
+        }
+        .bookmark-item:hover {
+            background: var(--bg-surface-hover);
+            color: var(--text-primary);
+        }
+        .bookmark-item.active {
+            color: var(--accent-light);
+            background: rgba(99, 102, 241, 0.12);
+            border-left-color: var(--accent);
+        }
+        .bookmark-item .chapter-tag {
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-right: 6px;
+            opacity: 0.6;
+        }
+        .tutorial-content {
+            flex: 1;
+            padding: var(--space-lg);
+            overflow-y: auto;
+            min-height: 0;
+        }
+        .tutorial-content::-webkit-scrollbar {
+            width: 4px;
+        }
+        .tutorial-content h2 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--space-md);
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: var(--space-sm);
+        }
+        .tutorial-content h3 {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--accent-light);
+            margin: var(--space-md) 0 var(--space-sm);
+        }
+        .tutorial-content p {
+            color: var(--text-secondary);
+            line-height: 1.8;
+            margin-bottom: var(--space-md);
+        }
+        .tutorial-content pre {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: var(--space-md) var(--space-lg);
+            overflow-x: auto;
+            font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+            font-size: 12.5px;
+            color: var(--text-primary);
+            margin: var(--space-md) 0;
+            line-height: 1.7;
+        }
+        .tutorial-content pre code {
+            display: block;
+            white-space: pre;
+        }
+        .tutorial-content ul {
+            padding-left: var(--space-xl);
+            color: var(--text-secondary);
+            margin-bottom: var(--space-md);
+        }
+        .tutorial-content ul li {
+            margin-bottom: var(--space-xs);
+        }
+        .tutorial-content .note {
+            background: rgba(99, 102, 241, 0.06);
+            border-left: 3px solid var(--accent);
+            padding: var(--space-sm) var(--space-md);
+            border-radius: var(--radius-sm);
+            margin: var(--space-md) 0;
+            color: var(--text-dim);
+            font-size: 13px;
+        }
+        .tutorial-content .note.warning {
+            border-left-color: var(--warning);
+            background: rgba(251, 191, 36, 0.06);
+        }
+        .tutorial-content .note.danger {
+            border-left-color: var(--error);
+            background: rgba(239, 68, 68, 0.06);
+        }
+        .tutorial-content .note.success {
+            border-left-color: var(--success);
+            background: rgba(52, 211, 153, 0.06);
+        }
+
+        @media (max-width: 820px) {
+            .tutorial-card {
+                height: 600px;
+                min-height: 400px;
+            }
+            .tutorial-body {
+                flex-direction: column;
+            }
+            .tutorial-sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid var(--border-subtle);
+                max-height: 180px;
+                flex-shrink: 0;
+            }
+            .tutorial-content {
+                padding: var(--space-md);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .tutorial-card {
+                height: 500px;
+                min-height: 350px;
+            }
+            .tutorial-sidebar .bookmark-item {
+                font-size: 12px;
+                padding: 4px 10px;
+            }
+            .tutorial-content h2 {
+                font-size: 17px;
+            }
+            .tutorial-content h3 {
+                font-size: 14px;
+            }
+            .tutorial-content pre {
+                font-size: 11px;
+                padding: var(--space-sm) var(--space-md);
+            }
+        }
+
+        /* ===== Toast ===== */
+        #toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(12px);
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 12px 24px;
+            font-size: 13px;
+            display: none;
+            align-items: center;
+            gap: 12px;
+            box-shadow: var(--shadow-soft);
+            z-index: 999;
+            backdrop-filter: blur(12px);
+            max-width: 92vw;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        #toast.show {
+            display: flex;
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        #toast.success {
+            border-left: 4px solid var(--success);
+            color: var(--success);
+        }
+        #toast.error {
+            border-left: 4px solid var(--error);
+            color: var(--error);
+        }
+        #toast i {
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app">
+        <!-- ===== 头部 ===== -->
+        <header class="app-header">
+            <div class="brand">
+                <i class="fas fa-wave-square"></i>
+                <h1>音频可视化</h1>
+                <span class="version">v4.0</span>
+            </div>
+            <div class="status-group">
+                <a href="/tools" class="back-btn" title="返回工具箱">
+                    <i class="fas fa-arrow-left"></i> 返回
+                </a>
+                <span class="badge">
+                    <i class="fas fa-lock"></i> 纯前端本地
+                </span>
+            </div>
+        </header>
+
+        <!-- ===== 标签页 ===== -->
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="test">可视化</button>
+            <button class="tab-btn" data-tab="tutorial">教程</button>
+        </div>
+
+        <!-- ===== 标签内容：可视化 ===== -->
+        <div id="testTab" class="tab-content">
+            <div class="panel">
+                <div class="panel-title"><i class="fas fa-wave-square"></i> 音频可视化 · 三视图</div>
+
+                <div class="audio-layout">
+                    <!-- ===== 左侧控制区 ===== -->
+                    <div class="control-panel" id="controlPanel">
+                        <!-- 文件上传 -->
+                        <div class="ctrl-group">
+                            <div class="group-label"><i class="fas fa-upload"></i> 音频文件</div>
+                            <div class="upload-area" id="uploadArea">
+                                <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                                <div class="upload-text">点击选择或拖拽文件</div>
+                                <div class="upload-hint">MP3, WAV, OGG, FLAC, AAC 等</div>
+                                <div class="upload-status" id="uploadStatus"><i class="fas fa-spinner fa-spin"></i> 加载中...</div>
+                                <input type="file" id="fileInput" accept="audio/*" />
+                            </div>
+                            <div class="file-info" id="fileInfo">
+                                <div class="info-row"><span class="label">文件名</span><span class="value" id="fileName">-</span></div>
+                                <div class="info-row"><span class="label">时长</span><span class="value" id="fileDuration">-</span></div>
+                                <div class="info-row"><span class="label">采样率</span><span class="value" id="fileSampleRate">-</span></div>
+                                <div class="info-row"><span class="label">声道数</span><span class="value" id="fileChannels">-</span></div>
+                                <div class="info-row"><span class="label">位深</span><span class="value" id="fileBitDepth">-</span></div>
+                            </div>
+                        </div>
+
+                        <!-- 播放控制 -->
+                        <div class="ctrl-group">
+                            <div class="group-label"><i class="fas fa-play"></i> 播放控制</div>
+                            <div class="player-controls">
+                                <div class="player-top">
+                                    <button class="player-btn" id="playBtn" title="播放/暂停"><i class="fas fa-play"></i></button>
+                                    <button class="player-btn btn-stop" id="stopBtn" title="停止"><i class="fas fa-stop"></i></button>
+                                    <div class="player-progress" id="progressWrap">
+                                        <div class="progress-fill" id="progressFill"></div>
+                                        <div class="progress-thumb" id="progressThumb"></div>
+                                    </div>
+                                    <span class="player-time" id="timeDisplay">00:00 / 00:00</span>
+                                </div>
+                                <div class="player-bottom">
+                                    <div class="player-volume">
+                                        <i class="fas fa-volume-down"></i>
+                                        <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.8" />
+                                        <i class="fas fa-volume-up"></i>
+                                    </div>
+                                    <span class="player-status-text" id="playerStatus">就绪</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 参数 -->
+                        <div class="ctrl-group">
+                            <div class="group-label"><i class="fas fa-sliders-h"></i> 可视化参数</div>
+                            <div class="param-row">
+                                <div class="param-item">
+                                    <label>FFT</label>
+                                    <select id="fftSize">
+                                        <option value="256">256</option>
+                                        <option value="512">512</option>
+                                        <option value="1024" selected>1024</option>
+                                        <option value="2048">2048</option>
+                                        <option value="4096">4096</option>
+                                    </select>
+                                </div>
+                                <div class="param-item">
+                                    <label>平滑</label>
+                                    <input type="range" id="smoothing" min="0" max="0.9" step="0.05" value="0.8" />
+                                    <span class="range-value" id="smoothingVal">0.80</span>
+                                </div>
+                            </div>
+                            <div class="param-row" style="margin-top:var(--space-xs);">
+                                <div class="param-item color-item">
+                                    <label>配色</label>
+                                    <select id="colorTheme">
+                                        <option value="neon">霓虹蓝紫</option>
+                                        <option value="fire">烈焰红橙</option>
+                                        <option value="ocean">海洋蓝青</option>
+                                        <option value="forest">森林绿</option>
+                                        <option value="mono">单色白</option>
+                                    </select>
+                                </div>
+                                <div class="param-item check-item">
+                                    <label><input type="checkbox" id="showGradient" checked /> 渐变</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== 右侧可视化三视图 ===== -->
+                    <div class="vis-panel">
+                        <div class="vis-row" style="flex:1;">
+                            <!-- 波形图 -->
+                            <div class="vis-item">
+                                <div class="vis-label"><i class="fas fa-chart-area"></i> 波形图</div>
+                                <canvas id="waveformCanvas"></canvas>
+                                <div class="vis-overlay" id="waveformOverlay">
+                                    <i class="fas fa-music"></i>
+                                    <span class="status-text">等待音频加载</span>
+                                </div>
+                            </div>
+                            <!-- 频谱图 -->
+                            <div class="vis-item">
+                                <div class="vis-label"><i class="fas fa-chart-line"></i> 频谱图</div>
+                                <canvas id="spectrumCanvas"></canvas>
+                                <div class="vis-overlay" id="spectrumOverlay">
+                                    <i class="fas fa-music"></i>
+                                    <span class="status-text">等待音频加载</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="vis-row" style="flex:0.6;min-height:80px;">
+                            <!-- 柱状频谱 -->
+                            <div class="vis-item">
+                                <div class="vis-label"><i class="fas fa-chart-bar"></i> 柱状频谱</div>
+                                <canvas id="barsCanvas"></canvas>
+                                <div class="vis-overlay" id="barsOverlay">
+                                    <i class="fas fa-music"></i>
+                                    <span class="status-text">等待音频加载</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== 标签内容：教程 ===== -->
+        <div id="tutorialTab" class="tab-content" style="display: none;">
+            <div class="panel tutorial-card">
+                <div class="card-header">
+                    <i class="fas fa-book" style="font-size:20px;color:var(--accent-light);margin-right:8px;"></i>
+                    <h3 style="display:inline-block;font-size:18px;font-weight:600;color:var(--text-main);">音频可视化相关教程</h3>
+                    <span style="float:right;font-size:12px;color:var(--text-muted);">共 9 章</span>
+                </div>
+                <div class="tutorial-body">
+                    <div class="tutorial-sidebar">
+                        <div class="search-box">
+                            <input type="text" id="tutorialSearch" placeholder="搜索章节..." />
+                        </div>
+                        <div class="bookmark-list" id="bookmarkList"></div>
+                    </div>
+                    <div class="tutorial-content" id="tutorialContent"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== Toast ===== -->
+        <div id="toast">
+            <i id="toastIcon"></i>
+            <span id="toastMsg"></span>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // ================================================================
+            // DOM 引用
+            // ================================================================
+            var fileInput = document.getElementById('fileInput');
+            var uploadArea = document.getElementById('uploadArea');
+            var uploadStatus = document.getElementById('uploadStatus');
+            var fileInfo = document.getElementById('fileInfo');
+            var fileName = document.getElementById('fileName');
+            var fileDuration = document.getElementById('fileDuration');
+            var fileSampleRate = document.getElementById('fileSampleRate');
+            var fileChannels = document.getElementById('fileChannels');
+            var fileBitDepth = document.getElementById('fileBitDepth');
+
+            var playBtn = document.getElementById('playBtn');
+            var stopBtn = document.getElementById('stopBtn');
+            var progressWrap = document.getElementById('progressWrap');
+            var progressFill = document.getElementById('progressFill');
+            var progressThumb = document.getElementById('progressThumb');
+            var timeDisplay = document.getElementById('timeDisplay');
+            var playerStatus = document.getElementById('playerStatus');
+
+            var volumeSlider = document.getElementById('volumeSlider');
+            var fftSizeSelect = document.getElementById('fftSize');
+            var smoothingSlider = document.getElementById('smoothing');
+            var smoothingVal = document.getElementById('smoothingVal');
+            var colorTheme = document.getElementById('colorTheme');
+            var showGradient = document.getElementById('showGradient');
+
+            var waveformCanvas = document.getElementById('waveformCanvas');
+            var spectrumCanvas = document.getElementById('spectrumCanvas');
+            var barsCanvas = document.getElementById('barsCanvas');
+            var overlays = {
+                waveform: document.getElementById('waveformOverlay'),
+                spectrum: document.getElementById('spectrumOverlay'),
+                bars: document.getElementById('barsOverlay')
+            };
+
+            var testTab = document.getElementById('testTab');
+            var tutorialTab = document.getElementById('tutorialTab');
+            var tabBtns = document.querySelectorAll('.tab-btn');
+
+            // 教程
+            var tutorialSearch = document.getElementById('tutorialSearch');
+            var bookmarkList = document.getElementById('bookmarkList');
+            var tutorialContent = document.getElementById('tutorialContent');
+
+            // Toast
+            var toast = document.getElementById('toast');
+            var toastIcon = document.getElementById('toastIcon');
+            var toastMsg = document.getElementById('toastMsg');
+            var toastTimer = null;
+
+            // ================================================================
+            // 音频相关
+            // ================================================================
+            var audioContext = null;
+            var audioBuffer = null;
+            var sourceNode = null;
+            var analyser = null;
+            var gainNode = null;
+            var isPlaying = false;
+            var startTime = 0;
+            var pausedTime = 0;
+            var animationId = null;
+            var currentFile = null;
+            var isLoaded = false;
+            var isDragging = false;
+            var wasPlayingBeforeSeek = false;
+
+            // ================================================================
+            // Toast
+            // ================================================================
+            function showToast(msg, type) {
+                type = type || 'success';
+                if (toastTimer) {
+                    clearTimeout(toastTimer);
+                    toastTimer = null;
+                }
+                toastIcon.className = type === 'error' ? 'fas fa-exclamation-circle' : 'fas fa-check-circle';
+                toastMsg.textContent = msg;
+                toast.className = type === 'error' ? 'error' : 'success';
+                toast.classList.add('show');
+                toastTimer = setTimeout(function() {
+                    toast.classList.remove('show');
+                    toastTimer = null;
+                }, 2500);
+            }
+
+            // ================================================================
+            // 画布尺寸管理
+            // ================================================================
+            function resizeAllCanvases() {
+                var canvases = [waveformCanvas, spectrumCanvas, barsCanvas];
+                canvases.forEach(function(canvas) {
+                    var container = canvas.parentElement;
+                    if (!container) return;
+                    var rect = container.getBoundingClientRect();
+                    var labelHeight = 28;
+                    var w = rect.width - 2;
+                    var h = rect.height - 2 - labelHeight;
+                    if (w <= 0 || h <= 0) { w = 100;
+                        h = 60; }
+                    var dpr = window.devicePixelRatio || 1;
+                    canvas.width = w * dpr;
+                    canvas.height = h * dpr;
+                    canvas.style.width = w + 'px';
+                    canvas.style.height = h + 'px';
+                    var ctx = canvas.getContext('2d');
+                    ctx.scale(dpr, dpr);
+                    canvas._w = w;
+                    canvas._h = h;
+                });
+            }
+
+            // ================================================================
+            // 颜色系统（已移除彩虹模式）
+            // ================================================================
+            function getThemeColors(theme, gradient) {
+                var colors = {};
+                switch (theme) {
+                    case 'neon':
+                        colors.primary = gradient ? ['#6366f1', '#818cf8', '#a78bfa'] : '#818cf8';
+                        colors.secondary = gradient ? ['#4f46e5', '#6366f1', '#818cf8'] : '#6366f1';
+                        colors.glow = 'rgba(99,102,241,0.3)';
+                        break;
+                    case 'fire':
+                        colors.primary = gradient ? ['#ef4444', '#f97316', '#f59e0b'] : '#f97316';
+                        colors.secondary = gradient ? ['#dc2626', '#ef4444', '#f97316'] : '#ef4444';
+                        colors.glow = 'rgba(239,68,68,0.3)';
+                        break;
+                    case 'ocean':
+                        colors.primary = gradient ? ['#06b6d4', '#3b82f6', '#8b5cf6'] : '#3b82f6';
+                        colors.secondary = gradient ? ['#0891b2', '#06b6d4', '#3b82f6'] : '#06b6d4';
+                        colors.glow = 'rgba(59,130,246,0.3)';
+                        break;
+                    case 'forest':
+                        colors.primary = gradient ? ['#10b981', '#34d399', '#6ee7b7'] : '#34d399';
+                        colors.secondary = gradient ? ['#059669', '#10b981', '#34d399'] : '#10b981';
+                        colors.glow = 'rgba(52,211,153,0.3)';
+                        break;
+                    case 'mono':
+                        colors.primary = gradient ? ['#94a3b8', '#cbd5e1', '#f1f5f9'] : '#cbd5e1';
+                        colors.secondary = gradient ? ['#64748b', '#94a3b8', '#cbd5e1'] : '#94a3b8';
+                        colors.glow = 'rgba(148,163,184,0.2)';
+                        break;
+                    default:
+                        colors.primary = '#818cf8';
+                        colors.secondary = '#6366f1';
+                        colors.glow = 'rgba(99,102,241,0.3)';
+                }
+                return colors;
+            }
+
+            function getColor(colors, index, total, primaryOnly) {
+                var palette = primaryOnly ? colors.primary : colors.secondary;
+                if (typeof palette === 'string') {
+                    return palette;
+                }
+                if (Array.isArray(palette)) {
+                    var pos = index / total;
+                    var len = palette.length;
+                    var idx = Math.floor(pos * (len - 1));
+                    var next = Math.min(idx + 1, len - 1);
+                    var frac = (pos * (len - 1)) - idx;
+                    return lerpColor(palette[idx], palette[next], frac);
+                }
+                return '#818cf8';
+            }
+
+            function lerpColor(c1, c2, t) {
+                var r1 = parseInt(c1.slice(1, 3), 16),
+                    g1 = parseInt(c1.slice(3, 5), 16),
+                    b1 = parseInt(c1.slice(5, 7), 16);
+                var r2 = parseInt(c2.slice(1, 3), 16),
+                    g2 = parseInt(c2.slice(3, 5), 16),
+                    b2 = parseInt(c2.slice(5, 7), 16);
+                var r = Math.round(r1 + (r2 - r1) * t);
+                var g = Math.round(g1 + (g2 - g1) * t);
+                var b = Math.round(b1 + (b2 - b1) * t);
+                return '#' + [r, g, b].map(function(c) {
+                    var h = c.toString(16);
+                    return h.length === 1 ? '0' + h : h;
+                }).join('');
+            }
+
+            // ================================================================
+            // 绘制函数
+            // ================================================================
+            function drawWaveform(ctx, w, h, data, colors) {
+                var step = Math.floor(data.length / w);
+                var half = h / 2;
+                ctx.clearRect(0, 0, w, h);
+
+                var bgGrad = ctx.createLinearGradient(0, 0, 0, h);
+                bgGrad.addColorStop(0, 'rgba(11,9,20,0.95)');
+                bgGrad.addColorStop(1, 'rgba(18,16,30,0.95)');
+                ctx.fillStyle = bgGrad;
+                ctx.fillRect(0, 0, w, h);
+
+                ctx.beginPath();
+                var grad = ctx.createLinearGradient(0, 0, w, 0);
+                var hasData = false;
+                for (var i = 0; i < w; i++) {
+                    var idx = Math.floor(i * step);
+                    var val = (data[idx] || 128) / 128 - 1;
+                    var y = half + val * half * 0.9;
+                    if (i === 0) {
+                        ctx.moveTo(i, y);
+                    } else {
+                        ctx.lineTo(i, y);
+                    }
+                    var color = getColor(colors, i, w, true);
+                    grad.addColorStop(i / w, color);
+                    if (data[idx] !== undefined) hasData = true;
+                }
+                ctx.strokeStyle = hasData ? grad : '#444';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+
+                ctx.lineTo(w, half);
+                ctx.lineTo(0, half);
+                ctx.closePath();
+                var fillGrad = ctx.createLinearGradient(0, 0, 0, h);
+                var baseColor = Array.isArray(colors.primary) ? colors.primary[0] : colors.primary;
+                fillGrad.addColorStop(0, (hasData ? baseColor : '#444') + '30');
+                fillGrad.addColorStop(1, (hasData ? baseColor : '#444') + '05');
+                ctx.fillStyle = fillGrad;
+                ctx.fill();
+            }
+
+            function drawSpectrum(ctx, w, h, data, colors) {
+                var total = data.length;
+                var step = Math.floor(total / w);
+                ctx.clearRect(0, 0, w, h);
+
+                var bgGrad = ctx.createLinearGradient(0, 0, 0, h);
+                bgGrad.addColorStop(0, 'rgba(11,9,20,0.95)');
+                bgGrad.addColorStop(1, 'rgba(18,16,30,0.95)');
+                ctx.fillStyle = bgGrad;
+                ctx.fillRect(0, 0, w, h);
+
+                ctx.beginPath();
+                var grad = ctx.createLinearGradient(0, 0, w, 0);
+                var hasData = false;
+                for (var i = 0; i < w; i++) {
+                    var idx = Math.floor(i * step);
+                    var val = data[idx] || 0;
+                    var y = h - (val / 255) * h * 0.9 - 5;
+                    if (i === 0) {
+                        ctx.moveTo(i, y);
+                    } else {
+                        ctx.lineTo(i, y);
+                    }
+                    var color = getColor(colors, i, w, true);
+                    grad.addColorStop(i / w, color);
+                    if (data[idx] !== undefined) hasData = true;
+                }
+                ctx.strokeStyle = hasData ? grad : '#444';
+                ctx.lineWidth = 1.8;
+                ctx.stroke();
+
+                ctx.lineTo(w, h);
+                ctx.lineTo(0, h);
+                ctx.closePath();
+                var fillGrad = ctx.createLinearGradient(0, 0, 0, h);
+                var baseColor = Array.isArray(colors.primary) ? colors.primary[0] : colors.primary;
+                fillGrad.addColorStop(0, (hasData ? baseColor : '#444') + '25');
+                fillGrad.addColorStop(1, (hasData ? baseColor : '#444') + '05');
+                ctx.fillStyle = fillGrad;
+                ctx.fill();
+            }
+
+            function drawBars(ctx, w, h, data, colors) {
+                var barCount = Math.min(64, Math.floor(w / 6));
+                var barWidth = Math.floor((w - 10) / barCount);
+                var step = Math.floor(data.length / barCount);
+                ctx.clearRect(0, 0, w, h);
+
+                var bgGrad = ctx.createLinearGradient(0, 0, 0, h);
+                bgGrad.addColorStop(0, 'rgba(11,9,20,0.95)');
+                bgGrad.addColorStop(1, 'rgba(18,16,30,0.95)');
+                ctx.fillStyle = bgGrad;
+                ctx.fillRect(0, 0, w, h);
+
+                var hasData = false;
+                for (var i = 0; i < barCount; i++) {
+                    var idx = Math.floor(i * step);
+                    var val = data[idx] || 0;
+                    if (data[idx] !== undefined) hasData = true;
+                    var barHeight = (val / 255) * h * 0.9;
+                    var x = 5 + i * barWidth;
+                    var color = getColor(colors, i, barCount, false);
+
+                    var grad = ctx.createLinearGradient(0, h - barHeight, 0, h);
+                    grad.addColorStop(0, hasData ? color : '#444');
+                    grad.addColorStop(1, hasData ? color + '40' : '#44440');
+                    ctx.fillStyle = grad;
+                    if (hasData && Array.isArray(colors.primary)) {
+                        ctx.shadowColor = colors.primary[0] + '30';
+                        ctx.shadowBlur = 4;
+                    } else {
+                        ctx.shadowBlur = 0;
+                    }
+                    ctx.fillRect(x, h - barHeight, Math.max(2, barWidth - 2), barHeight);
+                    ctx.shadowBlur = 0;
+                }
+            }
+
+            // ================================================================
+            // 主绘制循环
+            // ================================================================
+            function drawAllVisualizations(forceStop) {
+                if (!analyser) {
+                    showOverlays(true);
+                    return;
+                }
+                showOverlays(false);
+
+                var fftSize = analyser.fftSize;
+                var dataArray = new Uint8Array(fftSize);
+                var timeData = new Uint8Array(fftSize);
+
+                if (isPlaying && !forceStop) {
+                    analyser.getByteFrequencyData(dataArray);
+                    analyser.getByteTimeDomainData(timeData);
+                    window._cachedData = { freq: dataArray, time: timeData };
+                } else if (window._cachedData && !forceStop) {
+                    dataArray = window._cachedData.freq;
+                    timeData = window._cachedData.time;
+                } else {
+                    // 停止状态：显示空数据
+                    for (var i = 0; i < fftSize; i++) {
+                        dataArray[i] = 0;
+                        timeData[i] = 128;
+                    }
+                }
+
+                var theme = colorTheme.value;
+                var gradient = showGradient.checked;
+                var colors = getThemeColors(theme, gradient);
+
+                var ctx1 = waveformCanvas.getContext('2d');
+                var w1 = waveformCanvas._w || 200,
+                    h1 = waveformCanvas._h || 80;
+                drawWaveform(ctx1, w1, h1, timeData, colors);
+
+                var ctx2 = spectrumCanvas.getContext('2d');
+                var w2 = spectrumCanvas._w || 200,
+                    h2 = spectrumCanvas._h || 80;
+                drawSpectrum(ctx2, w2, h2, dataArray, colors);
+
+                var ctx3 = barsCanvas.getContext('2d');
+                var w3 = barsCanvas._w || 200,
+                    h3 = barsCanvas._h || 60;
+                drawBars(ctx3, w3, h3, dataArray, colors);
+
+                // 更新进度（仅在非拖动时）
+                if (!isDragging && isPlaying && audioBuffer) {
+                    var currentTime = audioContext.currentTime - startTime;
+                    var duration = audioBuffer.duration;
+                    if (currentTime > duration) currentTime = duration;
+                    updateProgress(currentTime, duration);
+                }
+            }
+
+            function showOverlays(show) {
+                var keys = ['waveform', 'spectrum', 'bars'];
+                keys.forEach(function(key) {
+                    var overlay = overlays[key];
+                    if (show) {
+                        overlay.classList.remove('hidden');
+                        overlay.querySelector('.status-text').textContent = !isLoaded ? '等待音频加载' :
+                            isPlaying ? '播放中...' : '已停止';
+                        overlay.querySelector('i').className = !isLoaded ? 'fas fa-music' :
+                            isPlaying ? 'fas fa-play-circle' : 'fas fa-stop-circle';
+                    } else {
+                        overlay.classList.add('hidden');
+                    }
+                });
+            }
+
+            // ================================================================
+            // 更新进度
+            // ================================================================
+            function updateProgress(current, duration) {
+                if (!duration || duration <= 0) duration = 1;
+                if (isNaN(current) || !isFinite(current) || current < 0) current = 0;
+                if (current > duration) current = duration;
+
+                var percent = (current / duration) * 100;
+                progressFill.style.width = percent + '%';
+                progressThumb.style.left = percent + '%';
+
+                var cMin = Math.floor(current / 60);
+                var cSec = Math.floor(current % 60);
+                var dMin = Math.floor(duration / 60);
+                var dSec = Math.floor(duration % 60);
+                var str = String(cMin).padStart(2, '0') + ':' + String(cSec).padStart(2, '0') +
+                    ' / ' +
+                    String(dMin).padStart(2, '0') + ':' + String(dSec).padStart(2, '0');
+                timeDisplay.textContent = str;
+            }
+
+            // ================================================================
+            // 播放控制
+            // ================================================================
+            function togglePlay() {
+                if (!audioBuffer) {
+                    showToast('请先上传音频文件', 'error');
+                    return;
+                }
+                if (isPlaying) {
+                    pauseAudio();
+                } else {
+                    playAudio();
+                }
+            }
+
+            function playAudio() {
+                if (!audioBuffer || !audioContext) return;
+
+                if (pausedTime >= audioBuffer.duration) {
+                    pausedTime = 0;
+                }
+
+                if (sourceNode) {
+                    try { sourceNode.stop(); } catch (e) {}
+                    try { sourceNode.disconnect(); } catch (e) {}
+                    sourceNode = null;
+                }
+
+                sourceNode = audioContext.createBufferSource();
+                sourceNode.buffer = audioBuffer;
+                sourceNode.connect(gainNode);
+                gainNode.connect(analyser);
+                analyser.connect(audioContext.destination);
+
+                // 从 pausedTime 开始播放
+                sourceNode.start(0, pausedTime);
+                startTime = audioContext.currentTime - pausedTime;
+                isPlaying = true;
+                isDragging = false; // 重置拖动状态
+
+                playBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                playerStatus.textContent = '播放中';
+                showOverlays(false);
+
+                if (animationId) cancelAnimationFrame(animationId);
+                animateVisualization();
+
+                sourceNode.onended = function() {
+                    if (isPlaying) {
+                        isPlaying = false;
+                        pausedTime = 0;
+                        playBtn.innerHTML = '<i class="fas fa-play"></i>';
+                        playerStatus.textContent = '已结束';
+                        updateProgress(0, audioBuffer.duration);
+                        drawAllVisualizations(true);
+                        showOverlays(true);
+                    }
+                };
+            }
+
+            function pauseAudio() {
+                if (!isPlaying || !sourceNode) return;
+                var elapsed = audioContext.currentTime - startTime;
+                pausedTime = Math.min(elapsed, audioBuffer.duration);
+                sourceNode.stop();
+                sourceNode.disconnect();
+                sourceNode = null;
+                isPlaying = false;
+                playBtn.innerHTML = '<i class="fas fa-play"></i>';
+                playerStatus.textContent = '已暂停';
+                if (animationId) {
+                    cancelAnimationFrame(animationId);
+                    animationId = null;
+                }
+
+                if (window._cachedData) {
+                    drawAllVisualizations(false);
+                } else {
+                    var fftSize = analyser ? analyser.fftSize : 1024;
+                    var emptyData = new Uint8Array(fftSize);
+                    for (var i = 0; i < fftSize; i++) {
+                        emptyData[i] = 128 + Math.sin(i * 0.05) * 60;
+                    }
+                    window._cachedData = { freq: emptyData, time: emptyData };
+                    drawAllVisualizations(false);
+                }
+
+                // 更新进度显示为当前位置
+                if (audioBuffer) {
+                    updateProgress(pausedTime, audioBuffer.duration);
+                }
+            }
+
+            function stopAudio() {
+                if (sourceNode) {
+                    try { sourceNode.stop(); } catch (e) {}
+                    sourceNode.disconnect();
+                    sourceNode = null;
+                }
+                isPlaying = false;
+                pausedTime = 0;
+                isDragging = false;
+                playBtn.innerHTML = '<i class="fas fa-play"></i>';
+                playerStatus.textContent = '已停止';
+                if (animationId) {
+                    cancelAnimationFrame(animationId);
+                    animationId = null;
+                }
+                window._cachedData = null;
+                if (audioBuffer) {
+                    var fftSize = analyser ? analyser.fftSize : 1024;
+                    var emptyData = new Uint8Array(fftSize);
+                    for (var i = 0; i < fftSize; i++) {
+                        emptyData[i] = 128 + Math.sin(i * 0.05) * 60;
+                    }
+                    window._cachedData = { freq: emptyData, time: emptyData };
+                    drawAllVisualizations(true);
+                }
+                updateProgress(0, audioBuffer ? audioBuffer.duration : 1);
+                showOverlays(true);
+                var overlay = overlays.waveform;
+                overlay.querySelector('.status-text').textContent = '已停止';
+                overlay.querySelector('i').className = 'fas fa-stop-circle';
+                overlay.classList.remove('hidden');
+            }
+
+            function animateVisualization() {
+                if (!isPlaying || !audioBuffer) {
+                    drawAllVisualizations(true);
+                    return;
+                }
+                drawAllVisualizations(false);
+                animationId = requestAnimationFrame(animateVisualization);
+            }
+
+            // ================================================================
+            // 进度条交互
+            // ================================================================
+            function seekTo(e) {
+                if (!audioBuffer) return;
+                var rect = progressWrap.getBoundingClientRect();
+                var x = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                var duration = audioBuffer.duration;
+                if (!duration || duration <= 0) return;
+                var newTime = x * duration;
+                if (newTime < 0) newTime = 0;
+                if (newTime > duration) newTime = duration;
+                pausedTime = newTime;
+                updateProgress(pausedTime, duration);
+            }
+
+            // 鼠标按下
+            progressWrap.addEventListener('mousedown', function(e) {
+                if (!audioBuffer) return;
+                wasPlayingBeforeSeek = isPlaying;
+                if (isPlaying) {
+                    pauseAudio();
+                }
+                isDragging = true;
+                progressWrap.classList.add('is-dragging');
+                seekTo(e);
+            });
+
+            // 鼠标移动
+            document.addEventListener('mousemove', function(e) {
+                if (!isDragging || !audioBuffer) return;
+                seekTo(e);
+            });
+
+            // 鼠标释放
+            document.addEventListener('mouseup', function() {
+                if (isDragging) {
+                    isDragging = false;
+                    progressWrap.classList.remove('is-dragging');
+                    // 如果之前是播放状态，恢复播放
+                    if (wasPlayingBeforeSeek) {
+                        playAudio();
+                    } else {
+                        // 否则只刷新画面
+                        if (window._cachedData) {
+                            drawAllVisualizations(false);
+                        }
+                        if (audioBuffer) {
+                            updateProgress(pausedTime, audioBuffer.duration);
+                        }
+                    }
+                }
+            });
+
+            // 触摸事件
+            progressWrap.addEventListener('touchstart', function(e) {
+                if (!audioBuffer) return;
+                wasPlayingBeforeSeek = isPlaying;
+                if (isPlaying) {
+                    pauseAudio();
+                }
+                isDragging = true;
+                progressWrap.classList.add('is-dragging');
+                var touch = e.touches[0];
+                if (touch) seekTo({ clientX: touch.clientX });
+            }, { passive: true });
+
+            document.addEventListener('touchmove', function(e) {
+                if (!isDragging || !audioBuffer) return;
+                var touch = e.touches[0];
+                if (touch) seekTo({ clientX: touch.clientX });
+            }, { passive: true });
+
+            document.addEventListener('touchend', function() {
+                if (isDragging) {
+                    isDragging = false;
+                    progressWrap.classList.remove('is-dragging');
+                    if (wasPlayingBeforeSeek) {
+                        playAudio();
+                    } else {
+                        if (window._cachedData) {
+                            drawAllVisualizations(false);
+                        }
+                        if (audioBuffer) {
+                            updateProgress(pausedTime, audioBuffer.duration);
+                        }
+                    }
+                }
+            }, { passive: true });
+
+            // ================================================================
+            // 加载音频
+            // ================================================================
+            async function loadAudioFile(file) {
+                try {
+                    uploadStatus.classList.add('active');
+                    uploadStatus.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 解码中...';
+
+                    var arrayBuffer = await file.arrayBuffer();
+                    audioContext = new(window.AudioContext || window.webkitAudioContext)();
+                    audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                    currentFile = file;
+                    isLoaded = true;
+
+                    analyser = audioContext.createAnalyser();
+                    analyser.fftSize = parseInt(fftSizeSelect.value) || 1024;
+                    analyser.smoothingTimeConstant = parseFloat(smoothingSlider.value) || 0.8;
+
+                    gainNode = audioContext.createGain();
+                    gainNode.gain.value = parseFloat(volumeSlider.value) || 0.8;
+
+                    fileInfo.classList.add('visible');
+                    fileName.textContent = file.name;
+                    var dur = Math.floor(audioBuffer.duration);
+                    var min = Math.floor(dur / 60);
+                    var sec = dur % 60;
+                    fileDuration.textContent = min + ':' + String(sec).padStart(2, '0');
+                    fileSampleRate.textContent = audioBuffer.sampleRate + ' Hz';
+                    fileChannels.textContent = audioBuffer.numberOfChannels + ' 声道';
+                    fileBitDepth.textContent = '32-bit 浮点';
+
+                    playerStatus.textContent = '已加载';
+                    pausedTime = 0;
+                    isPlaying = false;
+                    playBtn.innerHTML = '<i class="fas fa-play"></i>';
+                    window._cachedData = null;
+
+                    var fftSize2 = analyser.fftSize;
+                    var dummyData = new Uint8Array(fftSize2);
+                    for (var i = 0; i < fftSize2; i++) {
+                        dummyData[i] = 128 + Math.sin(i * 0.1) * 60;
+                    }
+                    window._cachedData = { freq: dummyData, time: dummyData };
+
+                    resizeAllCanvases(); stopAudio();
+                    setTimeout(function() {
+                        drawAllVisualizations(true);
+                        showOverlays(true);
+                        overlays.waveform.querySelector('.status-text').textContent = '已加载，点击播放';
+                        overlays.waveform.querySelector('i').className = 'fas fa-check-circle';
+                        overlays.waveform.classList.remove('hidden');
+                        overlays.spectrum.querySelector('.status-text').textContent = '已加载，点击播放';
+                        overlays.spectrum.querySelector('i').className = 'fas fa-check-circle';
+                        overlays.spectrum.classList.remove('hidden');
+                        overlays.bars.querySelector('.status-text').textContent = '已加载，点击播放';
+                        overlays.bars.querySelector('i').className = 'fas fa-check-circle';
+                        overlays.bars.classList.remove('hidden');
+                        uploadStatus.classList.remove('active');
+                    }, 150);
+
+                    showToast('加载成功: ' + file.name, 'success');
+                } catch (e) {
+                    uploadStatus.classList.remove('active');
+                    uploadStatus.innerHTML = '<span style="color:var(--error);">加载失败</span>';
+                    showToast('加载失败: ' + e.message, 'error');
+                    console.error(e);
+                }
+            }
+
+            // ================================================================
+            // 全局拖拽
+            // ================================================================
+            var dragCounter = 0;
+
+            // 进入页面时增加计数，显示遮罩
+            document.addEventListener('dragenter', function(e) {
+                e.preventDefault();
+                dragCounter++;
+                document.body.classList.add('dragover');
+            });
+
+            // 在页面内移动时，只需阻止默认行为，不计数
+            document.addEventListener('dragover', function(e) {
+                e.preventDefault();
+            });
+
+            // 离开元素或页面时减少计数，当计数归零时关闭遮罩
+            document.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                if (!e.relatedTarget || !document.body.contains(e.relatedTarget)) {
+                    dragCounter = 0;
+                    document.body.classList.remove('dragover');
+                } else {
+                    dragCounter--;
+                    if (dragCounter <= 0) {
+                        dragCounter = 0;
+                        document.body.classList.remove('dragover');
+                    }
+                }
+            });
+
+            // 在页面内释放文件时，直接重置并关闭遮罩
+            document.addEventListener('drop', function(e) {
+                e.preventDefault();
+                dragCounter = 0;
+                document.body.classList.remove('dragover');
+                var files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    var file = files[0];
+                    if (file.type.startsWith('audio/')) {
+                        loadAudioFile(file);
+                    } else {
+                        showToast('请拖拽音频文件', 'error');
+                    }
+                }
+            });
+
+            // ================================================================
+            // 事件绑定
+            // ================================================================
+            function bindEvents() {
+                fileInput.addEventListener('change', function() {
+                    if (this.files.length > 0) {
+                        loadAudioFile(this.files[0]);
+                    }
+                });
+
+                uploadArea.addEventListener('click', function(e) {
+                    if (e.target.tagName !== 'INPUT') {
+                        fileInput.click();
+                    }
+                });
+
+                playBtn.addEventListener('click', togglePlay);
+                stopBtn.addEventListener('click', stopAudio);
+
+                document.addEventListener('keydown', function(e) {
+                    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName ===
+                        'SELECT') return;
+                    if (e.key === ' ' && document.activeElement && document.activeElement.closest('#testTab')) {
+                        e.preventDefault();
+                        togglePlay();
+                    }
+                });
+
+                volumeSlider.addEventListener('input', function() {
+                    if (gainNode) {
+                        gainNode.gain.value = parseFloat(this.value);
+                    }
+                });
+
+                fftSizeSelect.addEventListener('change', function() {
+                    if (analyser) {
+                        analyser.fftSize = parseInt(this.value);
+                        window._cachedData = null;
+                        if (!isPlaying && audioBuffer) {
+                            drawAllVisualizations(true);
+                        }
+                    }
+                });
+
+                smoothingSlider.addEventListener('input', function() {
+                    var val = parseFloat(this.value);
+                    smoothingVal.textContent = val.toFixed(2);
+                    if (analyser) {
+                        analyser.smoothingTimeConstant = val;
+                    }
+                });
+
+                colorTheme.addEventListener('change', function() {
+                    if (audioBuffer) {
+                        drawAllVisualizations(isPlaying ? false : true);
+                    }
+                });
+                showGradient.addEventListener('change', function() {
+                    if (audioBuffer) {
+                        drawAllVisualizations(isPlaying ? false : true);
+                    }
+                });
+
+                var resizeTimer;
+                window.addEventListener('resize', function() {
+                    clearTimeout(resizeTimer);
+                    resizeTimer = setTimeout(function() {
+                        resizeAllCanvases();
+                        if (audioBuffer) {
+                            drawAllVisualizations(isPlaying ? false : true);
+                        }
+                    }, 200);
+                });
+
+                var panel = document.querySelector('.panel');
+                if (panel) {
+                    var resizeObserver = new ResizeObserver(function() {
+                        resizeAllCanvases();
+                        if (audioBuffer) {
+                            drawAllVisualizations(isPlaying ? false : true);
+                        }
+                    });
+                    resizeObserver.observe(panel);
+                }
+            }
+
+            // ================================================================
+            // 标签切换
+            // ================================================================
+            tabBtns.forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    tabBtns.forEach(function(b) { b.classList.remove('active'); });
+                    this.classList.add('active');
+                    var tab = this.dataset.tab;
+                    testTab.style.display = tab === 'test' ? 'block' : 'none';
+                    tutorialTab.style.display = tab === 'tutorial' ? 'block' : 'none';
+                    if (tab === 'tutorial') {
+                        renderBookmarks();
+                    } else if (tab === 'test') {
+                        setTimeout(function() {
+                            resizeAllCanvases();
+                            if (audioBuffer) {
+                                drawAllVisualizations(isPlaying ? false : true);
+                            }
+                        }, 150);
+                    }
+                });
+            });
+
+            // ================================================================
+            // 教程数据（9 章）
+            // ================================================================
+            var chapters = [{
+                id: 'intro',
+                title: '音频可视化简介',
+                content: `
+                    <h2>音频可视化简介</h2>
+                    <p>音频可视化是将声音信号转换为视觉图形的技术。它通过分析音频的时域和频域特征，将听觉信息转化为视觉呈现。</p>
+                    <ul>
+                        <li><strong>时域分析</strong>：显示声音波形随时间的变化（波形图）。</li>
+                        <li><strong>频域分析</strong>：显示声音各频率成分的强度（频谱图）。</li>
+                        <li><strong>应用</strong>：音乐播放器、DJ 软件、音频编辑、数据监控等。</li>
+                    </ul>
+                    <p>本工具同时显示波形图、频谱图和柱状频谱三种可视化方式。</p>
+                    <div class="note success">音频可视化让声音"看得见"，是理解音频信号的重要工具。</div>
+                `
+            }, {
+                id: 'audio-basics',
+                title: '音频基础知识',
+                content: `
+                    <h2>音频基础知识</h2>
+                    <h3>采样率 (Sample Rate)</h3>
+                    <p>采样率是指每秒从连续信号中提取的样本数量，单位 Hz（赫兹）。常见采样率：44.1kHz（CD 质量）、48kHz（专业音频）、96kHz（高解析度）。</p>
+                    <p>根据奈奎斯特定理，采样率至少应为最高频率的 2 倍，才能完整还原信号。</p>
+                    <h3>位深 (Bit Depth)</h3>
+                    <p>位深决定了每个样本的动态范围（信噪比）。16 位（CD 质量）动态范围约 96dB，24 位约 144dB。本工具使用 32-bit 浮点处理。</p>
+                    <h3>声道数 (Channels)</h3>
+                    <p>单声道 (Mono)、立体声 (Stereo, 2 声道)、环绕声 (5.1, 7.1 等)。</p>
+                    <h3>响度 (Loudness)</h3>
+                    <p>响度是人对声音强弱的感知，与振幅（音量）相关但非线性。LUFS 是常用的响度单位。</p>
+                    <div class="note">理解这些概念有助于更好地分析音频信号。</div>
+                `
+            }, {
+                id: 'waveform',
+                title: '波形图详解',
+                content: `
+                    <h2>波形图</h2>
+                    <p>波形图显示音频信号随时间变化的振幅（音量）。横轴代表时间，纵轴代表振幅。</p>
+                    <ul>
+                        <li><strong>振幅</strong>：声音的响度，振幅越大声音越响。</li>
+                        <li><strong>频率</strong>：波形的疏密程度，越密频率越高。</li>
+                        <li><strong>用途</strong>：观察音量变化、识别静音段、剪辑标记点等。</li>
+                    </ul>
+                    <div class="note">本工具使用 Web Audio API 的 <code>getByteTimeDomainData</code> 获取时域数据。</div>
+                `
+            }, {
+                id: 'spectrum',
+                title: '频谱图详解',
+                content: `
+                    <h2>频谱图</h2>
+                    <p>频谱图显示音频信号在频率域上的分布，横轴代表频率（Hz），纵轴代表振幅（能量）。</p>
+                    <ul>
+                        <li><strong>低频</strong>：左端，对应低音（如鼓声、贝斯）。</li>
+                        <li><strong>高频</strong>：右端，对应高音（如镲片、人声齿音）。</li>
+                        <li><strong>用途</strong>：分析音色、识别频率成分、音频均衡。</li>
+                    </ul>
+                    <div class="note">本工具使用 <code>getByteFrequencyData</code> 获取频域数据。</div>
+                `
+            }, {
+                id: 'bars',
+                title: '柱状频谱',
+                content: `
+                    <h2>柱状频谱</h2>
+                    <p>柱状频谱是频谱图的一种变体，使用垂直条柱表示各频率分量的强度，更具视觉冲击力。</p>
+                    <ul>
+                        <li><strong>条柱数量</strong>：可调节 FFT 大小控制条柱数量。</li>
+                        <li><strong>平滑效果</strong>：平滑系数影响条柱变化的流畅度。</li>
+                        <li><strong>用途</strong>：音乐播放器视觉效果、现场表演 VJ。</li>
+                    </ul>
+                    <div class="note">柱状频谱是音乐可视化中最常见的样式之一。</div>
+                `
+            }, {
+                id: 'fft',
+                title: 'FFT 与音频分析',
+                content: `
+                    <h2>FFT 与音频分析</h2>
+                    <p>FFT（Fast Fourier Transform，快速傅里叶变换）是将时域信号转换为频域信号的数学算法。</p>
+                    <ul>
+                        <li><strong>FFT 大小</strong>：决定了频率分辨率。值越大，频率越精细，但响应越慢。</li>
+                        <li><strong>常用值</strong>：256（低分辨率）、1024（标准）、4096（高分辨率）。</li>
+                        <li><strong>平滑系数</strong>：控制频谱变化的平滑程度，避免抖动。</li>
+                    </ul>
+                    <pre><code>// Web Audio API 使用示例
+const analyser = audioContext.createAnalyser();
+analyser.fftSize = 1024;  // 2^10
+analyser.smoothingTimeConstant = 0.8;
+const data = new Uint8Array(analyser.fftSize);
+analyser.getByteFrequencyData(data);</code></pre>
+                    <div class="note success">理解 FFT 是音频可视化的核心。</div>
+                `
+            }, {
+                id: 'webapi',
+                title: 'Web Audio API 详解',
+                content: `
+                    <h2>Web Audio API 详解</h2>
+                    <p>Web Audio API 是浏览器内置的高性能音频处理接口，支持实时音频分析和可视化。</p>
+                    <ul>
+                        <li><strong>AudioContext</strong>：音频处理的入口，管理音频图。</li>
+                        <li><strong>AnalyserNode</strong>：分析节点，提供时域和频域数据。</li>
+                        <li><strong>BufferSource</strong>：播放音频缓冲区的源节点。</li>
+                        <li><strong>GainNode</strong>：音量控制节点。</li>
+                    </ul>
+                    <pre><code>// 创建音频上下文
+const ctx = new AudioContext();
+// 创建分析器
+const analyser = ctx.createAnalyser();
+analyser.fftSize = 1024;
+// 连接节点
+source.connect(gainNode);
+gainNode.connect(analyser);
+analyser.connect(ctx.destination);</code></pre>
+                    <div class="note">Web Audio API 是现代 Web 音频应用的基础。</div>
+                `
+            }, {
+                id: 'visualization-science',
+                title: '视觉化科学原理',
+                content: `
+                    <h2>视觉化科学原理</h2>
+                    <h3>心理声学</h3>
+                    <p>人类听觉对频率的感知是对数的，而非线性的。低频区域分辨率高，高频区域分辨率低。这就是为什么频谱图通常使用对数频率刻度。</p>
+                    <h3>视觉感知</h3>
+                    <p>人眼对亮度、颜色和运动敏感。柱状频谱利用颜色渐变和动态运动，能有效传达音频的节奏和能量变化。</p>
+                    <h3>颜色心理学</h3>
+                    <p>不同颜色能唤起不同情绪：蓝色沉稳、红色热烈、绿色自然、紫色神秘。选择合适的配色可以增强视觉体验。</p>
+                    <div class="note">音频可视化是科学与艺术的结合。</div>
+                `
+            }, {
+                id: 'practice',
+                title: '实践与常见问题',
+                content: `
+                    <h2>实践与常见问题</h2>
+                    <ul>
+                        <li><strong>音频无法播放</strong>：检查浏览器是否支持 Web Audio API，确保文件格式正确。</li>
+                        <li><strong>可视化无反应</strong>：确认音频已加载并播放，检查 FFT 大小设置。</li>
+                        <li><strong>性能问题</strong>：降低 FFT 大小或减少绘制频率。</li>
+                        <li><strong>颜色主题</strong>：选择高对比度颜色便于观察，渐变效果更美观。</li>
+                        <li><strong>波形失真</strong>：可能是音量过大导致削波，适当降低音量。</li>
+                    </ul>
+                    <p>本工具可用于音频分析、音乐可视化、声音监控等场景。</p>
+                    <div class="note success">音频可视化让数据更直观，是数据艺术的重要形式。</div>
+                `
+            }];
+
+            var activeChapterId = null;
+
+            function renderBookmarks(filter) {
+                filter = filter || '';
+                var list = document.getElementById('bookmarkList');
+                var filtered = filter.trim() === '' ?
+                    chapters :
+                    chapters.filter(function(ch) {
+                        return ch.title.toLowerCase().includes(filter.toLowerCase());
+                    });
+
+                if (filtered.length === 0) {
+                    list.innerHTML =
+                        '<div style="color: var(--text-muted); padding: var(--space-md); text-align: center;">未找到匹配章节</div>';
+                    return;
+                }
+
+                var html = '';
+                filtered.forEach(function(ch) {
+                    var active = (ch.id === activeChapterId) ? 'active' : '';
+                    html += '<div class="bookmark-item ' + active + '" data-id="' + ch.id + '">' +
+                        '<span class="chapter-tag">#</span> ' + ch.title +
+                        '</div>';
+                });
+                list.innerHTML = html;
+
+                list.querySelectorAll('.bookmark-item').forEach(function(el) {
+                    el.addEventListener('click', function() {
+                        var id = this.dataset.id;
+                        var chapter = chapters.find(function(c) { return c.id === id; });
+                        if (chapter) {
+                            activeChapterId = id;
+                            renderContent(chapter);
+                            document.querySelectorAll('.bookmark-item').forEach(function(b) { b.classList
+                                    .remove('active'); });
+                            this.classList.add('active');
+                            document.getElementById('tutorialSearch').value = '';
+                            renderBookmarks();
+                        }
+                    });
+                });
+
+                if (!activeChapterId && chapters.length > 0) {
+                    activeChapterId = chapters[0].id;
+                    renderContent(chapters[0]);
+                    var firstItem = list.querySelector('.bookmark-item');
+                    if (firstItem) firstItem.classList.add('active');
+                }
+            }
+
+            function renderContent(chapter) {
+                var container = document.getElementById('tutorialContent');
+                container.innerHTML = chapter.content;
+                container.scrollTop = 0;
+            }
+
+            tutorialSearch.addEventListener('input', function() {
+                var filter = this.value.trim();
+                renderBookmarks(filter);
+                var items = document.querySelectorAll('#bookmarkList .bookmark-item');
+                if (items.length > 0 && filter !== '') {
+                    items.forEach(function(b) { b.classList.remove('active'); });
+                    items[0].classList.add('active');
+                    var id = items[0].dataset.id;
+                    var chapter = chapters.find(function(c) { return c.id === id; });
+                    if (chapter) {
+                        activeChapterId = id;
+                        renderContent(chapter);
+                    }
+                } else if (filter === '') {
+                    if (activeChapterId) {
+                        var chapter = chapters.find(function(c) { return c.id === activeChapterId; });
+                        if (chapter) renderContent(chapter);
+                    } else if (chapters.length > 0) {
+                        activeChapterId = chapters[0].id;
+                        renderContent(chapters[0]);
+                    }
+                    renderBookmarks();
+                }
+            });
+
+            // ================================================================
+            // 初始化
+            // ================================================================
+            function init() {
+                renderBookmarks();
+                testTab.style.display = 'block';
+                tutorialTab.style.display = 'none';
+                bindEvents();
+
+                smoothingVal.textContent = parseFloat(smoothingSlider.value).toFixed(2);
+
+                setTimeout(function() {
+                    resizeAllCanvases();
+                    showOverlays(true);
+                    overlays.waveform.querySelector('.status-text').textContent = '等待音频加载';
+                    overlays.waveform.querySelector('i').className = 'fas fa-music';
+                    overlays.spectrum.querySelector('.status-text').textContent = '等待音频加载';
+                    overlays.spectrum.querySelector('i').className = 'fas fa-music';
+                    overlays.bars.querySelector('.status-text').textContent = '等待音频加载';
+                    overlays.bars.querySelector('i').className = 'fas fa-music';
+                    var emptyData = new Uint8Array(1024);
+                    for (var i = 0; i < 1024; i++) {
+                        emptyData[i] = 128 + Math.sin(i * 0.05) * 60;
+                    }
+                    window._cachedData = { freq: emptyData, time: emptyData };
+                    drawAllVisualizations(true);
+                }, 200);
+
+                function idleLoop() {
+                    if (isPlaying && isLoaded) {
+                        drawAllVisualizations(true);
+                    }
+                    requestAnimationFrame(idleLoop);
+                }
+                setTimeout(idleLoop, 500);
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+
+        })();
+    </script>
+
+</body>
+</html>

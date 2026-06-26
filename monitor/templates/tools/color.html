@@ -1,0 +1,1960 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes" />
+    <title>颜色工具 · 开发者工具箱</title>
+    <link rel="stylesheet" href="/static/all.min.css" />
+    <style>
+        /* ===== 全局重置 & 暗色主题 ===== */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg-primary: #0b0914;
+            --bg-secondary: #12101e;
+            --bg-surface: #181625;
+            --bg-surface-hover: #221f35;
+            --bg-elevated: #1f1c30;
+            --border-subtle: #2a2740;
+            --border-strong: #3d385a;
+            --text-primary: #edeff5;
+            --text-secondary: #b8bfd9;
+            --text-muted: #7a83a3;
+            --text-dim: #94a3b8;
+            --accent: #6366f1;
+            --accent-light: #818cf8;
+            --accent-dark: #4f46e5;
+            --accent-glow: rgba(99, 102, 241, 0.3);
+            --success: #34d399;
+            --success-bg: rgba(52, 211, 153, 0.12);
+            --error: #f87171;
+            --error-bg: rgba(248, 113, 113, 0.12);
+            --warning: #fbbf24;
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 14px;
+            --radius-full: 9999px;
+            --shadow-soft: 0 8px 30px rgba(0, 0, 0, 0.5);
+            --shadow-glow: 0 0 30px var(--accent-glow);
+            --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --space-xs: 4px;
+            --space-sm: 8px;
+            --space-md: 14px;
+            --space-lg: 20px;
+            --space-xl: 28px;
+        }
+
+        html {
+            font-size: 15px;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            padding: 24px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            line-height: 1.6;
+            user-select: none;
+        }
+
+        .result-text,
+        .result-box .value,
+        .code-area,
+        .color-preview-text,
+        .color-name {
+            user-select: text;
+        }
+
+        body *:not(input):not(textarea):not(.modal-input):not(.result-text):not(.code-area):not(.color-preview-text):not(.color-name):not(.regex-content):not(.regex-content *) {
+            user-select: none;
+        }
+        .regex-content,
+        .regex-content * {
+            user-select: text;
+        }
+
+        /* ===== 滚动条 ===== */
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+            border-radius: 999px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-strong);
+            border-radius: 999px;
+            transition: background 0.2s;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent);
+        }
+
+        .app {
+            max-width: 1300px;
+            width: 100%;
+        }
+
+        /* ===== 头部 ===== */
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0 20px 0;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .app-header .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .app-header .brand i {
+            font-size: 28px;
+            color: var(--accent-light);
+            filter: drop-shadow(0 0 8px var(--accent-glow));
+        }
+        .app-header .brand h1 {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            background: linear-gradient(135deg, #ffffff 40%, var(--accent-light));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .app-header .brand .version {
+            font-size: 13px;
+            color: var(--text-muted);
+            -webkit-text-fill-color: var(--text-muted);
+            background: var(--bg-surface);
+            padding: 0 10px;
+            border-radius: 999px;
+            border: 1px solid var(--border-subtle);
+            font-weight: 500;
+            margin-left: 4px;
+        }
+
+        .app-header .status-group {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .app-header .back-btn {
+            font-size: 13px;
+            color: var(--text-secondary);
+            background: var(--bg-surface);
+            padding: 4px 14px;
+            border-radius: 999px;
+            border: 1px solid var(--border-subtle);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            transition: all var(--transition);
+            white-space: nowrap;
+        }
+        .app-header .back-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent-light);
+            box-shadow: 0 0 16px var(--accent-glow);
+        }
+
+        .app-header .badge {
+            background: var(--success-bg);
+            color: var(--success);
+            padding: 5px 16px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid rgba(52, 211, 153, 0.2);
+            white-space: nowrap;
+        }
+        .app-header .badge i {
+            font-size: 12px;
+        }
+
+        /* ===== 标签页 ===== */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: 0;
+        }
+        .tab-btn {
+            background: transparent;
+            border: none;
+            padding: 10px 22px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-dim);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all var(--transition);
+            font-family: inherit;
+        }
+        .tab-btn:hover {
+            color: var(--text-primary);
+        }
+        .tab-btn.active {
+            color: var(--accent-light);
+            border-bottom-color: var(--accent-light);
+        }
+
+        /* ===== 面板通用 ===== */
+        .panel {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 20px 22px 22px;
+            transition: border-color var(--transition), box-shadow var(--transition);
+        }
+        .panel:hover {
+            border-color: var(--border-strong);
+        }
+
+        .panel-title {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .panel-title i {
+            font-size: 14px;
+            color: var(--accent-light);
+        }
+
+        /* ===== 颜色工具布局 ===== */
+        .color-grid {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 24px;
+            align-items: start;
+        }
+        @media (max-width: 920px) {
+            .color-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+        }
+
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-md);
+        }
+
+        .color-preview-large {
+            width: 100%;
+            height: 120px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-subtle);
+            transition: background 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+        .color-preview-large .color-hex-label {
+            position: absolute;
+            bottom: 10px;
+            right: 14px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 2px 12px;
+            border-radius: var(--radius-full);
+            font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+            font-size: 14px;
+            color: #fff;
+            backdrop-filter: blur(4px);
+        }
+        .color-preview-large .color-name-label {
+            position: absolute;
+            top: 10px;
+            left: 14px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 2px 12px;
+            border-radius: var(--radius-full);
+            font-size: 13px;
+            color: #fff;
+            backdrop-filter: blur(4px);
+        }
+
+        .input-group {
+            margin-bottom: var(--space-sm);
+        }
+        .input-group label {
+            display: block;
+            font-size: 12px;
+            color: var(--text-dim);
+            margin-bottom: var(--space-xs);
+            font-weight: 500;
+            letter-spacing: 0.3px;
+        }
+        .input-group input,
+        .input-group select {
+            width: 100%;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+            font-size: 14px;
+            padding: var(--space-sm) var(--space-md);
+            transition: border var(--transition), box-shadow var(--transition);
+            outline: none;
+        }
+        .input-group input:focus,
+        .input-group select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+        .input-group input::placeholder {
+            color: var(--text-muted);
+        }
+
+        /* 滑块与数字输入组合 */
+        .slider-group {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+        }
+        .slider-group input[type="range"] {
+            flex: 1;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 4px;
+            border-radius: 2px;
+            background: var(--border-subtle);
+            outline: none;
+            padding: 0;
+        }
+        .slider-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            border: 2px solid var(--bg-primary);
+            box-shadow: 0 0 8px var(--accent-glow);
+        }
+        .slider-group input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            border: 2px solid var(--bg-primary);
+        }
+        .slider-group .slider-value {
+            min-width: 40px;
+            text-align: center;
+            font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+            font-size: 13px;
+            color: var(--text-primary);
+        }
+
+        .action-row {
+            display: flex;
+            gap: var(--space-sm);
+            flex-wrap: wrap;
+            margin-top: var(--space-xs);
+        }
+        .action-row .btn {
+            background: var(--accent);
+            border: none;
+            border-radius: var(--radius-md);
+            color: #fff;
+            padding: 6px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            min-height: 36px;
+        }
+        .action-row .btn:hover {
+            background: var(--accent-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px var(--accent-glow);
+        }
+        .action-row .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+        }
+        .action-row .btn-outline:hover {
+            border-color: var(--accent);
+            color: var(--accent-light);
+            background: rgba(99, 102, 241, 0.05);
+        }
+        .action-row .btn-success {
+            background: var(--success);
+            color: #0b0914;
+        }
+        .action-row .btn-success:hover {
+            background: #2dd4a0;
+        }
+        .eyedropper-btn {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            color: var(--text-secondary);
+            padding: var(--space-xs) var(--space-md);
+            cursor: pointer;
+            transition: all var(--transition);
+            font-size: 13px;
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-xs);
+            min-height: 36px;
+        }
+        .eyedropper-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent-light);
+            background: rgba(99, 102, 241, 0.05);
+        }
+        .eyedropper-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* 调色板 */
+        .palette {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-xs);
+            margin-top: var(--space-xs);
+        }
+        .palette .swatch {
+            width: 32px;
+            height: 32px;
+            border-radius: var(--radius-sm);
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all var(--transition);
+            flex-shrink: 0;
+        }
+        .palette .swatch:hover {
+            transform: scale(1.15);
+            border-color: var(--accent-light);
+            box-shadow: 0 0 12px var(--accent-glow);
+        }
+        .palette .swatch.active {
+            border-color: #fff;
+            box-shadow: 0 0 12px rgba(255, 255, 255, 0.3);
+        }
+
+        /* 历史记录 */
+        .history {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-xs);
+            margin-top: var(--space-xs);
+            min-height: 32px;
+            align-items: center;
+        }
+        .history .history-item {
+            width: 28px;
+            height: 28px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-subtle);
+            cursor: pointer;
+            transition: all var(--transition);
+            flex-shrink: 0;
+        }
+        .history .history-item:hover {
+            transform: scale(1.1);
+            border-color: var(--accent-light);
+        }
+        .history .history-empty {
+            color: var(--text-muted);
+            font-size: 12px;
+        }
+
+        /* 右侧结果面板 */
+        .result-box {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            min-height: 80px;
+            margin-top: var(--space-sm);
+        }
+        .result-box .result-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-xs) 0;
+            border-bottom: 1px solid var(--border-subtle);
+            font-size: 13px;
+            gap: var(--space-sm);
+        }
+        .result-box .result-row:last-child {
+            border-bottom: none;
+        }
+        .result-box .result-row .label {
+            color: var(--text-muted);
+            flex-shrink: 0;
+            min-width: 60px;
+            font-weight: 500;
+        }
+        .result-box .result-row .value {
+            color: var(--text-primary);
+            font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+            text-align: right;
+            word-break: break-all;
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+            flex: 1;
+            justify-content: flex-end;
+            font-size: 13px;
+        }
+        .result-box .result-row .value.highlight {
+            color: var(--accent-light);
+        }
+        .result-box .result-row .value .copy-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 0 4px;
+            border-radius: var(--radius-sm);
+            transition: all var(--transition);
+            font-size: 13px;
+            flex-shrink: 0;
+            opacity: 1;
+            line-height: 1;
+        }
+        .result-box .result-row .value .copy-btn:hover {
+            color: var(--accent-light);
+            background: rgba(99, 102, 241, 0.08);
+        }
+        .result-box .result-row .value .copy-btn.copied {
+            color: var(--success);
+        }
+
+        /* 对比度展示 */
+        .contrast-grid {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-xs);
+            margin-top: var(--space-xs);
+        }
+        .contrast-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            padding: var(--space-xs) var(--space-sm);
+            background: var(--bg-secondary);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-subtle);
+            flex-wrap: wrap;
+        }
+        .contrast-item .sample {
+            width: 28px;
+            height: 28px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-subtle);
+            flex-shrink: 0;
+        }
+        .contrast-item .base-label {
+            font-size: 13px;
+            color: var(--text-dim);
+            min-width: 40px;
+        }
+        .contrast-item .ratio {
+            font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .contrast-item .badge {
+            padding: 0 10px;
+            border-radius: var(--radius-full);
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .contrast-item .badge.pass-aaa {
+            background: var(--success-bg);
+            color: var(--success);
+        }
+        .contrast-item .badge.pass-aa {
+            background: var(--success-bg);
+            color: var(--success);
+        }
+        .contrast-item .badge.fail {
+            background: var(--error-bg);
+            color: var(--error);
+        }
+
+        .custom-contrast {
+            margin-top: var(--space-sm);
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: var(--space-sm);
+            padding: var(--space-sm);
+            background: var(--bg-secondary);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-subtle);
+        }
+        .custom-contrast .custom-label {
+            font-size: 12px;
+            color: var(--text-dim);
+            font-weight: 500;
+        }
+        .custom-contrast input {
+            flex: 1;
+            min-width: 100px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            padding: var(--space-xs) var(--space-sm);
+            font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+            font-size: 13px;
+            outline: none;
+            transition: border var(--transition);
+        }
+        .custom-contrast input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px var(--accent-glow);
+        }
+
+        .result-empty {
+            color: var(--text-muted);
+            text-align: center;
+            padding: var(--space-md) 0;
+            font-size: 14px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+        .result-empty i {
+            font-size: 32px;
+            margin-bottom: var(--space-sm);
+            color: var(--border-subtle);
+        }
+
+        /* ===== 教程样式 ===== */
+        .tutorial-card {
+            height: 500px;
+            min-height: 450px;
+            max-height: 850px;
+            resize: vertical;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+        }
+        .tutorial-card .card-header {
+            padding: var(--space-md) var(--space-lg);
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 0;
+            flex-shrink: 0;
+        }
+        .tutorial-body {
+            display: flex;
+            flex: 1;
+            min-height: 0;
+        }
+        .tutorial-sidebar {
+            width: 250px;
+            flex-shrink: 0;
+            background: var(--bg-primary);
+            border-right: 1px solid var(--border-subtle);
+            display: flex;
+            flex-direction: column;
+            padding: var(--space-md);
+        }
+        .tutorial-sidebar .search-box {
+            margin-bottom: var(--space-md);
+        }
+        .tutorial-sidebar .search-box input {
+            width: 100%;
+            padding: var(--space-sm) var(--space-md);
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-size: 13px;
+            outline: none;
+            transition: border var(--transition);
+        }
+        .tutorial-sidebar .search-box input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px var(--accent-glow);
+        }
+        .tutorial-sidebar .bookmark-list {
+            flex: 1;
+            overflow-y: auto;
+            margin: 0 -8px;
+            padding: 0 8px;
+        }
+        .tutorial-sidebar .bookmark-list::-webkit-scrollbar {
+            width: 4px;
+        }
+        .bookmark-item {
+            padding: 5px 12px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: all var(--transition);
+            font-size: 13px;
+            border-left: 2px solid transparent;
+            margin-bottom: 1px;
+        }
+        .bookmark-item:hover {
+            background: var(--bg-surface-hover);
+            color: var(--text-primary);
+        }
+        .bookmark-item.active {
+            color: var(--accent-light);
+            background: rgba(99, 102, 241, 0.12);
+            border-left-color: var(--accent);
+        }
+        .bookmark-item .chapter-tag {
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-right: 6px;
+            opacity: 0.6;
+        }
+        .tutorial-content {
+            flex: 1;
+            padding: var(--space-lg);
+            overflow-y: auto;
+            min-height: 0;
+        }
+        .tutorial-content::-webkit-scrollbar {
+            width: 4px;
+        }
+        .tutorial-content h2 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--space-md);
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: var(--space-sm);
+        }
+        .tutorial-content h3 {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--accent-light);
+            margin: var(--space-md) 0 var(--space-sm);
+        }
+        .tutorial-content p {
+            color: var(--text-secondary);
+            line-height: 1.8;
+            margin-bottom: var(--space-md);
+        }
+        .tutorial-content pre {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: var(--space-md) var(--space-lg);
+            overflow-x: auto;
+            font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+            font-size: 12.5px;
+            color: var(--text-primary);
+            margin: var(--space-md) 0;
+            line-height: 1.7;
+        }
+        .tutorial-content pre code {
+            display: block;
+            white-space: pre;
+        }
+        .tutorial-content ul {
+            padding-left: var(--space-xl);
+            color: var(--text-secondary);
+            margin-bottom: var(--space-md);
+        }
+        .tutorial-content ul li {
+            margin-bottom: var(--space-xs);
+        }
+        .tutorial-content .note {
+            background: rgba(99, 102, 241, 0.06);
+            border-left: 3px solid var(--accent);
+            padding: var(--space-sm) var(--space-md);
+            border-radius: var(--radius-sm);
+            margin: var(--space-md) 0;
+            color: var(--text-dim);
+            font-size: 13px;
+        }
+        .tutorial-content .note.warning {
+            border-left-color: var(--warning);
+            background: rgba(251, 191, 36, 0.06);
+        }
+        .tutorial-content .note.danger {
+            border-left-color: var(--error);
+            background: rgba(239, 68, 68, 0.06);
+        }
+        .tutorial-content .note.success {
+            border-left-color: var(--success);
+            background: rgba(52, 211, 153, 0.06);
+        }
+
+        /* ===== Toast ===== */
+        #toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(12px);
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 12px 24px;
+            font-size: 13px;
+            display: none;
+            align-items: center;
+            gap: 12px;
+            box-shadow: var(--shadow-soft);
+            z-index: 999;
+            backdrop-filter: blur(12px);
+            max-width: 92vw;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        #toast.show {
+            display: flex;
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        #toast.success {
+            border-left: 4px solid var(--success);
+            color: var(--success);
+        }
+        #toast.error {
+            border-left: 4px solid var(--error);
+            color: var(--error);
+        }
+        #toast i {
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 920px) {
+            .color-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            .color-preview-large {
+                height: 100px;
+            }
+        }
+
+        @media (max-width: 820px) {
+            .tutorial-card {
+                height: 600px;
+                min-height: 400px;
+            }
+            .tutorial-body {
+                flex-direction: column;
+            }
+            .tutorial-sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid var(--border-subtle);
+                max-height: 180px;
+                flex-shrink: 0;
+            }
+            .tutorial-content {
+                padding: var(--space-md);
+            }
+            .app-header .brand h1 {
+                font-size: 20px;
+            }
+            .app-header .back-btn {
+                font-size: 12px;
+                padding: 2px 10px;
+            }
+            .tab-btn {
+                padding: 8px 16px;
+                font-size: 13px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 12px;
+            }
+            .app-header {
+                padding: 12px 0 16px 0;
+                margin-bottom: 16px;
+                gap: 10px;
+            }
+            .app-header .brand i {
+                font-size: 22px;
+            }
+            .app-header .brand h1 {
+                font-size: 18px;
+            }
+            .app-header .brand .version {
+                font-size: 11px;
+                padding: 0 8px;
+            }
+            .app-header .status-group {
+                gap: 10px;
+            }
+            .app-header .back-btn {
+                font-size: 11px;
+                padding: 2px 8px;
+            }
+            .app-header .badge {
+                font-size: 10px;
+                padding: 2px 10px;
+            }
+            .panel {
+                padding: 16px 14px 18px;
+            }
+            .color-preview-large {
+                height: 80px;
+            }
+            .input-group input {
+                font-size: 16px;
+                /* 防止 iOS 缩放 */;
+            }
+            .action-row .btn {
+                font-size: 12px;
+                padding: 4px 12px;
+                min-height: 32px;
+            }
+            .result-box .result-row {
+                font-size: 12px;
+                flex-wrap: wrap;
+                gap: var(--space-xs);
+            }
+            .result-box .result-row .value {
+                text-align: left;
+                word-break: break-all;
+            }
+            .result-box .result-row .label {
+                min-width: 50px;
+            }
+            .tutorial-card {
+                height: 500px;
+                min-height: 350px;
+            }
+            .tab-btn {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+            .palette .swatch {
+                width: 28px;
+                height: 28px;
+            }
+            .history .history-item {
+                width: 24px;
+                height: 24px;
+            }
+            .slider-group .slider-value {
+                min-width: 32px;
+                font-size: 12px;
+            }
+            .contrast-item {
+                padding: var(--space-xs) var(--space-sm);
+                gap: var(--space-xs);
+            }
+            .contrast-item .sample {
+                width: 24px;
+                height: 24px;
+            }
+            .contrast-item .ratio {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app">
+        <!-- ===== 头部 ===== -->
+        <header class="app-header">
+            <div class="brand">
+                <i class="fas fa-palette"></i>
+                <h1>颜色工具</h1>
+                <span class="version">v2.2</span>
+            </div>
+            <div class="status-group">
+                <a href="/tools" class="back-btn" title="返回工具箱">
+                    <i class="fas fa-arrow-left"></i> 返回
+                </a>
+                <span class="badge">
+                    <i class="fas fa-lock"></i> 纯前端本地
+                </span>
+            </div>
+        </header>
+
+        <!-- ===== 标签页 ===== -->
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="test">转换</button>
+            <button class="tab-btn" data-tab="tutorial">教程</button>
+        </div>
+
+        <!-- ===== 标签内容：转换 ===== -->
+        <div id="testTab" class="tab-content">
+            <div class="panel">
+                <div class="panel-title"><i class="fas fa-exchange-alt"></i> 颜色转换</div>
+
+                <div class="color-grid">
+                    <!-- 左侧：输入与控制 -->
+                    <div class="left-panel">
+                        <!-- 颜色预览 -->
+                        <div class="color-preview-large" id="colorPreview" style="background:#6366f1;">
+                            <span class="color-name-label" id="colorNameLabel">蓝紫色</span>
+                            <span class="color-hex-label" id="colorHexLabel">#6366f1</span>
+                        </div>
+
+                        <!-- 输入框 -->
+                        <div class="input-group">
+                            <label for="colorInput">输入颜色值</label>
+                            <input type="text" id="colorInput" placeholder="HEX / RGB / HSL / CMYK" value="#6366f1" />
+                        </div>
+
+                        <!-- RGB 滑块 -->
+                        <div class="input-group">
+                            <label>RGB 调整</label>
+                            <div class="slider-group">
+                                <span style="color:#ff6b6b;font-weight:600;min-width:16px;">R</span>
+                                <input type="range" id="sliderR" min="0" max="255" value="99" />
+                                <span class="slider-value" id="sliderRVal">99</span>
+                            </div>
+                            <div class="slider-group">
+                                <span style="color:#51cf66;font-weight:600;min-width:16px;">G</span>
+                                <input type="range" id="sliderG" min="0" max="255" value="102" />
+                                <span class="slider-value" id="sliderGVal">102</span>
+                            </div>
+                            <div class="slider-group">
+                                <span style="color:#4dabf7;font-weight:600;min-width:16px;">B</span>
+                                <input type="range" id="sliderB" min="0" max="255" value="241" />
+                                <span class="slider-value" id="sliderBVal">241</span>
+                            </div>
+                        </div>
+
+                        <div class="action-row">
+                            <button class="btn btn-outline" id="clearBtn"><i class="fas fa-eraser"></i> 清空</button>
+                            <button class="eyedropper-btn" id="eyedropperBtn"><i class="fas fa-eye-dropper"></i> 取色</button>
+                        </div>
+
+                        <!-- 调色板 -->
+                        <div>
+                            <label style="font-size:12px;color:var(--text-dim);font-weight:500;display:block;margin-bottom:4px;">预设颜色</label>
+                            <div class="palette" id="palette"></div>
+                        </div>
+
+                        <!-- 历史记录 -->
+                        <div>
+                            <label style="font-size:12px;color:var(--text-dim);font-weight:500;display:block;margin-bottom:4px;">历史记录</label>
+                            <div class="history" id="historyContainer">
+                                <span class="history-empty">暂无记录</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 右侧：结果 -->
+                    <div>
+                        <div class="input-group">
+                            <label>转换结果</label>
+                            <div class="result-box" id="resultBox">
+                                <div class="result-empty">
+                                    <i class="fas fa-palette"></i>
+                                    输入颜色值或选择预设
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- WCAG 对比度 -->
+                        <div style="margin-top:var(--space-md);">
+                            <label style="font-size:12px;color:var(--text-dim);font-weight:500;display:block;margin-bottom:8px;">WCAG 对比度（与常见基准色）</label>
+                            <div class="result-box" id="contrastBox">
+                                <div class="result-empty">
+                                    <i class="fas fa-eye"></i>
+                                    选择颜色后将显示与常见基准色的对比度
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== 标签内容：教程 ===== -->
+        <div id="tutorialTab" class="tab-content" style="display: none;">
+            <div class="panel tutorial-card">
+                <div class="card-header">
+                    <i class="fas fa-book" style="font-size:20px;color:var(--accent-light);margin-right:8px;"></i>
+                    <h3 style="display:inline-block;font-size:18px;font-weight:600;color:var(--text-main);">颜色模型相关教程</h3>
+                    <span style="float:right;font-size:12px;color:var(--text-muted);">共 6 章</span>
+                </div>
+                <div class="tutorial-body">
+                    <div class="tutorial-sidebar">
+                        <div class="search-box">
+                            <input type="text" id="tutorialSearch" placeholder="搜索章节..." />
+                        </div>
+                        <div class="bookmark-list" id="bookmarkList"></div>
+                    </div>
+                    <div class="tutorial-content" id="tutorialContent"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== Toast ===== -->
+        <div id="toast">
+            <i id="toastIcon"></i>
+            <span id="toastMsg"></span>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // ================================================================
+            // DOM 引用
+            // ================================================================
+            var colorInput = document.getElementById('colorInput');
+            var clearBtn = document.getElementById('clearBtn');
+            var eyedropperBtn = document.getElementById('eyedropperBtn');
+            var colorPreview = document.getElementById('colorPreview');
+            var colorNameLabel = document.getElementById('colorNameLabel');
+            var colorHexLabel = document.getElementById('colorHexLabel');
+            var resultBox = document.getElementById('resultBox');
+            var contrastBox = document.getElementById('contrastBox');
+            var paletteEl = document.getElementById('palette');
+            var historyContainer = document.getElementById('historyContainer');
+
+            var sliderR = document.getElementById('sliderR');
+            var sliderG = document.getElementById('sliderG');
+            var sliderB = document.getElementById('sliderB');
+            var sliderRVal = document.getElementById('sliderRVal');
+            var sliderGVal = document.getElementById('sliderGVal');
+            var sliderBVal = document.getElementById('sliderBVal');
+
+            var tabBtns = document.querySelectorAll('.tab-btn');
+            var testTab = document.getElementById('testTab');
+            var tutorialTab = document.getElementById('tutorialTab');
+
+            // 教程
+            var tutorialSearch = document.getElementById('tutorialSearch');
+            var bookmarkList = document.getElementById('bookmarkList');
+            var tutorialContent = document.getElementById('tutorialContent');
+
+            // Toast
+            var toast = document.getElementById('toast');
+            var toastIcon = document.getElementById('toastIcon');
+            var toastMsg = document.getElementById('toastMsg');
+            var toastTimer = null;
+
+            function showToast(msg, type) {
+                type = type || 'success';
+                if (toastTimer) {
+                    clearTimeout(toastTimer);
+                    toastTimer = null;
+                }
+                toastIcon.className = type === 'error' ? 'fas fa-exclamation-circle' : 'fas fa-check-circle';
+                toastMsg.textContent = msg;
+                toast.className = type === 'error' ? 'error' : 'success';
+                toast.classList.add('show');
+                toastTimer = setTimeout(function() {
+                    toast.classList.remove('show');
+                    toastTimer = null;
+                }, 2500);
+            }
+
+            // ================================================================
+            // 颜色核心算法
+            // ================================================================
+            function hexToRgb(hex) {
+                hex = hex.replace(/^#/, '');
+                if (hex.length === 3) {
+                    hex = hex.split('').map(function(c) { return c + c; }).join('');
+                }
+                if (hex.length !== 6) return null;
+                var r = parseInt(hex.substring(0, 2), 16);
+                var g = parseInt(hex.substring(2, 4), 16);
+                var b = parseInt(hex.substring(4, 6), 16);
+                if (isNaN(r) || isNaN(g) || isNaN(b)) return null;
+                return { r: r, g: g, b: b };
+            }
+
+            function rgbToHex(r, g, b) {
+                var toHex = function(n) {
+                    n = Math.round(Math.max(0, Math.min(255, n)));
+                    var s = n.toString(16);
+                    return s.length === 1 ? '0' + s : s;
+                };
+                return '#' + toHex(r) + toHex(g) + toHex(b);
+            }
+
+            function rgbToHsl(r, g, b) {
+                r /= 255;
+                g /= 255;
+                b /= 255;
+                var max = Math.max(r, g, b),
+                    min = Math.min(r, g, b);
+                var h, s, l = (max + min) / 2;
+                if (max === min) {
+                    h = s = 0;
+                } else {
+                    var d = max - min;
+                    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                    switch (max) {
+                        case r:
+                            h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
+                            break;
+                        case g:
+                            h = ((b - r) / d + 2) / 6;
+                            break;
+                        case b:
+                            h = ((r - g) / d + 4) / 6;
+                            break;
+                    }
+                }
+                return { h: Math.round(h * 360), s: Math.round(s * 100), l: Math.round(l * 100) };
+            }
+
+            function hslToRgb(h, s, l) {
+                h = h % 360;
+                s /= 100;
+                l /= 100;
+                var c = (1 - Math.abs(2 * l - 1)) * s;
+                var x = c * (1 - Math.abs((h / 60) % 2 - 1));
+                var m = l - c / 2;
+                var r, g, b;
+                if (h < 60) { r = c;
+                    g = x;
+                    b = 0; } else if (h < 120) { r = x;
+                    g = c;
+                    b = 0; } else if (h < 180) { r = 0;
+                    g = c;
+                    b = x; } else if (h < 240) { r = 0;
+                    g = x;
+                    b = c; } else if (h < 300) { r = x;
+                    g = 0;
+                    b = c; } else { r = c;
+                    g = 0;
+                    b = x; }
+                return {
+                    r: Math.round((r + m) * 255),
+                    g: Math.round((g + m) * 255),
+                    b: Math.round((b + m) * 255)
+                };
+            }
+
+            function rgbToCmyk(r, g, b) {
+                var rn = r / 255,
+                    gn = g / 255,
+                    bn = b / 255;
+                var k = 1 - Math.max(rn, gn, bn);
+                if (k === 1) { return { c: 0, m: 0, y: 0, k: 100 }; }
+                var c = (1 - rn - k) / (1 - k);
+                var m = (1 - gn - k) / (1 - k);
+                var y = (1 - bn - k) / (1 - k);
+                return {
+                    c: Math.round(c * 100),
+                    m: Math.round(m * 100),
+                    y: Math.round(y * 100),
+                    k: Math.round(k * 100)
+                };
+            }
+
+            function cmykToRgb(c, m, y, k) {
+                var r = 255 * (1 - c / 100) * (1 - k / 100);
+                var g = 255 * (1 - m / 100) * (1 - k / 100);
+                var b = 255 * (1 - y / 100) * (1 - k / 100);
+                return { r: Math.round(r), g: Math.round(g), b: Math.round(b) };
+            }
+
+            function parseColor(str) {
+                str = str.trim();
+                if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(str)) {
+                    var rgb = hexToRgb(str);
+                    if (rgb) return rgb;
+                }
+                var rgbMatch = str.match(/^rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)$/i);
+                if (rgbMatch) {
+                    var r = parseInt(rgbMatch[1]),
+                        g = parseInt(rgbMatch[2]),
+                        b = parseInt(rgbMatch[3]);
+                    if (r >= 0 && r <= 255 && g >= 0 && g <= 255 && b >= 0 && b <= 255) {
+                        return { r: r, g: g, b: b };
+                    }
+                }
+                var hslMatch = str.match(/^hsl\(\s*(\d{1,3})\s*,\s*(\d{1,3})%\s*,\s*(\d{1,3})%\s*\)$/i);
+                if (hslMatch) {
+                    var h = parseInt(hslMatch[1]),
+                        s = parseInt(hslMatch[2]),
+                        l = parseInt(hslMatch[3]);
+                    if (h >= 0 && h <= 360 && s >= 0 && s <= 100 && l >= 0 && l <= 100) {
+                        return hslToRgb(h, s, l);
+                    }
+                }
+                var cmykMatch = str.match(/^cmyk\(\s*(\d{1,3})%\s*,\s*(\d{1,3})%\s*,\s*(\d{1,3})%\s*,\s*(\d{1,3})%\s*\)$/i);
+                if (cmykMatch) {
+                    var c = parseInt(cmykMatch[1]),
+                        m = parseInt(cmykMatch[2]),
+                        y = parseInt(cmykMatch[3]),
+                        k = parseInt(cmykMatch[4]);
+                    if (c >= 0 && c <= 100 && m >= 0 && m <= 100 && y >= 0 && y <= 100 && k >= 0 && k <= 100) {
+                        return cmykToRgb(c, m, y, k);
+                    }
+                }
+                return null;
+            }
+
+            // ================================================================
+            // 颜色名称（近似）
+            // ================================================================
+            var colorNames = [
+                { name: '黑色', hex: '#000000' },
+                { name: '深灰色', hex: '#333333' },
+                { name: '灰色', hex: '#808080' },
+                { name: '银灰色', hex: '#c0c0c0' },
+                { name: '白色', hex: '#ffffff' },
+                { name: '红色', hex: '#ff0000' },
+                { name: '暗红', hex: '#8b0000' },
+                { name: '橙色', hex: '#ff8c00' },
+                { name: '金色', hex: '#ffd700' },
+                { name: '黄色', hex: '#ffff00' },
+                { name: '黄绿色', hex: '#adff2f' },
+                { name: '绿色', hex: '#00ff00' },
+                { name: '暗绿', hex: '#006400' },
+                { name: '青色', hex: '#00ffff' },
+                { name: '深蓝', hex: '#00008b' },
+                { name: '蓝色', hex: '#0000ff' },
+                { name: '紫罗兰', hex: '#8a2be2' },
+                { name: '品红', hex: '#ff00ff' },
+                { name: '粉色', hex: '#ffc0cb' },
+                { name: '棕褐色', hex: '#d2691e' }
+            ];
+
+            function getColorName(hex) {
+                var target = hex.toLowerCase();
+                var minDist = Infinity,
+                    best = '未知';
+                colorNames.forEach(function(c) {
+                    var h = c.hex.toLowerCase();
+                    if (h === target) { best = c.name; return; }
+                    var rgb1 = hexToRgb(target);
+                    var rgb2 = hexToRgb(h);
+                    if (!rgb1 || !rgb2) return;
+                    var d = Math.sqrt(
+                        Math.pow(rgb1.r - rgb2.r, 2) +
+                        Math.pow(rgb1.g - rgb2.g, 2) +
+                        Math.pow(rgb1.b - rgb2.b, 2)
+                    );
+                    if (d < minDist) { minDist = d;
+                        best = c.name; }
+                });
+                return best;
+            }
+
+            // ================================================================
+            // 对比度计算
+            // ================================================================
+            function luminance(rgb) {
+                var rs = rgb.r / 255,
+                    gs = rgb.g / 255,
+                    bs = rgb.b / 255;
+                var rl = rs <= 0.03928 ? rs / 12.92 : Math.pow((rs + 0.055) / 1.055, 2.4);
+                var gl = gs <= 0.03928 ? gs / 12.92 : Math.pow((gs + 0.055) / 1.055, 2.4);
+                var bl = bs <= 0.03928 ? bs / 12.92 : Math.pow((bs + 0.055) / 1.055, 2.4);
+                return 0.2126 * rl + 0.7152 * gl + 0.0722 * bl;
+            }
+
+            function contrastRatio(lum1, lum2) {
+                var l1 = Math.max(lum1, lum2);
+                var l2 = Math.min(lum1, lum2);
+                return (l1 + 0.05) / (l2 + 0.05);
+            }
+
+            // ================================================================
+            // 更新界面
+            // ================================================================
+            var history = [];
+            var currentRgb = null;
+            var customBaseColor = '#ffffff'; // 保存用户自定义基准色
+
+            // 固定的常见基准色
+            var defaultBaseColors = [
+                { name: '白色', hex: '#ffffff' },
+                { name: '黑色', hex: '#000000' },
+                { name: '灰色', hex: '#808080' },
+                { name: '红色', hex: '#ff0000' },
+                { name: '绿色', hex: '#00ff00' },
+                { name: '蓝色', hex: '#0000ff' }
+            ];
+
+            function updateAll(rgb) {
+                currentRgb = rgb;
+                if (!rgb) {
+                    colorPreview.style.background = 'transparent';
+                    colorHexLabel.textContent = '';
+                    colorNameLabel.textContent = '';
+                    resultBox.innerHTML = '<div class="result-empty"><i class="fas fa-palette"></i>输入颜色值或选择预设</div>';
+                    contrastBox.innerHTML = '<div class="result-empty"><i class="fas fa-eye"></i>选择颜色后将显示与常见基准色的对比度</div>';
+                    return;
+                }
+                var hex = rgbToHex(rgb.r, rgb.g, rgb.b);
+                var hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+                var cmyk = rgbToCmyk(rgb.r, rgb.g, rgb.b);
+                var name = getColorName(hex);
+
+                // 预览
+                colorPreview.style.background = hex;
+                colorHexLabel.textContent = hex.toUpperCase();
+                colorNameLabel.textContent = name;
+
+                // 滑块同步
+                sliderR.value = rgb.r;
+                sliderG.value = rgb.g;
+                sliderB.value = rgb.b;
+                sliderRVal.textContent = rgb.r;
+                sliderGVal.textContent = rgb.g;
+                sliderBVal.textContent = rgb.b;
+
+                // 结果
+                var html = '';
+                var items = [
+                    { label: 'HEX', value: hex, highlight: true },
+                    { label: 'RGB', value: 'rgb(' + rgb.r + ', ' + rgb.g + ', ' + rgb.b + ')' },
+                    { label: 'HSL', value: 'hsl(' + hsl.h + ', ' + hsl.s + '%, ' + hsl.l + '%)' },
+                    { label: 'CMYK', value: 'cmyk(' + cmyk.c + '%, ' + cmyk.m + '%, ' + cmyk.y + '%, ' + cmyk.k + '%)' }
+                ];
+                items.forEach(function(item) {
+                    var highlightClass = item.highlight ? 'highlight' : '';
+                    html += '<div class="result-row">' +
+                        '<span class="label">' + item.label + '</span>' +
+                        '<span class="value ' + highlightClass + '">' +
+                        item.value +
+                        '<button class="copy-btn" data-copy="' + escapeHtml(item.value) + '" title="复制"><i class="fas fa-copy"></i></button>' +
+                        '</span>' +
+                        '</div>';
+                });
+                resultBox.innerHTML = html;
+                resultBox.querySelectorAll('.copy-btn').forEach(function(btn) {
+                    btn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        var text = this.dataset.copy;
+                        copyText(text, this);
+                    });
+                });
+
+                // 对比度
+                updateContrast();
+
+                // 历史记录
+                addHistory(hex);
+
+                // 同步输入框
+                colorInput.value = hex;
+            }
+
+            function updateContrast() {
+                if (!currentRgb) {
+                    contrastBox.innerHTML = '<div class="result-empty"><i class="fas fa-eye"></i>选择颜色后将显示与常见基准色的对比度</div>';
+                    return;
+                }
+
+                var lum1 = luminance(currentRgb);
+                var html = '<div class="contrast-grid">';
+
+                // 固定基准色
+                defaultBaseColors.forEach(function(base) {
+                    var baseRgb = hexToRgb(base.hex);
+                    if (!baseRgb) return;
+                    var lum2 = luminance(baseRgb);
+                    var ratio = contrastRatio(lum1, lum2);
+                    var level = 'fail';
+                    if (ratio >= 7.0) level = 'aaa';
+                    else if (ratio >= 4.5) level = 'aa';
+                    var badgeText = level === 'aaa' ? 'AAA 达标' :
+                        level === 'aa' ? 'AA 达标' : '不达标';
+                    var badgeClass = level === 'aaa' ? 'pass-aaa' :
+                        level === 'aa' ? 'pass-aa' : 'fail';
+
+                    html += '<div class="contrast-item">' +
+                        '<span class="sample" style="background:' + base.hex + ';"></span>' +
+                        '<span class="base-label">' + base.name + '</span>' +
+                        '<span class="ratio">' + ratio.toFixed(2) + ':1</span>' +
+                        '<span class="badge ' + badgeClass + '">' + badgeText + '</span>' +
+                        '</div>';
+                });
+
+                // 自定义基准色
+                html += '<div class="custom-contrast">' +
+                    '<span class="custom-label">自定义基准色</span>' +
+                    '<input type="text" id="customBaseInput" value="' + customBaseColor + '" placeholder="#ffffff" />' +
+                    '<button class="eyedropper-btn" id="customEyedropperBtn" style="padding:2px 8px;min-height:28px;font-size:12px;" title="取色">' +
+                        '<i class="fas fa-eye-dropper"></i>' +
+                    '</button>' +
+                    '<span id="customContrastResult" style="font-size:14px;font-weight:600;color:var(--text-primary);">—</span>' +
+                    '</div>';
+
+                contrastBox.innerHTML = html;
+
+                // 绑定自定义输入事件
+                var customInput = document.getElementById('customBaseInput');
+                var customResult = document.getElementById('customContrastResult');
+                if (customInput) {
+                    customInput.addEventListener('input', function() {
+                        var baseStr = this.value.trim() || '#ffffff';
+                        customBaseColor = baseStr; // 保存
+                        var baseRgb = parseColor(baseStr);
+                        if (!baseRgb || !currentRgb) {
+                            customResult.textContent = '无效';
+                            customResult.style.color = 'var(--error)';
+                            return;
+                        }
+                        var lum2 = luminance(baseRgb);
+                        var ratio = contrastRatio(lum1, lum2);
+                        var level = 'fail';
+                        if (ratio >= 7.0) level = 'aaa';
+                        else if (ratio >= 4.5) level = 'aa';
+                        var label = level === 'aaa' ? 'AAA ✓' :
+                            level === 'aa' ? 'AA ✓' : '✗';
+                        var color = level === 'aaa' ? 'var(--success)' :
+                            level === 'aa' ? 'var(--success)' : 'var(--error)';
+                        customResult.textContent = ratio.toFixed(2) + ':1 ' + label;
+                        customResult.style.color = color;
+                    });
+                    // 触发一次初始计算
+                    customInput.dispatchEvent(new Event('input'));
+                }
+
+                // 绑定自定义取色器
+                var customEyedropperBtn = document.getElementById('customEyedropperBtn');
+                if (customEyedropperBtn) {
+                    if (!window.EyeDropper) {
+                        customEyedropperBtn.disabled = true;
+                        customEyedropperBtn.title = '您的浏览器不支持取色器 API';
+                    } else {
+                        // 每次点击创建新的 EyeDropper 实例
+                        customEyedropperBtn.addEventListener('click', function() {
+                            var eyeDropper = new EyeDropper();
+                            eyeDropper.open().then(function(result) {
+                                var color = result.sRGBHex;
+                                var input = document.getElementById('customBaseInput');
+                                if (input) {
+                                    input.value = color;
+                                    customBaseColor = color;
+                                    input.dispatchEvent(new Event('input'));
+                                }
+                            }).catch(function(err) {
+                                if (err.name !== 'AbortError') {
+                                    showToast('取色失败: ' + err.message, 'error');
+                                }
+                            });
+                        });
+                    }
+                }
+            }
+
+            function addHistory(hex) {
+                history = history.filter(function(h) { return h !== hex; });
+                history.unshift(hex);
+                if (history.length > 12) history.pop();
+                renderHistory();
+            }
+
+            function renderHistory() {
+                if (history.length === 0) {
+                    historyContainer.innerHTML = '<span class="history-empty">暂无记录</span>';
+                    return;
+                }
+                var html = '';
+                history.forEach(function(h) {
+                    html += '<div class="history-item" style="background:' + h + ';" data-color="' + h + '"></div>';
+                });
+                historyContainer.innerHTML = html;
+                historyContainer.querySelectorAll('.history-item').forEach(function(el) {
+                    el.addEventListener('click', function() {
+                        var color = this.dataset.color;
+                        colorInput.value = color;
+                        handleInput();
+                    });
+                });
+            }
+
+            // ================================================================
+            // 输入处理
+            // ================================================================
+            function handleInput() {
+                var val = colorInput.value.trim();
+                if (!val) {
+                    updateAll(null);
+                    return;
+                }
+                var rgb = parseColor(val);
+                if (rgb) {
+                    updateAll(rgb);
+                } else {
+                    resultBox.innerHTML = '<div class="result-empty"><i class="fas fa-exclamation-circle"></i>无法识别的颜色格式</div>';
+                    contrastBox.innerHTML = '<div class="result-empty"><i class="fas fa-eye"></i>选择颜色后将显示与常见基准色的对比度</div>';
+                    colorPreview.style.background = 'transparent';
+                    colorHexLabel.textContent = '';
+                    colorNameLabel.textContent = '';
+                }
+            }
+
+            function updateFromSliders() {
+                var r = parseInt(sliderR.value);
+                var g = parseInt(sliderG.value);
+                var b = parseInt(sliderB.value);
+                sliderRVal.textContent = r;
+                sliderGVal.textContent = g;
+                sliderBVal.textContent = b;
+                var rgb = { r: r, g: g, b: b };
+                updateAll(rgb);
+            }
+
+            // ================================================================
+            // 复制功能
+            // ================================================================
+            function copyText(text, btn) {
+                if (!text) {
+                    showToast('没有内容可复制', 'error');
+                    return;
+                }
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text).then(function() {
+                        showToast('已复制', 'success');
+                        if (btn) {
+                            btn.classList.add('copied');
+                            setTimeout(function() { btn.classList.remove('copied'); }, 1500);
+                        }
+                    }).catch(function() {
+                        fallbackCopy(text, btn);
+                    });
+                } else {
+                    fallbackCopy(text, btn);
+                }
+            }
+
+            function fallbackCopy(text, btn) {
+                var textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                try {
+                    document.execCommand('copy');
+                    showToast('已复制', 'success');
+                    if (btn) {
+                        btn.classList.add('copied');
+                        setTimeout(function() { btn.classList.remove('copied'); }, 1500);
+                    }
+                } catch (e) {
+                    showToast('复制失败，请手动复制', 'error');
+                }
+                document.body.removeChild(textarea);
+            }
+
+            function escapeHtml(text) {
+                if (!text) return '';
+                var div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            // ================================================================
+            // 预设调色板
+            // ================================================================
+            var presetColors = [
+                '#ff6b6b', '#ff9f43', '#feca57', '#48dbfb', '#0abde3',
+                '#10ac84', '#ee5a24', '#5f27cd', '#341f97', '#1dd1a1',
+                '#f368e0', '#ff9ff3', '#54a0ff', '#5f6c80', '#8395a7',
+                '#ffffff', '#c8d6e5', '#8395a7', '#576574', '#222f3e'
+            ];
+
+            function renderPalette() {
+                var html = '';
+                presetColors.forEach(function(c) {
+                    html += '<div class="swatch" style="background:' + c + ';" data-color="' + c + '"></div>';
+                });
+                paletteEl.innerHTML = html;
+                paletteEl.querySelectorAll('.swatch').forEach(function(el) {
+                    el.addEventListener('click', function() {
+                        var color = this.dataset.color;
+                        colorInput.value = color;
+                        handleInput();
+                        paletteEl.querySelectorAll('.swatch').forEach(function(s) { s.classList.remove('active'); });
+                        this.classList.add('active');
+                    });
+                });
+            }
+
+            // ================================================================
+            // 主取色器（左侧面板）
+            // ================================================================
+            function initMainEyedropper() {
+                if (!window.EyeDropper) {
+                    eyedropperBtn.disabled = true;
+                    eyedropperBtn.title = '您的浏览器不支持取色器 API';
+                    return;
+                }
+                eyedropperBtn.addEventListener('click', function() {
+                    var eyeDropper = new EyeDropper();
+                    eyeDropper.open().then(function(result) {
+                        var color = result.sRGBHex;
+                        colorInput.value = color;
+                        handleInput();
+                        paletteEl.querySelectorAll('.swatch').forEach(function(s) {
+                            s.classList.toggle('active', s.dataset.color.toLowerCase() === color.toLowerCase());
+                        });
+                    }).catch(function(err) {
+                        if (err.name !== 'AbortError') {
+                            showToast('取色失败: ' + err.message, 'error');
+                        }
+                    });
+                });
+            }
+
+            // ================================================================
+            // 标签切换
+            // ================================================================
+            tabBtns.forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    tabBtns.forEach(function(b) { b.classList.remove('active'); });
+                    this.classList.add('active');
+                    var tab = this.dataset.tab;
+                    testTab.style.display = tab === 'test' ? 'block' : 'none';
+                    tutorialTab.style.display = tab === 'tutorial' ? 'block' : 'none';
+                    if (tab === 'tutorial') {
+                        renderBookmarks();
+                    }
+                });
+            });
+
+            // ================================================================
+            // 教程数据（6 章，增加 WCAG）
+            // ================================================================
+            var chapters = [{
+                id: 'intro',
+                title: '颜色模型简介',
+                content: `
+                    <h2>颜色模型简介</h2>
+                    <p>颜色模型是用数值表示颜色的数学方式。常见的颜色模型包括：</p>
+                    <ul>
+                        <li><strong>RGB</strong>：红绿蓝三原色，用于屏幕显示。</li>
+                        <li><strong>HEX</strong>：十六进制表示法，常用于 Web 设计。</li>
+                        <li><strong>HSL</strong>：色相、饱和度、亮度，更符合人类直觉。</li>
+                        <li><strong>CMYK</strong>：青、品红、黄、黑，用于印刷。</li>
+                    </ul>
+                    <div class="note success">本工具支持四种模型之间的相互转换。</div>
+                `
+            }, {
+                id: 'rgb',
+                title: 'RGB 与 HEX',
+                content: `
+                    <h2>RGB 与 HEX</h2>
+                    <p>RGB（红绿蓝）是一种加色模型，每种颜色由 0-255 的三通道值组成。HEX 是 RGB 的十六进制表示（#RRGGBB）。</p>
+                    <pre><code>rgb(100, 150, 200) -> #6496c8</code></pre>
+                    <p>HEX 简写：如果每个通道两位相同，可缩写为 #RGB，如 <code>#3366cc</code> → <code>#36c</code>。</p>
+                    <div class="note">HEX 是 Web 开发中最常用的颜色表示法。</div>
+                `
+            }, {
+                id: 'hsl',
+                title: 'HSL 色彩模型',
+                content: `
+                    <h2>HSL 色彩模型</h2>
+                    <p>HSL（色相、饱和度、亮度）是一种更直观的颜色模型：</p>
+                    <ul>
+                        <li><strong>色相 (H)</strong>：0-360°，红色为0°，绿色120°，蓝色240°。</li>
+                        <li><strong>饱和度 (S)</strong>：0-100%，0%为灰色，100%为纯色。</li>
+                        <li><strong>亮度 (L)</strong>：0-100%，0%为黑色，100%为白色。</li>
+                    </ul>
+                    <pre><code>hsl(240, 100%, 50%) -> 纯蓝色</code></pre>
+                    <div class="note success">HSL 便于调整颜色，如降低饱和度得到柔和色调。</div>
+                `
+            }, {
+                id: 'cmyk',
+                title: 'CMYK 与印刷',
+                content: `
+                    <h2>CMYK 与印刷</h2>
+                    <p>CMYK（青、品红、黄、黑）是一种减色模型，用于彩色印刷。</p>
+                    <p>CMYK 与 RGB 的转换并非精确可逆，因为色域不同。本工具提供近似转换。</p>
+                    <pre><code>cmyk(0%, 50%, 100%, 0%) -> 橙色</code></pre>
+                    <div class="note warning">CMYK 值受纸张和墨水影响，实际印刷需专业调色。</div>
+                `
+            }, {
+                id: 'wcag',
+                title: 'WCAG 对比度标准',
+                content: `
+                    <h2>WCAG 对比度标准</h2>
+                    <p>Web Content Accessibility Guidelines (WCAG) 定义了颜色对比度的要求，以确保文本可读性。</p>
+                    <ul>
+                        <li><strong>AA 级</strong>：普通文本对比度 ≥ 4.5:1，大文本 ≥ 3:1。</li>
+                        <li><strong>AAA 级</strong>：普通文本对比度 ≥ 7:1，大文本 ≥ 4.5:1。</li>
+                    </ul>
+                    <p>本工具计算对比度时，默认使用普通文本标准（AA 4.5，AAA 7.0）。</p>
+                    <p>对比度计算公式：<code>(L1 + 0.05) / (L2 + 0.05)</code>，其中 L1 为较亮颜色的相对亮度，L2 为较暗颜色的相对亮度。</p>
+                    <div class="note success">设计时建议至少达到 AA 级，确保可用性。</div>
+                `
+            }, {
+                id: 'practice',
+                title: '实用技巧',
+                content: `
+                    <h2>实用技巧</h2>
+                    <ul>
+                        <li><strong>设计调色板</strong>：使用 HSL 调整色相产生和谐配色。</li>
+                        <li><strong>取色器</strong>：从屏幕任意位置取色，快速获取颜色值。</li>
+                        <li><strong>复制结果</strong>：点击复制按钮快速拷贝颜色值。</li>
+                        <li><strong>预设颜色</strong>：点击调色板快速选择常用颜色。</li>
+                        <li><strong>历史记录</strong>：方便回溯之前使用的颜色。</li>
+                        <li><strong>对比度检测</strong>：自动显示与常见基准色的对比度，也可自定义基准色。</li>
+                    </ul>
+                    <div class="note success">熟练使用颜色工具可大幅提升设计效率。</div>
+                `
+            }];
+
+            var activeChapterId = null;
+
+            function renderBookmarks(filter) {
+                filter = filter || '';
+                var list = document.getElementById('bookmarkList');
+                var filtered = filter.trim() === '' ?
+                    chapters :
+                    chapters.filter(function(ch) {
+                        return ch.title.toLowerCase().includes(filter.toLowerCase());
+                    });
+
+                if (filtered.length === 0) {
+                    list.innerHTML =
+                        '<div style="color: var(--text-muted); padding: var(--space-md); text-align: center;">未找到匹配章节</div>';
+                    return;
+                }
+
+                var html = '';
+                filtered.forEach(function(ch) {
+                    var active = (ch.id === activeChapterId) ? 'active' : '';
+                    html += '<div class="bookmark-item ' + active + '" data-id="' + ch.id + '">' +
+                        '<span class="chapter-tag">#</span> ' + ch.title +
+                        '</div>';
+                });
+                list.innerHTML = html;
+
+                list.querySelectorAll('.bookmark-item').forEach(function(el) {
+                    el.addEventListener('click', function() {
+                        var id = this.dataset.id;
+                        var chapter = chapters.find(function(c) { return c.id === id; });
+                        if (chapter) {
+                            activeChapterId = id;
+                            renderContent(chapter);
+                            document.querySelectorAll('.bookmark-item').forEach(function(b) { b.classList
+                                    .remove('active'); });
+                            this.classList.add('active');
+                            document.getElementById('tutorialSearch').value = '';
+                            renderBookmarks();
+                        }
+                    });
+                });
+
+                if (!activeChapterId && chapters.length > 0) {
+                    activeChapterId = chapters[0].id;
+                    renderContent(chapters[0]);
+                    var firstItem = list.querySelector('.bookmark-item');
+                    if (firstItem) firstItem.classList.add('active');
+                }
+            }
+
+            function renderContent(chapter) {
+                var container = document.getElementById('tutorialContent');
+                container.innerHTML = chapter.content;
+                container.scrollTop = 0;
+            }
+
+            tutorialSearch.addEventListener('input', function() {
+                var filter = this.value.trim();
+                renderBookmarks(filter);
+                var items = document.querySelectorAll('#bookmarkList .bookmark-item');
+                if (items.length > 0 && filter !== '') {
+                    items.forEach(function(b) { b.classList.remove('active'); });
+                    items[0].classList.add('active');
+                    var id = items[0].dataset.id;
+                    var chapter = chapters.find(function(c) { return c.id === id; });
+                    if (chapter) {
+                        activeChapterId = id;
+                        renderContent(chapter);
+                    }
+                } else if (filter === '') {
+                    if (activeChapterId) {
+                        var chapter = chapters.find(function(c) { return c.id === activeChapterId; });
+                        if (chapter) renderContent(chapter);
+                    } else if (chapters.length > 0) {
+                        activeChapterId = chapters[0].id;
+                        renderContent(chapters[0]);
+                    }
+                    renderBookmarks();
+                }
+            });
+
+            // ================================================================
+            // 事件绑定
+            // ================================================================
+            colorInput.addEventListener('input', handleInput);
+            clearBtn.addEventListener('click', function() {
+                colorInput.value = '';
+                handleInput();
+                paletteEl.querySelectorAll('.swatch').forEach(function(s) { s.classList.remove('active'); });
+            });
+
+            sliderR.addEventListener('input', updateFromSliders);
+            sliderG.addEventListener('input', updateFromSliders);
+            sliderB.addEventListener('input', updateFromSliders);
+
+            // ================================================================
+            // 初始化
+            // ================================================================
+            function init() {
+                renderPalette();
+                initMainEyedropper();
+                renderHistory();
+                updateAll(null);
+                // 初始加载默认颜色
+                setTimeout(handleInput, 50);
+
+                // 教程初始
+                renderBookmarks();
+                testTab.style.display = 'block';
+                tutorialTab.style.display = 'none';
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else { init(); }
+
+        })();
+    </script>
+
+</body>
+</html>

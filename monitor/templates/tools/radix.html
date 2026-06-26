@@ -1,0 +1,1541 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes" />
+    <title>进制转换 · 开发者工具箱</title>
+    <link rel="stylesheet" href="/static/all.min.css" />
+    <style>
+        /* ===== 全局重置 & 蓝紫暗色主题 ===== */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg-primary: #0b0914;
+            --bg-secondary: #12101e;
+            --bg-surface: #181625;
+            --bg-surface-hover: #221f35;
+            --bg-elevated: #1f1c30;
+            --border-subtle: #2a2740;
+            --border-strong: #3d385a;
+            --text-primary: #edeff5;
+            --text-secondary: #b8bfd9;
+            --text-muted: #7a83a3;
+            --text-dim: #94a3b8;
+            --accent: #6366f1;
+            --accent-light: #818cf8;
+            --accent-dark: #4f46e5;
+            --accent-glow: rgba(99, 102, 241, 0.3);
+            --success: #34d399;
+            --success-bg: rgba(52, 211, 153, 0.12);
+            --error: #f87171;
+            --error-bg: rgba(248, 113, 113, 0.12);
+            --warning: #fbbf24;
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 14px;
+            --radius-full: 9999px;
+            --shadow-soft: 0 8px 30px rgba(0, 0, 0, 0.5);
+            --shadow-glow: 0 0 30px var(--accent-glow);
+            --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --space-xs: 4px;
+            --space-sm: 8px;
+            --space-md: 14px;
+            --space-lg: 20px;
+            --space-xl: 28px;
+        }
+
+        html {
+            font-size: 15px;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            padding: 24px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            line-height: 1.6;
+            user-select: none;
+        }
+
+        .result-text,
+        .result-box .value,
+        .code-area {
+            user-select: text;
+        }
+
+        body *:not(input):not(textarea):not(.modal-input):not(.result-text):not(.code-area):not(.regex-content):not(.regex-content *) {
+            user-select: none;
+        }
+
+        /* ===== 滚动条 ===== */
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+            border-radius: 999px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-strong);
+            border-radius: 999px;
+            transition: background 0.2s;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent);
+        }
+
+        .app {
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        /* ===== 头部 ===== */
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0 20px 0;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .app-header .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .app-header .brand i {
+            font-size: 28px;
+            color: var(--accent-light);
+            filter: drop-shadow(0 0 8px var(--accent-glow));
+        }
+        .app-header .brand h1 {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            background: linear-gradient(135deg, #ffffff 40%, var(--accent-light));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .app-header .brand .version {
+            font-size: 13px;
+            color: var(--text-muted);
+            -webkit-text-fill-color: var(--text-muted);
+            background: var(--bg-surface);
+            padding: 0 10px;
+            border-radius: 999px;
+            border: 1px solid var(--border-subtle);
+            font-weight: 500;
+            margin-left: 4px;
+        }
+
+        .app-header .status-group {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .app-header .back-btn {
+            font-size: 13px;
+            color: var(--text-secondary);
+            background: var(--bg-surface);
+            padding: 4px 14px;
+            border-radius: 999px;
+            border: 1px solid var(--border-subtle);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            transition: all var(--transition);
+            white-space: nowrap;
+        }
+        .app-header .back-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent-light);
+            box-shadow: 0 0 16px var(--accent-glow);
+        }
+
+        .app-header .badge {
+            background: var(--success-bg);
+            color: var(--success);
+            padding: 5px 16px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid rgba(52, 211, 153, 0.2);
+            white-space: nowrap;
+        }
+        .app-header .badge i {
+            font-size: 12px;
+        }
+
+        /* ===== 标签页 ===== */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: 0;
+        }
+        .tab-btn {
+            background: transparent;
+            border: none;
+            padding: 10px 22px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-dim);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all var(--transition);
+            font-family: inherit;
+        }
+        .tab-btn:hover {
+            color: var(--text-primary);
+        }
+        .tab-btn.active {
+            color: var(--accent-light);
+            border-bottom-color: var(--accent-light);
+        }
+
+        /* ===== 面板通用 ===== */
+        .panel {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 20px 22px 22px;
+            transition: border-color var(--transition), box-shadow var(--transition);
+            height: 480px;
+            resize: vertical;
+            overflow-y: auto;
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+        }
+        .panel:hover {
+            border-color: var(--border-strong);
+        }
+
+        .panel-title {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .panel-title i {
+            font-size: 14px;
+            color: var(--accent-light);
+        }
+
+        /* ===== 双列布局 ===== */
+        .radix-grid {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 24px;
+            flex: 1;
+            min-height: 0;
+        }
+        @media (max-width: 820px) {
+            .radix-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+        }
+
+        .radix-grid > div:first-child {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-sm);
+        }
+
+        .radix-grid > div:last-child {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            min-height: 0;
+        }
+
+        .radix-grid > div:last-child .input-group {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .input-group {
+            margin-bottom: var(--space-md);
+        }
+        .input-group label {
+            display: block;
+            font-size: 13px;
+            color: var(--text-dim);
+            margin-bottom: var(--space-sm);
+            font-weight: 500;
+            flex-shrink: 0;
+        }
+        .input-group select,
+        .input-group input {
+            width: 100%;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+            font-size: 14px;
+            padding: var(--space-sm) var(--space-md);
+            transition: border var(--transition), box-shadow var(--transition);
+            outline: none;
+        }
+        .input-group select:focus,
+        .input-group input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+        .input-group .hint {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: var(--space-xs);
+        }
+
+        /* ===== 操作按钮 ===== */
+        .action-row {
+            display: flex;
+            gap: var(--space-sm);
+            flex-wrap: wrap;
+            margin-top: var(--space-sm);
+            flex-shrink: 0;
+        }
+        .action-row .btn {
+            background: var(--accent);
+            border: none;
+            border-radius: var(--radius-md);
+            color: #fff;
+            padding: 6px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            min-height: 36px;
+        }
+        .action-row .btn:hover {
+            background: var(--accent-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px var(--accent-glow);
+        }
+        .action-row .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+        }
+        .action-row .btn-outline:hover {
+            border-color: var(--accent);
+            color: var(--accent-light);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        /* 预设快捷按钮 */
+        .preset-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-xs);
+            margin-top: var(--space-sm);
+            flex-shrink: 0;
+        }
+        .preset-buttons .preset-btn {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            color: var(--text-dim);
+            padding: 2px 12px;
+            font-size: 12px;
+            font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+            cursor: pointer;
+            transition: all var(--transition);
+            touch-action: manipulation;
+        }
+        .preset-buttons .preset-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent-light);
+            background: rgba(99, 102, 241, 0.06);
+        }
+
+        /* ===== 结果区域 ===== */
+        .result-box {
+            flex: 1;
+            min-height: 60px;
+            overflow-y: auto;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            margin-bottom: var(--space-sm);
+        }
+        .result-box::-webkit-scrollbar {
+            width: 4px;
+        }
+        .result-box .result-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-xs) 0;
+            border-bottom: 1px solid var(--border-subtle);
+            font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+            font-size: 13px;
+            gap: var(--space-sm);
+        }
+        .result-box .result-row:last-child {
+            border-bottom: none;
+        }
+        .result-box .result-row .label {
+            color: var(--text-muted);
+            min-width: 60px;
+            font-weight: 500;
+        }
+        .result-box .result-row .value {
+            color: var(--text-primary);
+            flex: 1;
+            text-align: right;
+            word-break: break-all;
+        }
+        .result-box .result-row .copy-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 0 4px;
+            border-radius: var(--radius-sm);
+            transition: all var(--transition);
+            font-size: 13px;
+            flex-shrink: 0;
+            line-height: 1;
+        }
+        .result-box .result-row .copy-btn:hover {
+            color: var(--accent-light);
+            background: rgba(99, 102, 241, 0.08);
+        }
+        .result-box .result-row .copy-btn.copied {
+            color: var(--success);
+        }
+
+        .result-empty {
+            color: var(--text-muted);
+            text-align: center;
+            padding: var(--space-md) 0;
+            font-size: 14px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+        .result-empty i {
+            font-size: 32px;
+            margin-bottom: var(--space-sm);
+            color: var(--border-subtle);
+        }
+
+        .result-stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-lg);
+            padding: var(--space-sm) var(--space-md);
+            background: var(--bg-surface);
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            color: var(--text-muted);
+            border: 1px solid var(--border-subtle);
+            flex-shrink: 0;
+        }
+        .result-stats span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .result-stats i {
+            font-size: 13px;
+            color: var(--accent-light);
+        }
+        .result-stats .count {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        .result-stats .copy-all-btn {
+            margin-left: auto;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 12px;
+            transition: color var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .result-stats .copy-all-btn:hover {
+            color: var(--accent-light);
+        }
+        .result-stats .copy-all-btn.copied {
+            color: var(--success);
+        }
+
+        /* ===== 教程样式 ===== */
+        .tutorial-card {
+            height: 500px;
+            min-height: 450px;
+            max-height: 850px;
+            resize: vertical;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+        }
+        .tutorial-card .card-header {
+            padding: var(--space-md) var(--space-lg);
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 0;
+            flex-shrink: 0;
+        }
+        .tutorial-body {
+            display: flex;
+            flex: 1;
+            min-height: 0;
+        }
+        .tutorial-sidebar {
+            width: 250px;
+            flex-shrink: 0;
+            background: var(--bg-primary);
+            border-right: 1px solid var(--border-subtle);
+            display: flex;
+            flex-direction: column;
+            padding: var(--space-md);
+        }
+        .tutorial-sidebar .search-box {
+            margin-bottom: var(--space-md);
+        }
+        .tutorial-sidebar .search-box input {
+            width: 100%;
+            padding: var(--space-sm) var(--space-md);
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-size: 13px;
+            outline: none;
+            transition: border var(--transition);
+        }
+        .tutorial-sidebar .search-box input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px var(--accent-glow);
+        }
+        .tutorial-sidebar .bookmark-list {
+            flex: 1;
+            overflow-y: auto;
+            margin: 0 -8px;
+            padding: 0 8px;
+        }
+        .tutorial-sidebar .bookmark-list::-webkit-scrollbar {
+            width: 4px;
+        }
+        .bookmark-item {
+            padding: 5px 12px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: all var(--transition);
+            font-size: 13px;
+            border-left: 2px solid transparent;
+            margin-bottom: 1px;
+        }
+        .bookmark-item:hover {
+            background: var(--bg-surface-hover);
+            color: var(--text-primary);
+        }
+        .bookmark-item.active {
+            color: var(--accent-light);
+            background: rgba(99, 102, 241, 0.12);
+            border-left-color: var(--accent);
+        }
+        .bookmark-item .chapter-tag {
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-right: 6px;
+            opacity: 0.6;
+        }
+        .tutorial-content {
+            flex: 1;
+            padding: var(--space-lg);
+            overflow-y: auto;
+            min-height: 0;
+        }
+        .tutorial-content::-webkit-scrollbar {
+            width: 4px;
+        }
+        .tutorial-content h2 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--space-md);
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: var(--space-sm);
+        }
+        .tutorial-content h3 {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--accent-light);
+            margin: var(--space-md) 0 var(--space-sm);
+        }
+        .tutorial-content p {
+            color: var(--text-secondary);
+            line-height: 1.8;
+            margin-bottom: var(--space-md);
+        }
+        .tutorial-content pre {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: var(--space-md) var(--space-lg);
+            overflow-x: auto;
+            font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+            font-size: 12.5px;
+            color: var(--text-primary);
+            margin: var(--space-md) 0;
+            line-height: 1.7;
+        }
+        .tutorial-content pre code {
+            display: block;
+            white-space: pre;
+        }
+        .tutorial-content ul {
+            padding-left: var(--space-xl);
+            color: var(--text-secondary);
+            margin-bottom: var(--space-md);
+        }
+        .tutorial-content ul li {
+            margin-bottom: var(--space-xs);
+        }
+        .tutorial-content .note {
+            background: rgba(99, 102, 241, 0.06);
+            border-left: 3px solid var(--accent);
+            padding: var(--space-sm) var(--space-md);
+            border-radius: var(--radius-sm);
+            margin: var(--space-md) 0;
+            color: var(--text-dim);
+            font-size: 13px;
+        }
+        .tutorial-content .note.warning {
+            border-left-color: var(--warning);
+            background: rgba(251, 191, 36, 0.06);
+        }
+        .tutorial-content .note.danger {
+            border-left-color: var(--error);
+            background: rgba(239, 68, 68, 0.06);
+        }
+        .tutorial-content .note.success {
+            border-left-color: var(--success);
+            background: rgba(52, 211, 153, 0.06);
+        }
+
+        /* ===== Toast ===== */
+        #toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(12px);
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 12px 24px;
+            font-size: 13px;
+            display: none;
+            align-items: center;
+            gap: 12px;
+            box-shadow: var(--shadow-soft);
+            z-index: 999;
+            backdrop-filter: blur(12px);
+            max-width: 92vw;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        #toast.show {
+            display: flex;
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        #toast.success {
+            border-left: 4px solid var(--success);
+            color: var(--success);
+        }
+        #toast.error {
+            border-left: 4px solid var(--error);
+            color: var(--error);
+        }
+        #toast i {
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 820px) {
+            .tutorial-card {
+                height: 600px;
+                min-height: 400px;
+            }
+            .tutorial-body {
+                flex-direction: column;
+            }
+            .tutorial-sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid var(--border-subtle);
+                max-height: 180px;
+                flex-shrink: 0;
+            }
+            .tutorial-content {
+                padding: var(--space-md);
+            }
+            .app-header .brand h1 {
+                font-size: 20px;
+            }
+            .app-header .back-btn {
+                font-size: 12px;
+                padding: 2px 10px;
+            }
+            .tab-btn {
+                padding: 8px 16px;
+                font-size: 13px;
+            }
+            .radix-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+            .result-stats .copy-all-btn {
+                margin-left: 0;
+            }
+            .panel {
+                height: auto;
+                min-height: 300px;
+                resize: vertical;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 12px;
+            }
+            .app-header {
+                padding: 12px 0 16px 0;
+                margin-bottom: 16px;
+                gap: 10px;
+            }
+            .app-header .brand i {
+                font-size: 22px;
+            }
+            .app-header .brand h1 {
+                font-size: 18px;
+            }
+            .app-header .brand .version {
+                font-size: 11px;
+                padding: 0 8px;
+            }
+            .app-header .status-group {
+                gap: 10px;
+            }
+            .app-header .back-btn {
+                font-size: 11px;
+                padding: 2px 8px;
+            }
+            .app-header .badge {
+                font-size: 10px;
+                padding: 2px 10px;
+            }
+            .panel {
+                padding: 16px 14px 18px;
+                height: auto;
+                min-height: 250px;
+            }
+            .result-box {
+                min-height: 40px;
+            }
+            .result-box .result-row {
+                font-size: 12px;
+                flex-wrap: wrap;
+                gap: var(--space-xs);
+            }
+            .result-box .result-row .label {
+                min-width: 40px;
+            }
+            .action-row .btn {
+                font-size: 12px;
+                padding: 4px 12px;
+                min-height: 32px;
+            }
+            .tutorial-card {
+                height: 500px;
+                min-height: 350px;
+            }
+            .tab-btn {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+            .result-stats {
+                gap: var(--space-sm);
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app">
+        <!-- ===== 头部 ===== -->
+        <header class="app-header">
+            <div class="brand">
+                <i class="fas fa-calculator"></i>
+                <h1>进制转换</h1>
+                <span class="version">v1.0</span>
+            </div>
+            <div class="status-group">
+                <a href="/tools" class="back-btn" title="返回工具箱">
+                    <i class="fas fa-arrow-left"></i> 返回
+                </a>
+                <span class="badge">
+                    <i class="fas fa-lock"></i> 纯前端本地
+                </span>
+            </div>
+        </header>
+
+        <!-- ===== 标签页 ===== -->
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="test">转换</button>
+            <button class="tab-btn" data-tab="tutorial">教程</button>
+        </div>
+
+        <!-- ===== 标签内容：转换 ===== -->
+        <div id="testTab" class="tab-content">
+            <div class="panel">
+                <div class="panel-title"><i class="fas fa-exchange-alt"></i> 进制转换</div>
+
+                <div class="radix-grid">
+                    <!-- 左侧：控制 -->
+                    <div>
+                        <div class="input-group">
+                            <label for="fromBase">源进制</label>
+                            <select id="fromBase">
+                                <option value="2">二进制 (2)</option>
+                                <option value="8">八进制 (8)</option>
+                                <option value="10" selected>十进制 (10)</option>
+                                <option value="16">十六进制 (16)</option>
+                            </select>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="toBase">目标进制</label>
+                            <select id="toBase">
+                                <option value="2">二进制 (2)</option>
+                                <option value="8">八进制 (8)</option>
+                                <option value="10">十进制 (10)</option>
+                                <option value="16" selected>十六进制 (16)</option>
+                            </select>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="inputValue">输入数值</label>
+                            <input type="text" id="inputValue" placeholder="例如: 255" value="255" />
+                            <div class="hint" id="inputHint">支持大写/小写，自动去除前缀</div>
+                        </div>
+
+                        <div class="action-row">
+                            <button class="btn" id="convertBtn"><i class="fas fa-arrow-right"></i> 转换</button>
+                            <button class="btn btn-outline" id="clearBtn"><i class="fas fa-eraser"></i> 清空</button>
+                        </div>
+
+                        <div class="preset-buttons">
+                            <span style="font-size:12px;color:var(--text-muted);margin-right:4px;">预设:</span>
+                            <button class="preset-btn" data-value="0">0</button>
+                            <button class="preset-btn" data-value="1">1</button>
+                            <button class="preset-btn" data-value="10">10</button>
+                            <button class="preset-btn" data-value="255">255</button>
+                            <button class="preset-btn" data-value="1024">1024</button>
+                            <button class="preset-btn" data-value="65535">65535</button>
+                            <button class="preset-btn" data-value="FF">FF</button>
+                            <button class="preset-btn" data-value="0b1010">0b1010</button>
+                        </div>
+                    </div>
+
+                    <!-- 右侧：结果 -->
+                    <div>
+                        <div class="input-group">
+                            <label>转换结果</label>
+                            <div class="result-box" id="resultBox">
+                                <div class="result-empty">
+                                    <i class="fas fa-calculator"></i>
+                                    输入数值后点击“转换”
+                                </div>
+                            </div>
+                            <div class="result-stats" id="resultStats">
+                                <span><i class="fas fa-tag"></i> 进制: <span id="baseDisplay">-</span></span>
+                                <button class="copy-all-btn" id="copyAllBtn"><i class="fas fa-copy"></i> 复制全部</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== 标签内容：教程 ===== -->
+        <div id="tutorialTab" class="tab-content" style="display: none;">
+            <div class="panel tutorial-card">
+                <div class="card-header">
+                    <i class="fas fa-book" style="font-size:20px;color:var(--accent-light);margin-right:8px;"></i>
+                    <h3 style="display:inline-block;font-size:18px;font-weight:600;color:var(--text-main);">进制相关教程</h3>
+                    <span style="float:right;font-size:12px;color:var(--text-muted);">共 6 章</span>
+                </div>
+                <div class="tutorial-body">
+                    <div class="tutorial-sidebar">
+                        <div class="search-box">
+                            <input type="text" id="tutorialSearch" placeholder="搜索章节..." />
+                        </div>
+                        <div class="bookmark-list" id="bookmarkList"></div>
+                    </div>
+                    <div class="tutorial-content" id="tutorialContent"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== Toast ===== -->
+        <div id="toast">
+            <i id="toastIcon"></i>
+            <span id="toastMsg"></span>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // ================================================================
+            // DOM 引用
+            // ================================================================
+            var fromBaseSelect = document.getElementById('fromBase');
+            var toBaseSelect = document.getElementById('toBase');
+            var inputValue = document.getElementById('inputValue');
+            var convertBtn = document.getElementById('convertBtn');
+            var clearBtn = document.getElementById('clearBtn');
+            var resultBox = document.getElementById('resultBox');
+            var baseDisplay = document.getElementById('baseDisplay');
+            var copyAllBtn = document.getElementById('copyAllBtn');
+            var presetBtns = document.querySelectorAll('.preset-btn');
+            var inputHint = document.getElementById('inputHint');
+
+            var toast = document.getElementById('toast');
+            var toastIcon = document.getElementById('toastIcon');
+            var toastMsg = document.getElementById('toastMsg');
+            var toastTimer = null;
+
+            // 教程
+            var tutorialSearch = document.getElementById('tutorialSearch');
+            var bookmarkList = document.getElementById('bookmarkList');
+            var tutorialContent = document.getElementById('tutorialContent');
+
+            // 标签切换
+            var tabBtns = document.querySelectorAll('.tab-btn');
+            var testTab = document.getElementById('testTab');
+            var tutorialTab = document.getElementById('tutorialTab');
+
+            // ================================================================
+            // Toast
+            // ================================================================
+            function showToast(msg, type) {
+                type = type || 'success';
+                if (toastTimer) {
+                    clearTimeout(toastTimer);
+                    toastTimer = null;
+                }
+                toastIcon.className = type === 'error' ? 'fas fa-exclamation-circle' : 'fas fa-check-circle';
+                toastMsg.textContent = msg;
+                toast.className = type === 'error' ? 'error' : 'success';
+                toast.classList.add('show');
+                toastTimer = setTimeout(function() {
+                    toast.classList.remove('show');
+                    toastTimer = null;
+                }, 2500);
+            }
+
+            // ================================================================
+            // 转换核心
+            // ================================================================
+            function isValidNumber(str, base) {
+                // 先去除常见前缀
+                var cleaned = str.replace(/^0x/i, '').replace(/^0b/i, '').replace(/^0o/i, '');
+                // 根据进制检查字符合法性
+                var validChars;
+                switch (base) {
+                    case 2:
+                        validChars = /^[01]+$/;
+                        break;
+                    case 8:
+                        validChars = /^[0-7]+$/;
+                        break;
+                    case 10:
+                        validChars = /^[0-9]+$/;
+                        break;
+                    case 16:
+                        validChars = /^[0-9a-fA-F]+$/;
+                        break;
+                    default:
+                        return false;
+                }
+                return validChars.test(cleaned);
+            }
+
+            function convertRadix(value, fromBase, toBase) {
+                // 去除前缀
+                var cleaned = value.replace(/^0x/i, '').replace(/^0b/i, '').replace(/^0o/i, '');
+                // 转成 BigInt
+                var decimal;
+                try {
+                    decimal = BigInt('0x' + cleaned);
+                } catch (e) {
+                    try {
+                        decimal = BigInt(parseInt(cleaned, fromBase));
+                    } catch (e2) {
+                        throw new Error('无效的输入值');
+                    }
+                }
+                // 转换为目标进制
+                var result = decimal.toString(toBase);
+                // 根据目标进制添加前缀（可选），但为了通用性我们保留纯数字
+                return result;
+            }
+
+            function doConvert() {
+                var fromBase = parseInt(fromBaseSelect.value);
+                var toBase = parseInt(toBaseSelect.value);
+                var value = inputValue.value.trim();
+
+                if (!value) {
+                    showToast('请输入数值', 'error');
+                    return;
+                }
+
+                // 检查输入合法性
+                if (!isValidNumber(value, fromBase)) {
+                    showToast('输入的数值不符合 ' + fromBase + ' 进制格式', 'error');
+                    return;
+                }
+
+                try {
+                    var result = convertRadix(value, fromBase, toBase);
+                    var displayResult = result.toUpperCase(); // 十六进制显示大写
+                    renderResult(value, fromBase, toBase, displayResult);
+                    showToast('转换成功', 'success');
+                } catch (e) {
+                    showToast('转换失败: ' + e.message, 'error');
+                }
+            }
+
+            function renderResult(original, fromBase, toBase, result) {
+                var html = '';
+                // 显示原始输入（带前缀提示）
+                var fromLabel = fromBase === 2 ? '二进制' :
+                    fromBase === 8 ? '八进制' :
+                    fromBase === 10 ? '十进制' :
+                    '十六进制';
+                var toLabel = toBase === 2 ? '二进制' :
+                    toBase === 8 ? '八进制' :
+                    toBase === 10 ? '十进制' :
+                    '十六进制';
+
+                html += '<div class="result-row">' +
+                    '<span class="label">' + fromLabel + ' (输入)</span>' +
+                    '<span class="value">' + escapeHtml(original) + '</span>' +
+                    '<button class="copy-btn" data-copy="' + escapeHtml(original) + '" title="复制"><i class="fas fa-copy"></i></button>' +
+                    '</div>';
+
+                html += '<div class="result-row">' +
+                    '<span class="label">' + toLabel + ' (结果)</span>' +
+                    '<span class="value">' + escapeHtml(result) + '</span>' +
+                    '<button class="copy-btn" data-copy="' + escapeHtml(result) + '" title="复制"><i class="fas fa-copy"></i></button>' +
+                    '</div>';
+
+                // 添加十进制中间值（方便查看）
+                var decimal;
+                try {
+                    decimal = BigInt('0x' + result);
+                } catch (e) {
+                    decimal = BigInt(parseInt(result, toBase));
+                }
+                html += '<div class="result-row">' +
+                    '<span class="label">十进制 (中间)</span>' +
+                    '<span class="value">' + decimal.toString() + '</span>' +
+                    '<button class="copy-btn" data-copy="' + decimal.toString() + '" title="复制"><i class="fas fa-copy"></i></button>' +
+                    '</div>';
+
+                resultBox.innerHTML = html;
+
+                // 绑定复制按钮
+                resultBox.querySelectorAll('.copy-btn').forEach(function(btn) {
+                    btn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        var text = this.dataset.copy;
+                        copyText(text, this);
+                    });
+                });
+
+                baseDisplay.textContent = fromBase + ' → ' + toBase;
+            }
+
+            function escapeHtml(text) {
+                if (!text) return '';
+                var div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            // ================================================================
+            // 复制功能
+            // ================================================================
+            function copyText(text, btn) {
+                if (!text) {
+                    showToast('没有内容可复制', 'error');
+                    return;
+                }
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text).then(function() {
+                        showToast('已复制', 'success');
+                        if (btn) {
+                            btn.classList.add('copied');
+                            setTimeout(function() { btn.classList.remove('copied'); }, 1500);
+                        }
+                    }).catch(function() {
+                        fallbackCopy(text, btn);
+                    });
+                } else {
+                    fallbackCopy(text, btn);
+                }
+            }
+
+            function fallbackCopy(text, btn) {
+                var textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                try {
+                    document.execCommand('copy');
+                    showToast('已复制', 'success');
+                    if (btn) {
+                        btn.classList.add('copied');
+                        setTimeout(function() { btn.classList.remove('copied'); }, 1500);
+                    }
+                } catch (e) {
+                    showToast('复制失败，请手动复制', 'error');
+                }
+                document.body.removeChild(textarea);
+            }
+
+            function copyAll() {
+                var rows = resultBox.querySelectorAll('.result-row');
+                if (rows.length === 0) {
+                    showToast('没有可复制的内容', 'error');
+                    return;
+                }
+                var texts = [];
+                rows.forEach(function(row) {
+                    var label = row.querySelector('.label')?.textContent || '';
+                    var value = row.querySelector('.value')?.textContent || '';
+                    if (value) texts.push(label + ': ' + value);
+                });
+                if (texts.length === 0) {
+                    showToast('没有可复制的内容', 'error');
+                    return;
+                }
+                var allText = texts.join('\n');
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(allText).then(function() {
+                        showToast('已复制全部', 'success');
+                        copyAllBtn.classList.add('copied');
+                        setTimeout(function() { copyAllBtn.classList.remove('copied'); }, 1500);
+                    }).catch(function() {
+                        fallbackCopy(allText);
+                    });
+                } else {
+                    fallbackCopy(allText);
+                }
+            }
+
+            // ================================================================
+            // 标签切换
+            // ================================================================
+            tabBtns.forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    tabBtns.forEach(function(b) { b.classList.remove('active'); });
+                    this.classList.add('active');
+                    var tab = this.dataset.tab;
+                    testTab.style.display = tab === 'test' ? 'block' : 'none';
+                    tutorialTab.style.display = tab === 'tutorial' ? 'block' : 'none';
+                    if (tab === 'tutorial') {
+                        renderBookmarks();
+                    }
+                });
+            });
+
+            // ================================================================
+            // 事件绑定
+            // ================================================================
+
+            // 转换
+            convertBtn.addEventListener('click', doConvert);
+
+            // 回车触发转换
+            inputValue.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    doConvert();
+                }
+            });
+
+            // 清空
+            clearBtn.addEventListener('click', function() {
+                inputValue.value = '';
+                resultBox.innerHTML = '<div class="result-empty"><i class="fas fa-calculator"></i>输入数值后点击“转换”</div>';
+                baseDisplay.textContent = '-';
+                showToast('已清空', 'success');
+            });
+
+            // 复制全部
+            copyAllBtn.addEventListener('click', copyAll);
+
+            // 预设按钮
+            presetBtns.forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var val = this.dataset.value;
+                    inputValue.value = val;
+                    doConvert();
+                });
+            });
+
+            // 进制切换时自动重新转换（如果输入不为空）
+            fromBaseSelect.addEventListener('change', function() {
+                if (inputValue.value.trim()) doConvert();
+                updateHint();
+            });
+            toBaseSelect.addEventListener('change', function() {
+                if (inputValue.value.trim()) doConvert();
+            });
+
+            function updateHint() {
+                var fromBase = parseInt(fromBaseSelect.value);
+                var hint = '支持大写/小写，自动去除前缀';
+                if (fromBase === 2) hint += '，仅允许 0/1';
+                else if (fromBase === 8) hint += '，仅允许 0-7';
+                else if (fromBase === 16) hint += '，允许 0-9/A-F';
+                inputHint.textContent = hint;
+            }
+            updateHint();
+
+            // ================================================================
+            // 教程数据（6 章，含详细代码示例）
+            // ================================================================
+            var chapters = [{
+                id: 'intro',
+                title: '进制系统简介',
+                content: `
+                    <h2>进制系统简介</h2>
+                    <p>进制（基数）是计数系统的基础。日常生活中常用十进制（10），计算机科学中常用二进制（2）、八进制（8）和十六进制（16）。</p>
+                    <ul>
+                        <li><strong>二进制</strong>：只有 0 和 1，计算机内部所有数据都使用二进制。</li>
+                        <li><strong>八进制</strong>：0-7，常用于文件权限（Unix/Linux）。</li>
+                        <li><strong>十进制</strong>：0-9，人类最常用的计数方式。</li>
+                        <li><strong>十六进制</strong>：0-9 和 A-F，常用于表示内存地址、颜色代码等。</li>
+                    </ul>
+                    <div class="note">本工具支持四种进制之间的任意转换。</div>
+                `
+            }, {
+                id: 'binary',
+                title: '二进制详解',
+                content: `
+                    <h2>二进制详解</h2>
+                    <p>二进制使用 2 作为基数，每一位的权值是 2 的幂次。</p>
+                    <p>例如：<code>1011₂ = 1×2³ + 0×2² + 1×2¹ + 1×2⁰ = 8 + 0 + 2 + 1 = 11₁₀</code></p>
+                    <p>二进制在计算机中表示开关状态（0 关，1 开），是数字电路的基础。</p>
+                    <pre><code>二进制前缀：0b (如 0b1010)
+            常见应用：位运算、权限掩码、网络子网掩码</code></pre>
+                    <div class="note">本工具支持二进制输入，自动识别 <code>0b</code> 前缀。</div>
+                `
+            }, {
+                id: 'octal',
+                title: '八进制详解',
+                content: `
+                    <h2>八进制详解</h2>
+                    <p>八进制使用 8 作为基数，每一位的权值是 8 的幂次，数字范围 0-7。</p>
+                    <p>例如：<code>127₈ = 1×8² + 2×8¹ + 7×8⁰ = 64 + 16 + 7 = 87₁₀</code></p>
+                    <p>八进制在 Unix/Linux 文件权限中广泛使用（如 755 表示读/写/执行权限）。</p>
+                    <pre><code>八进制前缀：0o (如 0o755)
+            常见应用：文件权限、字符转义序列（如 \\033）</code></pre>
+                    <div class="note warning">注意：某些语言中八进制前缀为 <code>0</code>（如 C 语言），容易混淆，推荐使用 <code>0o</code>。</div>
+                `
+            }, {
+                id: 'hex',
+                title: '十六进制详解',
+                content: `
+                    <h2>十六进制详解</h2>
+                    <p>十六进制使用 16 作为基数，数字范围 0-15，其中 10-15 用 A-F 表示。</p>
+                    <p>例如：<code>2Fₓ = 2×16¹ + 15×16⁰ = 32 + 15 = 47₁₀</code></p>
+                    <p>十六进制在计算机领域非常常用，因为 1 个十六进制数字正好对应 4 个二进制位（半个字节）。</p>
+                    <pre><code>十六进制前缀：0x (如 0x2F)
+            常见应用：颜色值 (#FF5733)、内存地址、Unicode 编码</code></pre>
+                    <div class="note success">本工具支持十六进制输入，自动识别 <code>0x</code> 前缀，输出默认大写。</div>
+                `
+            }, {
+                id: 'conversion',
+                title: '转换方法与代码实现',
+                content: `
+                    <h2>转换方法与代码实现</h2>
+                    <p>进制转换的核心是“按权展开”和“除以基数取余”。下面给出完整的 JavaScript 实现。</p>
+
+                    <h3>1. 任意进制 → 十进制（按权展开）</h3>
+                    <p>将每一位数字乘以基数的幂次，然后求和。</p>
+<pre><code>function anyBaseToDecimal(str, base) {
+    // 校验输入合法性
+    const digits = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    let result = 0n;  // 使用 BigInt 支持大数
+    str = str.toUpperCase();
+    for (let i = 0; i < str.length; i++) {
+        const char = str[i];
+        const value = digits.indexOf(char);
+        if (value === -1 || value >= base) {
+            throw new Error('无效字符: ' + char);
+        }
+        // 按权展开：result = result * base + value
+        result = result * BigInt(base) + BigInt(value);
+    }
+    return result;
+}
+
+// 示例：十六进制 "1A3" → 十进制
+console.log(anyBaseToDecimal('1A3', 16).toString());  // 419</code></pre>
+
+                    <h3>2. 十进制 → 任意进制（除基取余）</h3>
+                    <p>将十进制数反复除以目标基数，记录余数，倒序排列。</p>
+<pre><code>function decimalToAnyBase(num, base) {
+    if (num === 0n) return '0';
+    const digits = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    let result = '';
+    let n = BigInt(num);
+    const b = BigInt(base);
+    while (n > 0n) {
+        const remainder = Number(n % b);  // 余数作为索引
+        result = digits[remainder] + result;
+        n = n / b;  // BigInt 除法自动向下取整
+    }
+    return result;
+}
+
+// 示例：十进制 419 → 十六进制
+console.log(decimalToAnyBase(419, 16));  // 1A3</code></pre>
+
+                    <h3>3. 完整转换函数（任意进制互转）</h3>
+                    <p>结合以上两个函数，实现任意进制之间的互转。</p>
+<pre><code>function convertRadix(str, fromBase, toBase) {
+    // 先转为十进制（中间值）
+    const decimal = anyBaseToDecimal(str, fromBase);
+    // 再转为目标进制
+    return decimalToAnyBase(decimal, toBase);
+}
+
+// 示例：二进制 "1011" → 十六进制
+console.log(convertRadix('1011', 2, 16));  // B
+
+// 示例：十六进制 "FF" → 二进制
+console.log(convertRadix('FF', 16, 2));    // 11111111
+
+// 示例：八进制 "755" → 二进制
+console.log(convertRadix('755', 8, 2));    // 111101101</code></pre>
+
+                    <h3>4. 位运算与进制转换</h3>
+                    <p>在 JavaScript 中，可以通过位运算快速进行进制转换。</p>
+<pre><code>// 使用内置方法快速转换
+const num = 255;
+
+// 十进制 → 二进制
+console.log(num.toString(2));   // 11111111
+
+// 十进制 → 八进制
+console.log(num.toString(8));   // 377
+
+// 十进制 → 十六进制
+console.log(num.toString(16));  // ff
+
+// 其他进制 → 十进制（使用 parseInt）
+console.log(parseInt('ff', 16)); // 255
+console.log(parseInt('377', 8)); // 255
+
+// ⚠️ 注意：parseInt 对大数有精度限制，大数请使用 BigInt</code></pre>
+
+                    <div class="note success">本工具使用 <code>BigInt</code> 处理大整数，无精度损失，支持任意长度。</div>
+                `
+            }, {
+                id: 'practice',
+                title: '实践与技巧',
+                content: `
+                    <h2>实践与技巧</h2>
+                    <ul>
+                        <li><strong>快速转换</strong>：使用本工具可以快速验证转换结果。</li>
+                        <li><strong>前缀识别</strong>：输入时支持 <code>0b</code>、<code>0o</code>、<code>0x</code> 前缀，工具自动识别。</li>
+                        <li><strong>大整数</strong>：使用 <code>BigInt</code> 支持超过 2⁵³ 的大数。</li>
+                        <li><strong>调试</strong>：在编程中，进制转换常用于调试内存值、位掩码等。</li>
+                        <li><strong>颜色转换</strong>：HEX 颜色值（如 #FF5733）实际上就是十六进制数。</li>
+                        <li><strong>位掩码</strong>：使用二进制/十六进制表示权限组合（如 0b1010 表示第 1 位和第 3 位为 1）。</li>
+                    </ul>
+
+                    <h3>常见转换对照表</h3>
+<pre><code>十进制  二进制  八进制  十六进制
+0       0       0       0
+1       1       1       1
+2       10      2       2
+3       11      3       3
+4       100     4       4
+5       101     5       5
+6       110     6       6
+7       111     7       7
+8       1000    10      8
+9       1001    11      9
+10      1010    12      A
+15      1111    17      F
+16      10000   20      10
+255     11111111 377    FF
+1024    10000000000 2000 400</code></pre>
+
+                    <div class="note success">掌握进制转换是计算机科学的基础技能，本工具可以帮助您快速验证和练习。</div>
+                `
+            }];
+
+            var activeChapterId = null;
+
+            function renderBookmarks(filter) {
+                filter = filter || '';
+                var list = document.getElementById('bookmarkList');
+                var filtered = filter.trim() === '' ?
+                    chapters :
+                    chapters.filter(function(ch) {
+                        return ch.title.toLowerCase().includes(filter.toLowerCase());
+                    });
+
+                if (filtered.length === 0) {
+                    list.innerHTML =
+                        '<div style="color: var(--text-muted); padding: var(--space-md); text-align: center;">未找到匹配章节</div>';
+                    return;
+                }
+
+                var html = '';
+                filtered.forEach(function(ch) {
+                    var active = (ch.id === activeChapterId) ? 'active' : '';
+                    html += '<div class="bookmark-item ' + active + '" data-id="' + ch.id + '">' +
+                        '<span class="chapter-tag">#</span> ' + ch.title +
+                        '</div>';
+                });
+                list.innerHTML = html;
+
+                list.querySelectorAll('.bookmark-item').forEach(function(el) {
+                    el.addEventListener('click', function() {
+                        var id = this.dataset.id;
+                        var chapter = chapters.find(function(c) { return c.id === id; });
+                        if (chapter) {
+                            activeChapterId = id;
+                            renderContent(chapter);
+                            document.querySelectorAll('.bookmark-item').forEach(function(b) { b.classList
+                                    .remove('active'); });
+                            this.classList.add('active');
+                            document.getElementById('tutorialSearch').value = '';
+                            renderBookmarks();
+                        }
+                    });
+                });
+
+                if (!activeChapterId && chapters.length > 0) {
+                    activeChapterId = chapters[0].id;
+                    renderContent(chapters[0]);
+                    var firstItem = list.querySelector('.bookmark-item');
+                    if (firstItem) firstItem.classList.add('active');
+                }
+            }
+
+            function renderContent(chapter) {
+                var container = document.getElementById('tutorialContent');
+                container.innerHTML = chapter.content;
+                container.scrollTop = 0;
+            }
+
+            tutorialSearch.addEventListener('input', function() {
+                var filter = this.value.trim();
+                renderBookmarks(filter);
+                var items = document.querySelectorAll('#bookmarkList .bookmark-item');
+                if (items.length > 0 && filter !== '') {
+                    items.forEach(function(b) { b.classList.remove('active'); });
+                    items[0].classList.add('active');
+                    var id = items[0].dataset.id;
+                    var chapter = chapters.find(function(c) { return c.id === id; });
+                    if (chapter) {
+                        activeChapterId = id;
+                        renderContent(chapter);
+                    }
+                } else if (filter === '') {
+                    if (activeChapterId) {
+                        var chapter = chapters.find(function(c) { return c.id === activeChapterId; });
+                        if (chapter) renderContent(chapter);
+                    } else if (chapters.length > 0) {
+                        activeChapterId = chapters[0].id;
+                        renderContent(chapters[0]);
+                    }
+                    renderBookmarks();
+                }
+            });
+
+            // ================================================================
+            // 初始化
+            // ================================================================
+            function init() {
+                renderBookmarks();
+                testTab.style.display = 'block';
+                tutorialTab.style.display = 'none';
+                // 默认执行一次转换
+                doConvert();
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+
+        })();
+    </script>
+
+</body>
+</html>

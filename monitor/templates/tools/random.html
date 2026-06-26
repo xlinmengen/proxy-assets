@@ -1,0 +1,1927 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes" />
+    <title>随机值生成器 · 开发者工具箱</title>
+    <link rel="stylesheet" href="/static/all.min.css" />
+    <style>
+        /* ===== 全局重置 & 蓝紫暗色主题 ===== */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg-primary: #0b0914;
+            --bg-secondary: #12101e;
+            --bg-surface: #181625;
+            --bg-surface-hover: #221f35;
+            --bg-elevated: #1f1c30;
+            --border-subtle: #2a2740;
+            --border-strong: #3d385a;
+            --text-primary: #edeff5;
+            --text-secondary: #b8bfd9;
+            --text-muted: #7a83a3;
+            --text-dim: #94a3b8;
+            --accent: #6366f1;
+            --accent-light: #818cf8;
+            --accent-dark: #4f46e5;
+            --accent-glow: rgba(99, 102, 241, 0.3);
+            --success: #34d399;
+            --success-bg: rgba(52, 211, 153, 0.12);
+            --error: #f87171;
+            --error-bg: rgba(248, 113, 113, 0.12);
+            --warning: #fbbf24;
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 14px;
+            --radius-full: 9999px;
+            --shadow-soft: 0 8px 30px rgba(0, 0, 0, 0.5);
+            --shadow-glow: 0 0 30px var(--accent-glow);
+            --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --space-xs: 4px;
+            --space-sm: 8px;
+            --space-md: 14px;
+            --space-lg: 20px;
+            --space-xl: 28px;
+        }
+
+        html {
+            font-size: 15px;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            padding: 24px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            line-height: 1.6;
+            user-select: none;
+        }
+
+        .result-text,
+        .result-box .value,
+        .code-area {
+            user-select: text;
+        }
+
+        body *:not(input):not(textarea):not(.modal-input):not(.result-text):not(.code-area):not(.regex-content):not(.regex-content *) {
+            user-select: none;
+        }
+
+        /* ===== 滚动条 ===== */
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+            border-radius: 999px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-strong);
+            border-radius: 999px;
+            transition: background 0.2s;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent);
+        }
+
+        .app {
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        /* ===== 头部 ===== */
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0 20px 0;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .app-header .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .app-header .brand i {
+            font-size: 28px;
+            color: var(--accent-light);
+            filter: drop-shadow(0 0 8px var(--accent-glow));
+        }
+        .app-header .brand h1 {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            background: linear-gradient(135deg, #ffffff 40%, var(--accent-light));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .app-header .brand .version {
+            font-size: 13px;
+            color: var(--text-muted);
+            -webkit-text-fill-color: var(--text-muted);
+            background: var(--bg-surface);
+            padding: 0 10px;
+            border-radius: 999px;
+            border: 1px solid var(--border-subtle);
+            font-weight: 500;
+            margin-left: 4px;
+        }
+
+        .app-header .status-group {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .app-header .back-btn {
+            font-size: 13px;
+            color: var(--text-secondary);
+            background: var(--bg-surface);
+            padding: 4px 14px;
+            border-radius: 999px;
+            border: 1px solid var(--border-subtle);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            transition: all var(--transition);
+            white-space: nowrap;
+        }
+        .app-header .back-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent-light);
+            box-shadow: 0 0 16px var(--accent-glow);
+        }
+
+        .app-header .badge {
+            background: var(--success-bg);
+            color: var(--success);
+            padding: 5px 16px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid rgba(52, 211, 153, 0.2);
+            white-space: nowrap;
+        }
+        .app-header .badge i {
+            font-size: 12px;
+        }
+
+        /* ===== 标签页 ===== */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: 0;
+        }
+        .tab-btn {
+            background: transparent;
+            border: none;
+            padding: 10px 22px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-dim);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all var(--transition);
+            font-family: inherit;
+        }
+        .tab-btn:hover {
+            color: var(--text-primary);
+        }
+        .tab-btn.active {
+            color: var(--accent-light);
+            border-bottom-color: var(--accent-light);
+        }
+
+        /* ===== 面板通用 ===== */
+        .panel {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 20px 22px 22px;
+            transition: border-color var(--transition), box-shadow var(--transition);
+            height: 460px;
+            resize: vertical;
+            overflow-y: auto;
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+        }
+        .panel:hover {
+            border-color: var(--border-strong);
+        }
+
+        .panel-title {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .panel-title i {
+            font-size: 14px;
+            color: var(--accent-light);
+        }
+
+        /* ===== 双列布局 ===== */
+        .random-grid {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 24px;
+            flex: 1;
+            min-height: 0;
+        }
+        @media (max-width: 820px) {
+            .random-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+        }
+
+        .random-grid > div:first-child {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-sm);
+        }
+
+        .random-grid > div:last-child {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            min-height: 0;
+        }
+
+        .random-grid > div:last-child .input-group {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .input-group {
+            margin-bottom: var(--space-md);
+        }
+        .input-group label {
+            display: block;
+            font-size: 13px;
+            color: var(--text-dim);
+            margin-bottom: var(--space-sm);
+            font-weight: 500;
+            flex-shrink: 0;
+        }
+        .input-group select,
+        .input-group input {
+            width: 100%;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+            font-size: 14px;
+            padding: var(--space-sm) var(--space-md);
+            transition: border var(--transition), box-shadow var(--transition);
+            outline: none;
+        }
+        .input-group select:focus,
+        .input-group input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+        .input-group .hint {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: var(--space-xs);
+        }
+
+        /* 动态参数区 */
+        .dynamic-params {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-md);
+            padding: var(--space-sm) var(--space-md);
+            border: 1px solid var(--border-subtle);
+            margin-top: var(--space-xs);
+        }
+        .dynamic-params .param-row {
+            display: flex;
+            gap: var(--space-sm);
+            align-items: center;
+            margin-top: var(--space-xs);
+        }
+        .dynamic-params .param-row label {
+            font-size: 13px;
+            color: var(--text-dim);
+            min-width: 50px;
+            flex-shrink: 0;
+        }
+        .dynamic-params .param-row input {
+            flex: 1;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            padding: var(--space-xs) var(--space-sm);
+            font-size: 13px;
+            font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+            outline: none;
+            transition: border var(--transition);
+        }
+        .dynamic-params .param-row input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px var(--accent-glow);
+        }
+
+        /* ===== 自定义复选框 ===== */
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-md);
+            margin-top: var(--space-xs);
+            padding: var(--space-sm) var(--space-md);
+            background: var(--bg-secondary);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-subtle);
+        }
+
+        .checkbox-custom {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 400;
+            transition: color var(--transition);
+            padding: 2px 0;
+        }
+        .checkbox-custom:hover {
+            color: var(--text-primary);
+        }
+
+        .checkbox-custom input[type="checkbox"] {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+            margin: 0;
+            pointer-events: none;
+        }
+
+        .checkbox-custom .checkmark {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            border: 2px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            background: var(--bg-primary);
+            transition: all var(--transition);
+            flex-shrink: 0;
+            position: relative;
+            margin: 0;
+            transform: translateY(4px);
+        }
+
+        .checkbox-custom .checkmark::after {
+            content: '';
+            position: absolute;
+            width: 10px;
+            height: 5px;
+            border-left: 2px solid transparent;
+            border-bottom: 2px solid transparent;
+            transform: rotate(-45deg) scale(0);
+            transition: all var(--transition);
+            margin-top: -2px;
+        }
+
+        .checkbox-custom input[type="checkbox"]:checked + .checkmark {
+            border-color: var(--accent);
+            background: var(--accent);
+            box-shadow: 0 0 12px var(--accent-glow);
+        }
+
+        .checkbox-custom input[type="checkbox"]:checked + .checkmark::after {
+            border-left-color: #fff;
+            border-bottom-color: #fff;
+            transform: rotate(-45deg) scale(1);
+        }
+
+        .checkbox-custom input[type="checkbox"]:focus + .checkmark {
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        /* ===== 操作按钮 ===== */
+        .action-row {
+            display: flex;
+            gap: var(--space-sm);
+            flex-wrap: wrap;
+            margin-top: var(--space-sm);
+            flex-shrink: 0;
+        }
+        .action-row .btn {
+            background: var(--accent);
+            border: none;
+            border-radius: var(--radius-md);
+            color: #fff;
+            padding: 6px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            min-height: 36px;
+        }
+        .action-row .btn:hover {
+            background: var(--accent-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px var(--accent-glow);
+        }
+        .action-row .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+        }
+        .action-row .btn-outline:hover {
+            border-color: var(--accent);
+            color: var(--accent-light);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        /* 预设快捷按钮 */
+        .preset-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-xs);
+            margin-top: var(--space-sm);
+            flex-shrink: 0;
+        }
+        .preset-buttons .preset-btn {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            color: var(--text-dim);
+            padding: 2px 12px;
+            font-size: 12px;
+            font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+            cursor: pointer;
+            transition: all var(--transition);
+            touch-action: manipulation;
+        }
+        .preset-buttons .preset-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent-light);
+            background: rgba(99, 102, 241, 0.06);
+        }
+
+        /* ===== 结果区域 ===== */
+        .result-box {
+            flex: 1;
+            min-height: 60px;
+            overflow-y: auto;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            margin-bottom: var(--space-sm);
+        }
+        .result-box::-webkit-scrollbar {
+            width: 4px;
+        }
+        .result-box .random-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-xs) 0;
+            border-bottom: 1px solid var(--border-subtle);
+            font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+            font-size: 13px;
+            gap: var(--space-sm);
+        }
+        .result-box .random-item:last-child {
+            border-bottom: none;
+        }
+        .result-box .random-item .idx {
+            color: var(--text-muted);
+            min-width: 32px;
+            font-size: 12px;
+        }
+        .result-box .random-item .random-text {
+            color: var(--text-primary);
+            flex: 1;
+            word-break: break-all;
+        }
+        .result-box .random-item .copy-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 0 4px;
+            border-radius: var(--radius-sm);
+            transition: all var(--transition);
+            font-size: 13px;
+            flex-shrink: 0;
+            line-height: 1;
+        }
+        .result-box .random-item .copy-btn:hover {
+            color: var(--accent-light);
+            background: rgba(99, 102, 241, 0.08);
+        }
+        .result-box .random-item .copy-btn.copied {
+            color: var(--success);
+        }
+
+        .result-empty {
+            color: var(--text-muted);
+            text-align: center;
+            padding: var(--space-md) 0;
+            font-size: 14px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+        .result-empty i {
+            font-size: 32px;
+            margin-bottom: var(--space-sm);
+            color: var(--border-subtle);
+        }
+
+        .result-stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-lg);
+            padding: var(--space-sm) var(--space-md);
+            background: var(--bg-surface);
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            color: var(--text-muted);
+            border: 1px solid var(--border-subtle);
+            flex-shrink: 0;
+        }
+        .result-stats span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .result-stats i {
+            font-size: 13px;
+            color: var(--accent-light);
+        }
+        .result-stats .count {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        .result-stats .copy-all-btn {
+            margin-left: auto;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 12px;
+            transition: color var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .result-stats .copy-all-btn:hover {
+            color: var(--accent-light);
+        }
+        .result-stats .copy-all-btn.copied {
+            color: var(--success);
+        }
+
+        /* ===== 教程样式 ===== */
+        .tutorial-card {
+            height: 500px;
+            min-height: 450px;
+            max-height: 850px;
+            resize: vertical;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+        }
+        .tutorial-card .card-header {
+            padding: var(--space-md) var(--space-lg);
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 0;
+            flex-shrink: 0;
+        }
+        .tutorial-body {
+            display: flex;
+            flex: 1;
+            min-height: 0;
+        }
+        .tutorial-sidebar {
+            width: 250px;
+            flex-shrink: 0;
+            background: var(--bg-primary);
+            border-right: 1px solid var(--border-subtle);
+            display: flex;
+            flex-direction: column;
+            padding: var(--space-md);
+        }
+        .tutorial-sidebar .search-box {
+            margin-bottom: var(--space-md);
+        }
+        .tutorial-sidebar .search-box input {
+            width: 100%;
+            padding: var(--space-sm) var(--space-md);
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-size: 13px;
+            outline: none;
+            transition: border var(--transition);
+        }
+        .tutorial-sidebar .search-box input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px var(--accent-glow);
+        }
+        .tutorial-sidebar .bookmark-list {
+            flex: 1;
+            overflow-y: auto;
+            margin: 0 -8px;
+            padding: 0 8px;
+        }
+        .tutorial-sidebar .bookmark-list::-webkit-scrollbar {
+            width: 4px;
+        }
+        .bookmark-item {
+            padding: 5px 12px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: all var(--transition);
+            font-size: 13px;
+            border-left: 2px solid transparent;
+            margin-bottom: 1px;
+        }
+        .bookmark-item:hover {
+            background: var(--bg-surface-hover);
+            color: var(--text-primary);
+        }
+        .bookmark-item.active {
+            color: var(--accent-light);
+            background: rgba(99, 102, 241, 0.12);
+            border-left-color: var(--accent);
+        }
+        .bookmark-item .chapter-tag {
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-right: 6px;
+            opacity: 0.6;
+        }
+        .tutorial-content {
+            flex: 1;
+            padding: var(--space-lg);
+            overflow-y: auto;
+            min-height: 0;
+        }
+        .tutorial-content::-webkit-scrollbar {
+            width: 4px;
+        }
+        .tutorial-content h2 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--space-md);
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: var(--space-sm);
+        }
+        .tutorial-content h3 {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--accent-light);
+            margin: var(--space-md) 0 var(--space-sm);
+        }
+        .tutorial-content p {
+            color: var(--text-secondary);
+            line-height: 1.8;
+            margin-bottom: var(--space-md);
+        }
+        .tutorial-content pre {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: var(--space-md) var(--space-lg);
+            overflow-x: auto;
+            font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+            font-size: 12.5px;
+            color: var(--text-primary);
+            margin: var(--space-md) 0;
+            line-height: 1.7;
+        }
+        .tutorial-content pre code {
+            display: block;
+            white-space: pre;
+        }
+        .tutorial-content ul {
+            padding-left: var(--space-xl);
+            color: var(--text-secondary);
+            margin-bottom: var(--space-md);
+        }
+        .tutorial-content ul li {
+            margin-bottom: var(--space-xs);
+        }
+        .tutorial-content .note {
+            background: rgba(99, 102, 241, 0.06);
+            border-left: 3px solid var(--accent);
+            padding: var(--space-sm) var(--space-md);
+            border-radius: var(--radius-sm);
+            margin: var(--space-md) 0;
+            color: var(--text-dim);
+            font-size: 13px;
+        }
+        .tutorial-content .note.warning {
+            border-left-color: var(--warning);
+            background: rgba(251, 191, 36, 0.06);
+        }
+        .tutorial-content .note.danger {
+            border-left-color: var(--error);
+            background: rgba(239, 68, 68, 0.06);
+        }
+        .tutorial-content .note.success {
+            border-left-color: var(--success);
+            background: rgba(52, 211, 153, 0.06);
+        }
+
+        /* ===== Toast ===== */
+        #toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(12px);
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 12px 24px;
+            font-size: 13px;
+            display: none;
+            align-items: center;
+            gap: 12px;
+            box-shadow: var(--shadow-soft);
+            z-index: 999;
+            backdrop-filter: blur(12px);
+            max-width: 92vw;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        #toast.show {
+            display: flex;
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        #toast.success {
+            border-left: 4px solid var(--success);
+            color: var(--success);
+        }
+        #toast.error {
+            border-left: 4px solid var(--error);
+            color: var(--error);
+        }
+        #toast i {
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 820px) {
+            .tutorial-card {
+                height: 600px;
+                min-height: 400px;
+            }
+            .tutorial-body {
+                flex-direction: column;
+            }
+            .tutorial-sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid var(--border-subtle);
+                max-height: 180px;
+                flex-shrink: 0;
+            }
+            .tutorial-content {
+                padding: var(--space-md);
+            }
+            .app-header .brand h1 {
+                font-size: 20px;
+            }
+            .app-header .back-btn {
+                font-size: 12px;
+                padding: 2px 10px;
+            }
+            .tab-btn {
+                padding: 8px 16px;
+                font-size: 13px;
+            }
+            .random-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+            .result-stats .copy-all-btn {
+                margin-left: 0;
+            }
+            .checkbox-group {
+                gap: var(--space-sm);
+                padding: var(--space-xs) var(--space-sm);
+            }
+            .checkbox-custom {
+                font-size: 12px;
+            }
+            .panel {
+                height: auto;
+                min-height: 300px;
+                resize: vertical;
+            }
+            .dynamic-params .param-row {
+                flex-wrap: wrap;
+            }
+            .dynamic-params .param-row label {
+                min-width: 40px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 12px;
+            }
+            .app-header {
+                padding: 12px 0 16px 0;
+                margin-bottom: 16px;
+                gap: 10px;
+            }
+            .app-header .brand i {
+                font-size: 22px;
+            }
+            .app-header .brand h1 {
+                font-size: 18px;
+            }
+            .app-header .brand .version {
+                font-size: 11px;
+                padding: 0 8px;
+            }
+            .app-header .status-group {
+                gap: 10px;
+            }
+            .app-header .back-btn {
+                font-size: 11px;
+                padding: 2px 8px;
+            }
+            .app-header .badge {
+                font-size: 10px;
+                padding: 2px 10px;
+            }
+            .panel {
+                padding: 16px 14px 18px;
+                height: auto;
+                min-height: 250px;
+            }
+            .result-box {
+                min-height: 40px;
+            }
+            .result-box .random-item {
+                font-size: 12px;
+                flex-wrap: wrap;
+                gap: var(--space-xs);
+            }
+            .result-box .random-item .idx {
+                min-width: 28px;
+            }
+            .action-row .btn {
+                font-size: 12px;
+                padding: 4px 12px;
+                min-height: 32px;
+            }
+            .tutorial-card {
+                height: 500px;
+                min-height: 350px;
+            }
+            .tab-btn {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+            .result-stats {
+                gap: var(--space-sm);
+                font-size: 12px;
+            }
+            .checkbox-group {
+                flex-direction: column;
+                gap: var(--space-xs);
+            }
+            .checkbox-custom .checkmark {
+                width: 16px;
+                height: 16px;
+            }
+            .checkbox-custom .checkmark::after {
+                width: 8px;
+                height: 4px;
+            }
+            .dynamic-params .param-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .dynamic-params .param-row label {
+                min-width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app">
+        <!-- ===== 头部 ===== -->
+        <header class="app-header">
+            <div class="brand">
+                <i class="fas fa-dice"></i>
+                <h1>随机值生成器</h1>
+                <span class="version">v2.0</span>
+            </div>
+            <div class="status-group">
+                <a href="/tools" class="back-btn" title="返回工具箱">
+                    <i class="fas fa-arrow-left"></i> 返回
+                </a>
+                <span class="badge">
+                    <i class="fas fa-lock"></i> 纯前端本地
+                </span>
+            </div>
+        </header>
+
+        <!-- ===== 标签页 ===== -->
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="test">生成</button>
+            <button class="tab-btn" data-tab="tutorial">教程</button>
+        </div>
+
+        <!-- ===== 标签内容：生成 ===== -->
+        <div id="testTab" class="tab-content">
+            <div class="panel">
+                <div class="panel-title"><i class="fas fa-cogs"></i> 随机值生成</div>
+
+                <div class="random-grid">
+                    <!-- 左侧：控制 -->
+                    <div>
+                        <div class="input-group">
+                            <label for="typeSelect">类型</label>
+                            <select id="typeSelect">
+                                <option value="integer">整数</option>
+                                <option value="float">浮点数</option>
+                                <option value="string">随机字符串</option>
+                                <option value="password">密码</option>
+                                <option value="color">颜色</option>
+                                <option value="uuid">UUID</option>
+                            </select>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="countInput">数量</label>
+                            <input type="number" id="countInput" min="1" max="100" value="1" />
+                            <div class="hint">1 ~ 100</div>
+                        </div>
+
+                        <!-- 动态参数区 -->
+                        <div class="dynamic-params" id="dynamicParams">
+                            <!-- 由 JS 动态渲染 -->
+                        </div>
+
+                        <div class="action-row">
+                            <button class="btn" id="generateBtn"><i class="fas fa-sync-alt"></i> 生成</button>
+                            <button class="btn btn-outline" id="clearBtn"><i class="fas fa-eraser"></i> 清空</button>
+                        </div>
+
+                        <div class="preset-buttons">
+                            <span style="font-size:12px;color:var(--text-muted);margin-right:4px;">快速:</span>
+                            <button class="preset-btn" data-count="1">1个</button>
+                            <button class="preset-btn" data-count="5">5个</button>
+                            <button class="preset-btn" data-count="10">10个</button>
+                            <button class="preset-btn" data-count="25">25个</button>
+                        </div>
+                    </div>
+
+                    <!-- 右侧：结果 -->
+                    <div>
+                        <div class="input-group">
+                            <label>生成结果</label>
+                            <div class="result-box" id="resultBox">
+                                <div class="result-empty">
+                                    <i class="fas fa-dice"></i>
+                                    设置参数后点击“生成”
+                                </div>
+                            </div>
+                            <div class="result-stats" id="resultStats">
+                                <span><i class="fas fa-hashtag"></i> 数量: <span class="count" id="countDisplay">0</span></span>
+                                <span><i class="fas fa-tag"></i> 类型: <span id="typeDisplay">-</span></span>
+                                <button class="copy-all-btn" id="copyAllBtn"><i class="fas fa-copy"></i> 复制全部</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== 标签内容：教程 ===== -->
+        <div id="tutorialTab" class="tab-content" style="display: none;">
+            <div class="panel tutorial-card">
+                <div class="card-header">
+                    <i class="fas fa-book" style="font-size:20px;color:var(--accent-light);margin-right:8px;"></i>
+                    <h3 style="display:inline-block;font-size:18px;font-weight:600;color:var(--text-main);">随机数相关教程</h3>
+                    <span style="float:right;font-size:12px;color:var(--text-muted);">共 11 章</span>
+                </div>
+                <div class="tutorial-body">
+                    <div class="tutorial-sidebar">
+                        <div class="search-box">
+                            <input type="text" id="tutorialSearch" placeholder="搜索章节..." />
+                        </div>
+                        <div class="bookmark-list" id="bookmarkList"></div>
+                    </div>
+                    <div class="tutorial-content" id="tutorialContent"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== Toast ===== -->
+        <div id="toast">
+            <i id="toastIcon"></i>
+            <span id="toastMsg"></span>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // ================================================================
+            // DOM 引用
+            // ================================================================
+            var typeSelect = document.getElementById('typeSelect');
+            var countInput = document.getElementById('countInput');
+            var generateBtn = document.getElementById('generateBtn');
+            var clearBtn = document.getElementById('clearBtn');
+            var resultBox = document.getElementById('resultBox');
+            var countDisplay = document.getElementById('countDisplay');
+            var typeDisplay = document.getElementById('typeDisplay');
+            var copyAllBtn = document.getElementById('copyAllBtn');
+            var presetBtns = document.querySelectorAll('.preset-btn');
+            var dynamicParams = document.getElementById('dynamicParams');
+
+            var toast = document.getElementById('toast');
+            var toastIcon = document.getElementById('toastIcon');
+            var toastMsg = document.getElementById('toastMsg');
+            var toastTimer = null;
+
+            // 教程
+            var tutorialSearch = document.getElementById('tutorialSearch');
+            var bookmarkList = document.getElementById('bookmarkList');
+            var tutorialContent = document.getElementById('tutorialContent');
+
+            // 标签切换
+            var tabBtns = document.querySelectorAll('.tab-btn');
+            var testTab = document.getElementById('testTab');
+            var tutorialTab = document.getElementById('tutorialTab');
+
+            // ================================================================
+            // Toast
+            // ================================================================
+            function showToast(msg, type) {
+                type = type || 'success';
+                if (toastTimer) {
+                    clearTimeout(toastTimer);
+                    toastTimer = null;
+                }
+                toastIcon.className = type === 'error' ? 'fas fa-exclamation-circle' : 'fas fa-check-circle';
+                toastMsg.textContent = msg;
+                toast.className = type === 'error' ? 'error' : 'success';
+                toast.classList.add('show');
+                toastTimer = setTimeout(function() {
+                    toast.classList.remove('show');
+                    toastTimer = null;
+                }, 2500);
+            }
+
+            // ================================================================
+            // 随机生成核心
+            // ================================================================
+
+            // 安全随机整数 [min, max]
+            function randomInt(min, max) {
+                if (min > max) { var t = min;
+                    min = max;
+                    max = t; }
+                var range = max - min + 1;
+                if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+                    var bytes = new Uint32Array(1);
+                    crypto.getRandomValues(bytes);
+                    return min + (bytes[0] % range);
+                } else {
+                    return min + Math.floor(Math.random() * range);
+                }
+            }
+
+            // 随机浮点数 [min, max)
+            function randomFloat(min, max) {
+                if (min > max) { var t = min;
+                    min = max;
+                    max = t; }
+                if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+                    var bytes = new Uint32Array(1);
+                    crypto.getRandomValues(bytes);
+                    var rand = bytes[0] / 4294967296;
+                    return min + rand * (max - min);
+                } else {
+                    return min + Math.random() * (max - min);
+                }
+            }
+
+            // 随机字符串 (可指定字符集)
+            function randomString(length, chars) {
+                if (!chars) chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+                var result = '';
+                var charLen = chars.length;
+                for (var i = 0; i < length; i++) {
+                    result += chars[randomInt(0, charLen - 1)];
+                }
+                return result;
+            }
+
+            // 生成密码 (可配置字符类型)
+            function generatePassword(length, includeLower, includeUpper, includeDigits, includeSymbols) {
+                var chars = '';
+                if (includeLower) chars += 'abcdefghijklmnopqrstuvwxyz';
+                if (includeUpper) chars += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                if (includeDigits) chars += '0123456789';
+                if (includeSymbols) chars += '!@#$%^&*()_+-=[]{}|;:,.<>?';
+                if (!chars) chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+                return randomString(length, chars);
+            }
+
+            // 随机颜色 (HEX)
+            function randomColor(format) {
+                var r = randomInt(0, 255);
+                var g = randomInt(0, 255);
+                var b = randomInt(0, 255);
+                if (format === 'hex') {
+                    return '#' + [r, g, b].map(function(c) {
+                        var h = c.toString(16);
+                        return h.length === 1 ? '0' + h : h;
+                    }).join('');
+                } else if (format === 'rgb') {
+                    return 'rgb(' + r + ', ' + g + ', ' + b + ')';
+                } else {
+                    var hsl = rgbToHsl(r, g, b);
+                    return 'hsl(' + Math.round(hsl.h) + ', ' + Math.round(hsl.s) + '%, ' + Math.round(hsl.l) + '%)';
+                }
+            }
+
+            function rgbToHsl(r, g, b) {
+                r /= 255;
+                g /= 255;
+                b /= 255;
+                var max = Math.max(r, g, b),
+                    min = Math.min(r, g, b);
+                var h, s, l = (max + min) / 2;
+                if (max === min) {
+                    h = s = 0;
+                } else {
+                    var d = max - min;
+                    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                    switch (max) {
+                        case r:
+                            h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
+                            break;
+                        case g:
+                            h = ((b - r) / d + 2) / 6;
+                            break;
+                        case b:
+                            h = ((r - g) / d + 4) / 6;
+                            break;
+                    }
+                }
+                return { h: h * 360, s: s * 100, l: l * 100 };
+            }
+
+            // ===== UUID 生成 (v1, v4, v7) =====
+            function generateUUIDv4() {
+                var bytes = new Uint8Array(16);
+                if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+                    crypto.getRandomValues(bytes);
+                } else {
+                    for (var i = 0; i < 16; i++) bytes[i] = Math.floor(Math.random() * 256);
+                }
+                bytes[6] = (bytes[6] & 0x0f) | 0x40;
+                bytes[8] = (bytes[8] & 0x3f) | 0x80;
+                return bytesToHex(bytes);
+            }
+
+            function generateUUIDv1() {
+                var now = Date.now();
+                var timestamp = now * 10000 + 122192928000000000;
+                var time_low = (timestamp & 0xffffffff) >>> 0;
+                var time_mid = ((timestamp >> 32) & 0xffff) >>> 0;
+                var time_hi = ((timestamp >> 48) & 0x0fff) >>> 0;
+                time_hi = (time_hi & 0x0fff) | 0x1000;
+                var nodeBytes = new Uint8Array(6);
+                if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+                    crypto.getRandomValues(nodeBytes);
+                } else {
+                    for (var i = 0; i < 6; i++) nodeBytes[i] = Math.floor(Math.random() * 256);
+                }
+                nodeBytes[0] = (nodeBytes[0] & 0xfe) | 0x01;
+                var bytes = new Uint8Array([
+                    (time_low >> 24) & 0xff,
+                    (time_low >> 16) & 0xff,
+                    (time_low >> 8) & 0xff,
+                    time_low & 0xff,
+                    (time_mid >> 8) & 0xff,
+                    time_mid & 0xff,
+                    (time_hi >> 8) & 0xff,
+                    time_hi & 0xff,
+                    0x80 | (Math.floor(Math.random() * 64)),
+                    Math.floor(Math.random() * 256),
+                    nodeBytes[0], nodeBytes[1], nodeBytes[2],
+                    nodeBytes[3], nodeBytes[4], nodeBytes[5]
+                ]);
+                return bytesToHex(bytes);
+            }
+
+            function generateUUIDv7() {
+                var ms = Date.now();
+                var bytes = new Uint8Array(16);
+                var tsBytes = new Uint8Array(6);
+                var temp = BigInt(ms);
+                for (var i = 5; i >= 0; i--) {
+                    tsBytes[i] = Number(temp & BigInt(0xff));
+                    temp = temp >> BigInt(8);
+                }
+                var randBytes = new Uint8Array(10);
+                if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+                    crypto.getRandomValues(randBytes);
+                } else {
+                    for (var k = 0; k < 10; k++) randBytes[k] = Math.floor(Math.random() * 256);
+                }
+                for (var j = 0; j < 6; j++) bytes[j] = tsBytes[j];
+                for (var m = 0; m < 10; m++) bytes[6 + m] = randBytes[m];
+                bytes[6] = (bytes[6] & 0x0f) | 0x70;
+                bytes[8] = (bytes[8] & 0x3f) | 0x80;
+                return bytesToHex(bytes);
+            }
+
+            function bytesToHex(bytes) {
+                var hex = '';
+                for (var i = 0; i < bytes.length; i++) {
+                    var b = bytes[i];
+                    hex += (b < 16 ? '0' : '') + b.toString(16);
+                }
+                return hex;
+            }
+
+            function formatUUID(hex, uppercase, noDash, braces) {
+                var uuid = hex;
+                if (!noDash) {
+                    uuid = uuid.substring(0, 8) + '-' +
+                        uuid.substring(8, 12) + '-' +
+                        uuid.substring(12, 16) + '-' +
+                        uuid.substring(16, 20) + '-' +
+                        uuid.substring(20);
+                }
+                if (uppercase) {
+                    uuid = uuid.toUpperCase();
+                }
+                if (braces) {
+                    uuid = '{' + uuid + '}';
+                }
+                return uuid;
+            }
+
+            // ================================================================
+            // 动态参数渲染
+            // ================================================================
+            function renderParams(type) {
+                var html = '';
+                switch (type) {
+                    case 'integer':
+                        html = '<div class="param-row"><label>范围</label>' +
+                            '<input type="number" id="intMin" value="1" style="flex:1; min-width:60px; max-width:130px;" />' +
+                            '<span style="color:var(--text-muted);flex-shrink:0;padding:0 4px;">至</span>' +
+                            '<input type="number" id="intMax" value="100" style="flex:1; min-width:60px; max-width:130px;" /></div>';
+                        break;
+                    case 'float':
+                        html = '<div class="param-row"><label>范围</label>' +
+                            '<input type="number" id="floatMin" value="0" step="0.1" style="flex:1; min-width:60px; max-width:130px;" />' +
+                            '<span style="color:var(--text-muted);flex-shrink:0;padding:0 4px;">至</span>' +
+                            '<input type="number" id="floatMax" value="100" step="0.1" style="flex:1; min-width:60px; max-width:130px;" /></div>' +
+                            '<div class="param-row"><label>小数位</label><input type="number" id="floatDigits" value="2" min="0" max="10" style="flex:1; max-width:120px;" /></div>';
+                        break;
+                    case 'string':
+                        html = '<div class="param-row"><label>长度</label><input type="number" id="strLength" value="8" min="1" max="100" style="flex:0.4;" /></div>' +
+                            '<div class="param-row"><label>字符集</label><input type="text" id="strChars" value="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789" style="flex:1;" /></div>';
+                        break;
+                    case 'password':
+                        html = '<div class="param-row"><label>长度</label><input type="number" id="pwdLength" value="12" min="4" max="64" style="flex:0.4;" /></div>' +
+                            '<div class="checkbox-group" style="margin-top:4px;padding:4px 8px;">' +
+                            '<label class="checkbox-custom"><input type="checkbox" id="pwdLower" checked /><span class="checkmark"></span>小写</label>' +
+                            '<label class="checkbox-custom"><input type="checkbox" id="pwdUpper" checked /><span class="checkmark"></span>大写</label>' +
+                            '<label class="checkbox-custom"><input type="checkbox" id="pwdDigits" checked /><span class="checkmark"></span>数字</label>' +
+                            '<label class="checkbox-custom"><input type="checkbox" id="pwdSymbols" /><span class="checkmark"></span>符号</label>' +
+                            '</div>';
+                        break;
+                    case 'color':
+                        html = '<div class="param-row"><label>格式</label><select id="colorFormat" style="flex:1;background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:var(--radius-md);color:var(--text-primary);padding:var(--space-xs) var(--space-sm);font-size:13px;font-family:inherit;"><option value="hex">HEX</option><option value="rgb">RGB</option><option value="hsl">HSL</option></select></div>';
+                        break;
+                    case 'uuid':
+                        html = '<div class="param-row"><label>版本</label><select id="uuidVersion" style="flex:1;background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:var(--radius-md);color:var(--text-primary);padding:var(--space-xs) var(--space-sm);font-size:13px;font-family:inherit;"><option value="v4">v4 (随机)</option><option value="v1">v1 (时间)</option><option value="v7">v7 (时间排序)</option></select></div>' +
+                            '<div class="checkbox-group" style="margin-top:6px;padding:var(--space-sm) var(--space-md);">' +
+                            '<label class="checkbox-custom"><input type="checkbox" id="uuidUppercase" /><span class="checkmark"></span>大写</label>' +
+                            '<label class="checkbox-custom"><input type="checkbox" id="uuidNoDash" /><span class="checkmark"></span>无连字符</label>' +
+                            '<label class="checkbox-custom"><input type="checkbox" id="uuidBraces" /><span class="checkmark"></span>大括号</label>' +
+                            '</div>';
+                        break;
+                }
+                dynamicParams.innerHTML = html;
+            }
+
+            // ================================================================
+            // 生成逻辑
+            // ================================================================
+            function doGenerate() {
+                var type = typeSelect.value;
+                var count = parseInt(countInput.value, 10);
+                if (isNaN(count) || count < 1) count = 1;
+                if (count > 100) count = 100;
+                countInput.value = count;
+
+                var results = [];
+                var displayType = '';
+
+                try {
+                    switch (type) {
+                        case 'integer': {
+                            var min = parseInt(document.getElementById('intMin').value, 10);
+                            var max = parseInt(document.getElementById('intMax').value, 10);
+                            if (isNaN(min)) min = 0;
+                            if (isNaN(max)) max = 100;
+                            if (min > max) { var t = min;
+                                min = max;
+                                max = t; }
+                            for (var i = 0; i < count; i++) {
+                                results.push(String(randomInt(min, max)));
+                            }
+                            displayType = '整数 (' + min + '~' + max + ')';
+                            break;
+                        }
+                        case 'float': {
+                            var minF = parseFloat(document.getElementById('floatMin').value);
+                            var maxF = parseFloat(document.getElementById('floatMax').value);
+                            var digits = parseInt(document.getElementById('floatDigits').value, 10);
+                            if (isNaN(minF)) minF = 0;
+                            if (isNaN(maxF)) maxF = 100;
+                            if (isNaN(digits) || digits < 0) digits = 2;
+                            if (digits > 10) digits = 10;
+                            if (minF > maxF) { var tf = minF;
+                                minF = maxF;
+                                maxF = tf; }
+                            for (var j = 0; j < count; j++) {
+                                var val = randomFloat(minF, maxF);
+                                results.push(val.toFixed(digits));
+                            }
+                            displayType = '浮点数 (' + minF + '~' + maxF + ', ' + digits + '位)';
+                            break;
+                        }
+                        case 'string': {
+                            var len = parseInt(document.getElementById('strLength').value, 10);
+                            var chars = document.getElementById('strChars').value;
+                            if (isNaN(len) || len < 1) len = 8;
+                            if (len > 100) len = 100;
+                            if (!chars) chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+                            for (var k = 0; k < count; k++) {
+                                results.push(randomString(len, chars));
+                            }
+                            displayType = '字符串 (长度' + len + ')';
+                            break;
+                        }
+                        case 'password': {
+                            var pwdLen = parseInt(document.getElementById('pwdLength').value, 10);
+                            var lower = document.getElementById('pwdLower').checked;
+                            var upper = document.getElementById('pwdUpper').checked;
+                            var digits = document.getElementById('pwdDigits').checked;
+                            var symbols = document.getElementById('pwdSymbols').checked;
+                            if (isNaN(pwdLen) || pwdLen < 4) pwdLen = 12;
+                            if (pwdLen > 64) pwdLen = 64;
+                            if (!lower && !upper && !digits && !symbols) {
+                                lower = true;
+                                upper = true;
+                            }
+                            for (var m = 0; m < count; m++) {
+                                results.push(generatePassword(pwdLen, lower, upper, digits, symbols));
+                            }
+                            displayType = '密码 (长度' + pwdLen + ')';
+                            break;
+                        }
+                        case 'color': {
+                            var format = document.getElementById('colorFormat').value;
+                            for (var n = 0; n < count; n++) {
+                                results.push(randomColor(format));
+                            }
+                            displayType = '颜色 (' + format + ')';
+                            break;
+                        }
+                        case 'uuid': {
+                            var version = document.getElementById('uuidVersion').value;
+                            var uppercase = document.getElementById('uuidUppercase').checked;
+                            var noDash = document.getElementById('uuidNoDash').checked;
+                            var braces = document.getElementById('uuidBraces').checked;
+                            var generator;
+                            if (version === 'v4') generator = generateUUIDv4;
+                            else if (version === 'v1') generator = generateUUIDv1;
+                            else if (version === 'v7') generator = generateUUIDv7;
+                            else throw new Error('未知版本');
+                            for (var p = 0; p < count; p++) {
+                                var hex = generator();
+                                var formatted = formatUUID(hex, uppercase, noDash, braces);
+                                results.push(formatted);
+                            }
+                            displayType = 'UUID (' + version + (uppercase ? ', 大写' : '') + (noDash ? ', 无连字符' : '') + (
+                                braces ? ', 大括号' : '') + ')';
+                            break;
+                        }
+                    }
+                } catch (e) {
+                    showToast('生成失败: ' + e.message, 'error');
+                    return;
+                }
+
+                renderResults(results, displayType);
+                showToast('生成 ' + count + ' 个 ' + displayType, 'success');
+            }
+
+            // ================================================================
+            // 界面更新
+            // ================================================================
+            var currentResults = [];
+
+            function renderResults(results, typeLabel) {
+                if (!results || results.length === 0) {
+                    resultBox.innerHTML = '<div class="result-empty"><i class="fas fa-dice"></i>设置参数后点击“生成”</div>';
+                    countDisplay.textContent = '0';
+                    typeDisplay.textContent = '-';
+                    currentResults = [];
+                    return;
+                }
+
+                var html = '';
+                results.forEach(function(val, idx) {
+                    html += '<div class="random-item">' +
+                        '<span class="idx">#' + (idx + 1) + '</span>' +
+                        '<span class="random-text">' + escapeHtml(val) + '</span>' +
+                        '<button class="copy-btn" data-copy="' + escapeHtml(val) + '" title="复制"><i class="fas fa-copy"></i></button>' +
+                        '</div>';
+                });
+                resultBox.innerHTML = html;
+
+                resultBox.querySelectorAll('.copy-btn').forEach(function(btn) {
+                    btn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        var text = this.dataset.copy;
+                        copyText(text, this);
+                    });
+                });
+
+                countDisplay.textContent = results.length;
+                typeDisplay.textContent = typeLabel || typeSelect.options[typeSelect.selectedIndex].text;
+                currentResults = results;
+            }
+
+            function escapeHtml(text) {
+                if (!text) return '';
+                var div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            // ================================================================
+            // 复制功能
+            // ================================================================
+            function copyText(text, btn) {
+                if (!text) {
+                    showToast('没有内容可复制', 'error');
+                    return;
+                }
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text).then(function() {
+                        showToast('已复制', 'success');
+                        if (btn) {
+                            btn.classList.add('copied');
+                            setTimeout(function() { btn.classList.remove('copied'); }, 1500);
+                        }
+                    }).catch(function() {
+                        fallbackCopy(text, btn);
+                    });
+                } else {
+                    fallbackCopy(text, btn);
+                }
+            }
+
+            function fallbackCopy(text, btn) {
+                var textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                try {
+                    document.execCommand('copy');
+                    showToast('已复制', 'success');
+                    if (btn) {
+                        btn.classList.add('copied');
+                        setTimeout(function() { btn.classList.remove('copied'); }, 1500);
+                    }
+                } catch (e) {
+                    showToast('复制失败，请手动复制', 'error');
+                }
+                document.body.removeChild(textarea);
+            }
+
+            function copyAll() {
+                if (currentResults.length === 0) {
+                    showToast('没有可复制的内容', 'error');
+                    return;
+                }
+                var text = currentResults.join('\n');
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text).then(function() {
+                        showToast('已复制全部 (' + currentResults.length + ' 个)', 'success');
+                        copyAllBtn.classList.add('copied');
+                        setTimeout(function() { copyAllBtn.classList.remove('copied'); }, 1500);
+                    }).catch(function() {
+                        fallbackCopy(text);
+                    });
+                } else {
+                    fallbackCopy(text);
+                }
+            }
+
+            // ================================================================
+            // 标签切换
+            // ================================================================
+            tabBtns.forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    tabBtns.forEach(function(b) { b.classList.remove('active'); });
+                    this.classList.add('active');
+                    var tab = this.dataset.tab;
+                    testTab.style.display = tab === 'test' ? 'block' : 'none';
+                    tutorialTab.style.display = tab === 'tutorial' ? 'block' : 'none';
+                    if (tab === 'tutorial') {
+                        renderBookmarks();
+                    }
+                });
+            });
+
+            // ================================================================
+            // 事件绑定
+            // ================================================================
+
+            typeSelect.addEventListener('change', function() {
+                renderParams(this.value);
+            });
+
+            function doGenerateWrapper() {
+                doGenerate();
+            }
+
+            var generateTimer = null;
+            function scheduleGenerate() {
+                if (generateTimer) {
+                    clearTimeout(generateTimer);
+                }
+                generateTimer = setTimeout(function() {
+                    doGenerate();
+                    generateTimer = null;
+                }, 200);
+            }
+
+            generateBtn.addEventListener('click', doGenerateWrapper);
+            countInput.addEventListener('input', scheduleGenerate);
+
+            presetBtns.forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var count = parseInt(this.dataset.count, 10);
+                    countInput.value = count;
+                    doGenerate();
+                });
+            });
+
+            clearBtn.addEventListener('click', function() {
+                resultBox.innerHTML = '<div class="result-empty"><i class="fas fa-dice"></i>设置参数后点击“生成”</div>';
+                countDisplay.textContent = '0';
+                typeDisplay.textContent = '-';
+                currentResults = [];
+                showToast('已清空', 'success');
+            });
+
+            copyAllBtn.addEventListener('click', copyAll);
+
+            // ================================================================
+            // 教程数据（共 11 章：随机数 4 章 + UUID 7 章）
+            // ================================================================
+            var chapters = [{
+                id: 'random-intro',
+                title: '随机数简介',
+                content: `
+                    <h2>随机数简介</h2>
+                    <p>随机数在计算机科学中应用广泛，包括模拟、抽样、密码学、游戏、测试等。本工具提供多种随机值生成方式。</p>
+                    <ul>
+                        <li><strong>真随机</strong>：基于物理现象（如热噪声），不可预测。</li>
+                        <li><strong>伪随机</strong>：算法生成，确定性但看似随机。</li>
+                        <li><strong>密码学安全随机</strong>：使用 CSPRNG，适合安全场景。</li>
+                    </ul>
+                    <p>本工具优先使用 <code>crypto.getRandomValues()</code> 生成安全随机数，回退到 <code>Math.random()</code>。</p>
+                    <div class="note success">安全随机数适合密码、令牌等敏感场景。</div>
+                `
+            }, {
+                id: 'random-integer',
+                title: '整数与浮点数',
+                content: `
+                    <h2>整数与浮点数</h2>
+                    <p>生成指定范围内的随机整数或浮点数。</p>
+                    <ul>
+                        <li><strong>整数</strong>：均匀分布在 [min, max] 闭区间。</li>
+                        <li><strong>浮点数</strong>：均匀分布在 [min, max) 半开区间，可指定小数位数。</li>
+                    </ul>
+                    <h3>示例</h3>
+                    <pre><code>随机整数 [1, 100]：42
+随机浮点数 [0, 1) 2位小数：0.73</code></pre>
+                    <div class="note">浮点数生成使用 <code>crypto.getRandomValues</code> 保证均匀性。</div>
+                `
+            }, {
+                id: 'random-string',
+                title: '随机字符串与密码',
+                content: `
+                    <h2>随机字符串与密码</h2>
+                    <p>从指定字符集中随机选取字符，生成指定长度的字符串。密码生成器可配置字符类型（大小写、数字、符号）。</p>
+                    <ul>
+                        <li><strong>字符集</strong>：可自定义，默认包含大小写字母和数字。</li>
+                        <li><strong>密码强度</strong>：建议长度 ≥12，混合多种字符类型。</li>
+                    </ul>
+                    <h3>示例</h3>
+                    <pre><code>字符串 (长度8)：A9kL3xQp
+密码 (长度12)：X9#kL2!pQw@7</code></pre>
+                    <div class="note warning">密码强度取决于长度和字符多样性，请勿使用简单密码。</div>
+                `
+            }, {
+                id: 'random-color',
+                title: '随机颜色',
+                content: `
+                    <h2>随机颜色</h2>
+                    <p>生成随机颜色，支持 HEX、RGB、HSL 三种格式。</p>
+                    <ul>
+                        <li><strong>HEX</strong>：如 #FF5733</li>
+                        <li><strong>RGB</strong>：如 rgb(255, 87, 51)</li>
+                        <li><strong>HSL</strong>：如 hsl(15, 100%, 60%)</li>
+                    </ul>
+                    <div class="note success">适用于设计原型、随机配色等场景。</div>
+                `
+            }, {
+                // ===== UUID 教程开始 =====
+                id: 'uuid-intro',
+                title: 'UUID 简介',
+                content: `
+                    <h2>UUID 简介</h2>
+                    <p>UUID（Universally Unique Identifier）是一种 128 位（16 字节）的全局唯一标识符，标准格式为 8-4-4-4-12 的十六进制字符串，例如 <code>123e4567-e89b-12d3-a456-426614174000</code>。</p>
+                    <p>UUID 的核心目标是让分布式系统能够在不依赖中央协调的情况下生成唯一标识，碰撞概率极低。</p>
+                    <ul>
+                        <li><strong>唯一性</strong>：标准 UUID 有 2^122 种可能，碰撞概率可忽略。</li>
+                        <li><strong>版本</strong>：不同版本采用不同的生成算法（v1/v4/v7 等）。</li>
+                        <li><strong>应用</strong>：数据库主键、会话 ID、分布式追踪、文件名等。</li>
+                    </ul>
+                    <div class="note success">UUID 是开发中常用的标识符标准。</div>
+                `
+            }, {
+                id: 'uuid-versions',
+                title: 'UUID 版本对比',
+                content: `
+                    <h2>UUID 版本对比</h2>
+                    <p>UUID 规范（RFC 4122）定义了多种版本，本工具支持 v1、v4 和 v7：</p>
+                    <ul>
+                        <li><strong>v1</strong>：基于时间和节点 MAC 地址，可排序但暴露时间信息。</li>
+                        <li><strong>v4</strong>：完全随机生成，最常用，碰撞概率极低。</li>
+                        <li><strong>v7</strong>：基于时间戳 + 随机，既保证唯一性又可按时间排序（RFC 草案）。</li>
+                    </ul>
+                    <p>选择建议：</p>
+                    <ul>
+                        <li>一般用途 → v4（安全、无关联）</li>
+                        <li>需要时间有序 → v7（如日志、数据库索引）</li>
+                        <li>兼容旧系统 → v1（但注意隐私问题）</li>
+                    </ul>
+                    <div class="note warning">v1 包含 MAC 地址，可能泄露设备信息，谨慎使用。</div>
+                `
+            }, {
+                id: 'uuid-v1',
+                title: 'UUID v1 详解',
+                content: `
+                    <h2>UUID v1（基于时间）</h2>
+                    <p>v1 使用以下信息生成：</p>
+                    <ul>
+                        <li><strong>时间戳</strong>：从 1582-10-15 开始的 100 纳秒间隔数（60 位）</li>
+                        <li><strong>时钟序列</strong>：用于解决相同时间戳的冲突（14 位）</li>
+                        <li><strong>节点 ID</strong>：通常为 MAC 地址（48 位）</li>
+                    </ul>
+                    <p>本工具使用随机节点 ID 模拟 MAC，确保隐私安全。</p>
+                    <pre><code>格式: xxxxxxxx-xxxx-Mxxx-Nxxx-xxxxxxxxxxxx
+M = 版本 (1)
+N = 变体 (8,9,a,b)</code></pre>
+                    <div class="note warning">由于浏览器无法获取真实 MAC，本工具使用随机节点 ID，不影响唯一性。</div>
+                `
+            }, {
+                id: 'uuid-v4',
+                title: 'UUID v4（随机）',
+                content: `
+                    <h2>UUID v4（随机）</h2>
+                    <p>v4 完全基于随机数生成，是最常用的版本。</p>
+                    <ul>
+                        <li><strong>安全性</strong>：不包含时间或位置信息。</li>
+                        <li><strong>碰撞概率</strong>：约 1/2^122，实际可视为零。</li>
+                        <li><strong>生成</strong>：使用密码学安全的随机数生成器（CSPRNG）。</li>
+                    </ul>
+                    <pre><code>格式: xxxxxxxx-xxxx-4xxx-Nxxx-xxxxxxxxxxxx
+4 = 版本 (4)
+N = 变体 (8,9,a,b)</code></pre>
+                    <div class="note success">v4 是大多数场景的最佳选择。</div>
+                `
+            }, {
+                id: 'uuid-v7',
+                title: 'UUID v7（时间排序）',
+                content: `
+                    <h2>UUID v7（时间排序）</h2>
+                    <p>v7 是 RFC 草案中的新版本，结合了时间戳和随机数。</p>
+                    <ul>
+                        <li><strong>时间戳</strong>：Unix 毫秒时间戳（48 位），可排序。</li>
+                        <li><strong>随机后缀</strong>：其余 80 位为随机数，保证唯一性。</li>
+                        <li><strong>优势</strong>：按时间排序，适合数据库索引，提升性能。</li>
+                    </ul>
+                    <pre><code>格式: xxxxxxxx-xxxx-7xxx-Nxxx-xxxxxxxxxxxx
+7 = 版本 (7)
+N = 变体 (8,9,a,b)</code></pre>
+                    <div class="note success">v7 是未来的趋势，建议新项目优先考虑。</div>
+                `
+            }, {
+                id: 'uuid-format',
+                title: 'UUID 格式选项',
+                content: `
+                    <h2>UUID 格式选项</h2>
+                    <p>本工具支持多种输出格式：</p>
+                    <ul>
+                        <li><strong>标准</strong>：8-4-4-4-12 连字符格式（如 <code>550e8400-e29b-41d4-a716-446655440000</code>）</li>
+                        <li><strong>大写</strong>：所有字母转为大写（如 <code>550E8400-E29B-41D4-A716-446655440000</code>）</li>
+                        <li><strong>无连字符</strong>：去掉所有连字符（如 <code>550e8400e29b41d4a716446655440000</code>）</li>
+                        <li><strong>大括号包裹</strong>：用花括号包围（如 <code>{550e8400-e29b-41d4-a716-446655440000}</code>）</li>
+                    </ul>
+                    <p>可根据实际使用场景选择合适格式（如无连字符用于编码，大括号用于某些系统）。</p>
+                `
+            }, {
+                id: 'uuid-practice',
+                title: 'UUID 实践与最佳实践',
+                content: `
+                    <h2>UUID 实践与最佳实践</h2>
+                    <ul>
+                        <li><strong>数据库主键</strong>：UUID 可作为主键，但注意随机 UUID 可能影响索引性能（v7 可改善）。</li>
+                        <li><strong>分布式系统</strong>：各节点独立生成，无需协调。</li>
+                        <li><strong>安全性</strong>：不要将 UUID 用于安全敏感场景（如密码重置令牌），应使用专用安全令牌。</li>
+                        <li><strong>长度</strong>：36 字符（含连字符），在传输中考虑长度影响。</li>
+                    </ul>
+                    <div class="note success">合理使用 UUID 可以简化系统设计，提升可扩展性。</div>
+                `
+            }];
+
+            var activeChapterId = null;
+
+            function renderBookmarks(filter) {
+                filter = filter || '';
+                var list = document.getElementById('bookmarkList');
+                var filtered = filter.trim() === '' ?
+                    chapters :
+                    chapters.filter(function(ch) {
+                        return ch.title.toLowerCase().includes(filter.toLowerCase());
+                    });
+
+                if (filtered.length === 0) {
+                    list.innerHTML =
+                        '<div style="color: var(--text-muted); padding: var(--space-md); text-align: center;">未找到匹配章节</div>';
+                    return;
+                }
+
+                var html = '';
+                filtered.forEach(function(ch) {
+                    var active = (ch.id === activeChapterId) ? 'active' : '';
+                    html += '<div class="bookmark-item ' + active + '" data-id="' + ch.id + '">' +
+                        '<span class="chapter-tag">#</span> ' + ch.title +
+                        '</div>';
+                });
+                list.innerHTML = html;
+
+                list.querySelectorAll('.bookmark-item').forEach(function(el) {
+                    el.addEventListener('click', function() {
+                        var id = this.dataset.id;
+                        var chapter = chapters.find(function(c) { return c.id === id; });
+                        if (chapter) {
+                            activeChapterId = id;
+                            renderContent(chapter);
+                            document.querySelectorAll('.bookmark-item').forEach(function(b) { b.classList
+                                    .remove('active'); });
+                            this.classList.add('active');
+                            document.getElementById('tutorialSearch').value = '';
+                            renderBookmarks();
+                        }
+                    });
+                });
+
+                if (!activeChapterId && chapters.length > 0) {
+                    activeChapterId = chapters[0].id;
+                    renderContent(chapters[0]);
+                    var firstItem = list.querySelector('.bookmark-item');
+                    if (firstItem) firstItem.classList.add('active');
+                }
+            }
+
+            function renderContent(chapter) {
+                var container = document.getElementById('tutorialContent');
+                container.innerHTML = chapter.content;
+                container.scrollTop = 0;
+            }
+
+            tutorialSearch.addEventListener('input', function() {
+                var filter = this.value.trim();
+                renderBookmarks(filter);
+                var items = document.querySelectorAll('#bookmarkList .bookmark-item');
+                if (items.length > 0 && filter !== '') {
+                    items.forEach(function(b) { b.classList.remove('active'); });
+                    items[0].classList.add('active');
+                    var id = items[0].dataset.id;
+                    var chapter = chapters.find(function(c) { return c.id === id; });
+                    if (chapter) {
+                        activeChapterId = id;
+                        renderContent(chapter);
+                    }
+                } else if (filter === '') {
+                    if (activeChapterId) {
+                        var chapter = chapters.find(function(c) { return c.id === activeChapterId; });
+                        if (chapter) renderContent(chapter);
+                    } else if (chapters.length > 0) {
+                        activeChapterId = chapters[0].id;
+                        renderContent(chapters[0]);
+                    }
+                    renderBookmarks();
+                }
+            });
+
+            // ================================================================
+            // 初始化
+            // ================================================================
+            function init() {
+                renderParams('integer');
+                renderBookmarks();
+                testTab.style.display = 'block';
+                tutorialTab.style.display = 'none';
+                doGenerate();
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+
+        })();
+    </script>
+
+</body>
+</html>

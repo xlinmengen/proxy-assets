@@ -1,0 +1,2079 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes" />
+    <title>网络请求 · 开发者工具箱</title>
+    <link rel="stylesheet" href="/static/all.min.css" />
+    <style>
+        /* ===== 全局重置 & 暗色主题 ===== */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg-primary: #0b0914;
+            --bg-secondary: #12101e;
+            --bg-surface: #181625;
+            --bg-surface-hover: #221f35;
+            --bg-elevated: #1f1c30;
+            --border-subtle: #2a2740;
+            --border-strong: #3d385a;
+            --text-primary: #edeff5;
+            --text-secondary: #b8bfd9;
+            --text-muted: #7a83a3;
+            --text-dim: #94a3b8;
+            --accent: #6366f1;
+            --accent-light: #818cf8;
+            --accent-dark: #4f46e5;
+            --accent-glow: rgba(99, 102, 241, 0.3);
+            --success: #34d399;
+            --success-bg: rgba(52, 211, 153, 0.12);
+            --error: #f87171;
+            --error-bg: rgba(248, 113, 113, 0.12);
+            --warning: #fbbf24;
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 14px;
+            --radius-full: 9999px;
+            --shadow-soft: 0 8px 30px rgba(0, 0, 0, 0.5);
+            --shadow-glow: 0 0 30px var(--accent-glow);
+            --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --space-xs: 4px;
+            --space-sm: 8px;
+            --space-md: 14px;
+            --space-lg: 20px;
+            --space-xl: 28px;
+        }
+
+        html {
+            font-size: 15px;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            padding: 24px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            line-height: 1.6;
+            user-select: none;
+        }
+
+        .response-body,
+        .response-body * {
+            user-select: text;
+        }
+
+        body *:not(input):not(textarea):not(.response-body):not(.response-body *) {
+            user-select: none;
+        }
+
+        /* ===== 滚动条 ===== */
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+            border-radius: 999px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-strong);
+            border-radius: 999px;
+            transition: background 0.2s;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent);
+        }
+
+        .app {
+            max-width: 1440px;
+            width: 100%;
+        }
+
+        /* ===== 头部 ===== */
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0 20px 0;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .app-header .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .app-header .brand i {
+            font-size: 28px;
+            color: var(--accent-light);
+            filter: drop-shadow(0 0 8px var(--accent-glow));
+        }
+        .app-header .brand h1 {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            background: linear-gradient(135deg, #ffffff 40%, var(--accent-light));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .app-header .brand .version {
+            font-size: 13px;
+            color: var(--text-muted);
+            -webkit-text-fill-color: var(--text-muted);
+            background: var(--bg-surface);
+            padding: 0 10px;
+            border-radius: 999px;
+            border: 1px solid var(--border-subtle);
+            font-weight: 500;
+            margin-left: 4px;
+        }
+
+        .app-header .status-group {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .app-header .back-btn {
+            font-size: 13px;
+            color: var(--text-secondary);
+            background: var(--bg-surface);
+            padding: 4px 14px;
+            border-radius: 999px;
+            border: 1px solid var(--border-subtle);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            transition: all var(--transition);
+            white-space: nowrap;
+        }
+        .app-header .back-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent-light);
+            box-shadow: 0 0 16px var(--accent-glow);
+        }
+
+        .app-header .badge {
+            background: var(--success-bg);
+            color: var(--success);
+            padding: 5px 16px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid rgba(52, 211, 153, 0.2);
+            white-space: nowrap;
+        }
+        .app-header .badge i {
+            font-size: 12px;
+        }
+
+        /* ===== 标签页 ===== */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: 0;
+        }
+        .tab-btn {
+            background: transparent;
+            border: none;
+            padding: 10px 22px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-dim);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all var(--transition);
+            font-family: inherit;
+        }
+        .tab-btn:hover {
+            color: var(--text-primary);
+        }
+        .tab-btn.active {
+            color: var(--accent-light);
+            border-bottom-color: var(--accent-light);
+        }
+
+        /* ===== 面板通用 ===== */
+        .panel {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 20px 22px 22px;
+            transition: border-color var(--transition), box-shadow var(--transition);
+            display: flex;
+            flex-direction: column;
+            height: 620px;
+            resize: vertical;
+            overflow: hidden;
+            min-height: 480px;
+        }
+        .panel:hover {
+            border-color: var(--border-strong);
+        }
+
+        .panel-title {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .panel-title i {
+            font-size: 14px;
+            color: var(--accent-light);
+        }
+
+        /* ===== 双列布局 ===== */
+        .request-grid {
+            display: flex;
+            flex: 1;
+            gap: 20px;
+            min-height: 0;
+        }
+        @media (max-width: 920px) {
+            .request-grid {
+                flex-direction: column;
+                gap: 14px;
+            }
+        }
+
+        .request-left {
+            flex: 0 0 48%;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+        .request-right {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+        @media (max-width: 920px) {
+            .request-left {
+                flex: 1;
+            }
+        }
+
+        /* ===== 滚动内容区 ===== */
+        .scroll-content {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+        .scroll-content::-webkit-scrollbar {
+            width: 4px;
+        }
+        .scroll-content::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+            border-radius: 999px;
+        }
+        .scroll-content::-webkit-scrollbar-thumb {
+            background: var(--border-strong);
+            border-radius: 999px;
+        }
+        .scroll-content::-webkit-scrollbar-thumb:hover {
+            background: var(--accent);
+        }
+
+        /* ===== 控件组 ===== */
+        .ctrl-group {
+            margin-bottom: var(--space-md);
+        }
+        .ctrl-group:last-child {
+            margin-bottom: 0;
+        }
+        .ctrl-group .group-label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            margin-bottom: var(--space-xs);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .ctrl-group .group-label i {
+            font-size: 11px;
+            color: var(--accent-light);
+        }
+
+        .ctrl-group label {
+            display: block;
+            font-size: 12px;
+            color: var(--text-dim);
+            margin-bottom: var(--space-xs);
+            font-weight: 500;
+        }
+
+        .ctrl-group input[type="text"],
+        .ctrl-group input[type="number"],
+        .ctrl-group select,
+        .ctrl-group textarea {
+            width: 100%;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+            font-size: 13px;
+            padding: var(--space-sm) var(--space-md);
+            transition: border var(--transition), box-shadow var(--transition);
+            outline: none;
+        }
+        .ctrl-group textarea {
+            min-height: 60px;
+            resize: vertical;
+            line-height: 1.6;
+        }
+        .ctrl-group select:focus,
+        .ctrl-group input:focus,
+        .ctrl-group textarea:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+        .ctrl-group .hint {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: var(--space-xs);
+        }
+
+        /* 行内控件 */
+        .row-controls {
+            display: flex;
+            gap: var(--space-sm);
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .row-controls .ctrl-group {
+            flex: 1;
+            min-width: 80px;
+            margin-bottom: 0;
+        }
+        .row-controls .ctrl-group.shrink {
+            flex: 0 0 auto;
+            min-width: auto;
+        }
+
+        /* 请求头列表 */
+        .headers-list {
+            margin-top: var(--space-xs);
+        }
+        .header-item {
+            display: flex;
+            gap: var(--space-sm);
+            align-items: center;
+            margin-bottom: var(--space-xs);
+        }
+        .header-item input {
+            flex: 1;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+            font-size: 13px;
+            padding: var(--space-xs) var(--space-sm);
+            outline: none;
+            transition: border var(--transition);
+            min-width: 60px;
+        }
+        .header-item input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px var(--accent-glow);
+        }
+        .header-item .btn-remove-header {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: var(--space-xs);
+            border-radius: var(--radius-sm);
+            transition: all var(--transition);
+            font-size: 14px;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+        .header-item .btn-remove-header:hover {
+            color: var(--error);
+            background: var(--error-bg);
+        }
+        .add-header-btn {
+            background: transparent;
+            border: 1px dashed var(--border-subtle);
+            border-radius: var(--radius-sm);
+            color: var(--text-muted);
+            padding: var(--space-xs) var(--space-sm);
+            cursor: pointer;
+            font-size: 12px;
+            transition: all var(--transition);
+            width: 100%;
+            text-align: center;
+            margin-top: var(--space-xs);
+        }
+        .add-header-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent-light);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        /* 按钮 */
+        .btn-group {
+            display: flex;
+            gap: var(--space-sm);
+            flex-wrap: wrap;
+            margin-top: var(--space-sm);
+            flex-shrink: 0;
+        }
+        .btn-group .btn {
+            background: var(--accent);
+            border: none;
+            border-radius: var(--radius-md);
+            color: #fff;
+            padding: 6px 18px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            min-height: 34px;
+            font-family: inherit;
+        }
+        .btn-group .btn:hover {
+            background: var(--accent-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px var(--accent-glow);
+        }
+        .btn-group .btn:active {
+            transform: translateY(0);
+        }
+        .btn-group .btn-success {
+            background: var(--success);
+            color: #0b0914;
+        }
+        .btn-group .btn-success:hover {
+            background: #2dd4a0;
+            box-shadow: 0 4px 12px rgba(52, 211, 153, 0.3);
+        }
+        .btn-group .btn-danger {
+            background: var(--error);
+        }
+        .btn-group .btn-danger:hover {
+            background: #dc2626;
+        }
+        .btn-group .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+        }
+        .btn-group .btn-outline:hover {
+            border-color: var(--accent);
+            color: var(--accent-light);
+            background: rgba(99, 102, 241, 0.05);
+            box-shadow: none;
+        }
+        .btn-group .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        /* 文件上传 */
+        .file-upload-wrap {
+            display: flex;
+            gap: var(--space-sm);
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .file-upload-wrap .file-input-label {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            color: var(--text-secondary);
+            padding: var(--space-xs) var(--space-sm);
+            cursor: pointer;
+            font-size: 12px;
+            transition: all var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            min-height: 32px;
+        }
+        .file-upload-wrap .file-input-label:hover {
+            border-color: var(--accent);
+            color: var(--accent-light);
+        }
+        .file-upload-wrap .file-input-label input[type="file"] {
+            display: none;
+        }
+        .file-upload-wrap .file-name {
+            font-size: 12px;
+            color: var(--text-muted);
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .file-upload-wrap .file-clear {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: var(--space-xs);
+            border-radius: var(--radius-sm);
+            transition: all var(--transition);
+            font-size: 14px;
+        }
+        .file-upload-wrap .file-clear:hover {
+            color: var(--error);
+            background: var(--error-bg);
+        }
+
+        /* ===== 响应区域 ===== */
+        .response-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-lg);
+            padding: var(--space-sm) var(--space-md);
+            background: var(--bg-secondary);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-subtle);
+            margin-bottom: var(--space-sm);
+            flex-shrink: 0;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+        .response-meta span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .response-meta i {
+            color: var(--accent-light);
+            font-size: 13px;
+        }
+        .response-meta .status-code {
+            font-weight: 600;
+        }
+        .response-meta .status-code.success {
+            color: var(--success);
+        }
+        .response-meta .status-code.error {
+            color: var(--error);
+        }
+        .response-meta .action-buttons {
+            margin-left: auto;
+            display: flex;
+            gap: var(--space-sm);
+        }
+        .response-meta .action-buttons .btn-sm {
+            background: transparent;
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            color: var(--text-muted);
+            padding: 2px 10px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            min-height: 28px;
+        }
+        .response-meta .action-buttons .btn-sm:hover {
+            border-color: var(--accent);
+            color: var(--accent-light);
+            background: rgba(99, 102, 241, 0.05);
+        }
+        .response-meta .action-buttons .btn-sm.download-btn {
+            color: var(--success);
+            border-color: var(--success);
+        }
+        .response-meta .action-buttons .btn-sm.download-btn:hover {
+            background: var(--success-bg);
+            color: var(--success);
+        }
+
+        .response-headers {
+            flex-shrink: 0;
+            max-height: 100px;
+            overflow-y: auto;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            padding: var(--space-sm) var(--space-md);
+            margin-bottom: var(--space-sm);
+            font-family: 'SF Mono', monospace;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        .response-headers::-webkit-scrollbar {
+            width: 4px;
+        }
+        .response-headers .header-line {
+            padding: 1px 0;
+            word-break: break-all;
+        }
+        .response-headers .header-line .hkey {
+            color: var(--text-muted);
+        }
+        .response-headers .header-line .hvalue {
+            color: var(--text-primary);
+        }
+
+        .response-body {
+            flex: 1;
+            overflow-y: auto;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            padding: var(--space-md);
+            font-family: 'SF Mono', monospace;
+            font-size: 13px;
+            color: var(--text-primary);
+            white-space: pre-wrap;
+            word-break: break-all;
+            min-height: 60px;
+            position: relative;
+        }
+        .response-body::-webkit-scrollbar {
+            width: 4px;
+        }
+        .response-body .file-preview {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            gap: var(--space-sm);
+            color: var(--text-muted);
+            padding: var(--space-md) 0;
+        }
+        .response-body .file-preview i {
+            font-size: 64px;
+            color: var(--border-strong);
+        }
+        .response-body .file-preview .file-name {
+            font-size: 16px;
+            color: var(--text-secondary);
+        }
+        .response-body .file-preview .file-meta {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+        .response-body .empty {
+            color: var(--text-muted);
+            text-align: center;
+            padding: var(--space-md) 0;
+        }
+        .response-body img.preview-image {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            border-radius: var(--radius-sm);
+        }
+
+        /* ===== 教程样式 ===== */
+        .tutorial-card {
+            height: 500px;
+            min-height: 450px;
+            max-height: 850px;
+            resize: vertical;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+        }
+        .tutorial-card .card-header {
+            padding: var(--space-md) var(--space-lg);
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 0;
+            flex-shrink: 0;
+        }
+        .tutorial-body {
+            display: flex;
+            flex: 1;
+            min-height: 0;
+        }
+        .tutorial-sidebar {
+            width: 250px;
+            flex-shrink: 0;
+            background: var(--bg-primary);
+            border-right: 1px solid var(--border-subtle);
+            display: flex;
+            flex-direction: column;
+            padding: var(--space-md);
+        }
+        .tutorial-sidebar .search-box {
+            margin-bottom: var(--space-md);
+        }
+        .tutorial-sidebar .search-box input {
+            width: 100%;
+            padding: var(--space-sm) var(--space-md);
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-size: 13px;
+            outline: none;
+            transition: border var(--transition);
+        }
+        .tutorial-sidebar .search-box input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px var(--accent-glow);
+        }
+        .tutorial-sidebar .bookmark-list {
+            flex: 1;
+            overflow-y: auto;
+            margin: 0 -8px;
+            padding: 0 8px;
+        }
+        .tutorial-sidebar .bookmark-list::-webkit-scrollbar {
+            width: 4px;
+        }
+        .bookmark-item {
+            padding: 5px 12px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: all var(--transition);
+            font-size: 13px;
+            border-left: 2px solid transparent;
+            margin-bottom: 1px;
+        }
+        .bookmark-item:hover {
+            background: var(--bg-surface-hover);
+            color: var(--text-primary);
+        }
+        .bookmark-item.active {
+            color: var(--accent-light);
+            background: rgba(99, 102, 241, 0.12);
+            border-left-color: var(--accent);
+        }
+        .bookmark-item .chapter-tag {
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-right: 6px;
+            opacity: 0.6;
+        }
+        .tutorial-content {
+            flex: 1;
+            padding: var(--space-lg);
+            overflow-y: auto;
+            min-height: 0;
+        }
+        .tutorial-content::-webkit-scrollbar {
+            width: 4px;
+        }
+        .tutorial-content h2 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--space-md);
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: var(--space-sm);
+        }
+        .tutorial-content h3 {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--accent-light);
+            margin: var(--space-md) 0 var(--space-sm);
+        }
+        .tutorial-content p {
+            color: var(--text-secondary);
+            line-height: 1.8;
+            margin-bottom: var(--space-md);
+        }
+        .tutorial-content pre {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: var(--space-md) var(--space-lg);
+            overflow-x: auto;
+            font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+            font-size: 12.5px;
+            color: var(--text-primary);
+            margin: var(--space-md) 0;
+            line-height: 1.7;
+        }
+        .tutorial-content pre code {
+            display: block;
+            white-space: pre;
+        }
+        .tutorial-content ul {
+            padding-left: var(--space-xl);
+            color: var(--text-secondary);
+            margin-bottom: var(--space-md);
+        }
+        .tutorial-content ul li {
+            margin-bottom: var(--space-xs);
+        }
+        .tutorial-content .note {
+            background: rgba(99, 102, 241, 0.06);
+            border-left: 3px solid var(--accent);
+            padding: var(--space-sm) var(--space-md);
+            border-radius: var(--radius-sm);
+            margin: var(--space-md) 0;
+            color: var(--text-dim);
+            font-size: 13px;
+        }
+        .tutorial-content .note.warning {
+            border-left-color: var(--warning);
+            background: rgba(251, 191, 36, 0.06);
+        }
+        .tutorial-content .note.danger {
+            border-left-color: var(--error);
+            background: rgba(239, 68, 68, 0.06);
+        }
+        .tutorial-content .note.success {
+            border-left-color: var(--success);
+            background: rgba(52, 211, 153, 0.06);
+        }
+
+        @media (max-width: 820px) {
+            .tutorial-card {
+                height: 600px;
+                min-height: 400px;
+            }
+            .tutorial-body {
+                flex-direction: column;
+            }
+            .tutorial-sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid var(--border-subtle);
+                max-height: 180px;
+                flex-shrink: 0;
+            }
+            .tutorial-content {
+                padding: var(--space-md);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .tutorial-card {
+                height: 500px;
+                min-height: 350px;
+            }
+            .tutorial-sidebar .bookmark-item {
+                font-size: 12px;
+                padding: 4px 10px;
+            }
+            .tutorial-content h2 {
+                font-size: 17px;
+            }
+            .tutorial-content h3 {
+                font-size: 14px;
+            }
+            .tutorial-content pre {
+                font-size: 11px;
+                padding: var(--space-sm) var(--space-md);
+            }
+        }
+
+        /* ===== Toast ===== */
+        #toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(12px);
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 12px 24px;
+            font-size: 13px;
+            display: none;
+            align-items: center;
+            gap: 12px;
+            box-shadow: var(--shadow-soft);
+            z-index: 999;
+            backdrop-filter: blur(12px);
+            max-width: 92vw;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        #toast.show {
+            display: flex;
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        #toast.success {
+            border-left: 4px solid var(--success);
+            color: var(--success);
+        }
+        #toast.error {
+            border-left: 4px solid var(--error);
+            color: var(--error);
+        }
+        #toast.warning {
+            border-left: 4px solid var(--warning);
+            color: var(--warning);
+        }
+        #toast i {
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 920px) {
+            .panel {
+                height: auto;
+                min-height: 480px;
+                resize: vertical;
+                overflow-y: auto;
+            }
+            .request-grid {
+                flex-direction: column;
+                gap: 14px;
+            }
+            .request-left {
+                flex: none;
+            }
+            .row-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .row-controls .ctrl-group {
+                flex: none;
+            }
+            .response-meta {
+                gap: var(--space-sm);
+                font-size: 12px;
+                flex-wrap: wrap;
+            }
+            .response-meta .action-buttons {
+                margin-left: 0;
+                width: 100%;
+                justify-content: flex-start;
+            }
+            .response-headers {
+                max-height: 80px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 12px;
+            }
+            .app-header {
+                padding: 12px 0 16px 0;
+                margin-bottom: 14px;
+                gap: 10px;
+            }
+            .app-header .brand i {
+                font-size: 22px;
+            }
+            .app-header .brand h1 {
+                font-size: 18px;
+            }
+            .app-header .brand .version {
+                font-size: 11px;
+                padding: 0 8px;
+            }
+            .app-header .status-group {
+                gap: 10px;
+            }
+            .app-header .back-btn {
+                font-size: 11px;
+                padding: 2px 8px;
+            }
+            .app-header .badge {
+                font-size: 10px;
+                padding: 2px 10px;
+            }
+            .panel {
+                padding: 12px 12px 16px;
+                height: auto;
+                min-height: 400px;
+            }
+            .panel-title {
+                font-size: 10px;
+                margin-bottom: 10px;
+            }
+            .ctrl-group {
+                margin-bottom: var(--space-sm);
+            }
+            .btn-group .btn {
+                font-size: 11px;
+                padding: 4px 10px;
+                min-height: 28px;
+                gap: 4px;
+            }
+            .header-item input {
+                font-size: 12px;
+                padding: var(--space-xs) var(--space-sm);
+            }
+            .response-meta {
+                font-size: 11px;
+                padding: var(--space-xs) var(--space-sm);
+            }
+            .response-headers {
+                font-size: 11px;
+                max-height: 60px;
+                padding: var(--space-xs) var(--space-sm);
+            }
+            .response-body {
+                font-size: 12px;
+                padding: var(--space-sm);
+            }
+            .tab-btn {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+            .file-upload-wrap .file-input-label {
+                font-size: 11px;
+                padding: 2px 8px;
+                min-height: 28px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app">
+        <!-- ===== 头部 ===== -->
+        <header class="app-header">
+            <div class="brand">
+                <i class="fas fa-paper-plane"></i>
+                <h1>网络请求</h1>
+                <span class="version">v2.0</span>
+            </div>
+            <div class="status-group">
+                <a href="/tools" class="back-btn" title="返回工具箱">
+                    <i class="fas fa-arrow-left"></i> 返回
+                </a>
+                <span class="badge">
+                    <i class="fas fa-lock"></i> 纯前端本地
+                </span>
+            </div>
+        </header>
+
+        <!-- ===== 标签页 ===== -->
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="test">请求</button>
+            <button class="tab-btn" data-tab="tutorial">教程</button>
+        </div>
+
+        <!-- ===== 标签内容：请求 ===== -->
+        <div id="testTab" class="tab-content">
+            <div class="panel">
+                <div class="panel-title"><i class="fas fa-paper-plane"></i> HTTP 请求</div>
+
+                <div class="request-grid">
+                    <!-- 左侧：配置 -->
+                    <div class="request-left">
+                        <div class="scroll-content" id="requestPanel">
+                            <!-- 由 JS 动态渲染 -->
+                        </div>
+                    </div>
+
+                    <!-- 右侧：响应 -->
+                    <div class="request-right">
+                        <div id="responsePanel">
+                            <!-- 由 JS 动态渲染 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== 标签内容：教程 ===== -->
+        <div id="tutorialTab" class="tab-content" style="display: none;">
+            <div class="panel tutorial-card">
+                <div class="card-header">
+                    <i class="fas fa-book" style="font-size:20px;color:var(--accent-light);margin-right:8px;"></i>
+                    <h3 style="display:inline-block;font-size:18px;font-weight:600;color:var(--text-main);">网络请求相关教程</h3>
+                    <span style="float:right;font-size:12px;color:var(--text-muted);">共 5 章</span>
+                </div>
+                <div class="tutorial-body">
+                    <div class="tutorial-sidebar">
+                        <div class="search-box">
+                            <input type="text" id="tutorialSearch" placeholder="搜索章节..." />
+                        </div>
+                        <div class="bookmark-list" id="bookmarkList"></div>
+                    </div>
+                    <div class="tutorial-content" id="tutorialContent"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== Toast ===== -->
+        <div id="toast">
+            <i id="toastIcon"></i>
+            <span id="toastMsg"></span>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // ================================================================
+            // DOM 引用
+            // ================================================================
+            var requestPanel = document.getElementById('requestPanel');
+            var responsePanel = document.getElementById('responsePanel');
+            var testTab = document.getElementById('testTab');
+            var tutorialTab = document.getElementById('tutorialTab');
+            var tabBtns = document.querySelectorAll('.tab-btn');
+
+            // 教程
+            var tutorialSearch = document.getElementById('tutorialSearch');
+            var bookmarkList = document.getElementById('bookmarkList');
+            var tutorialContent = document.getElementById('tutorialContent');
+
+            // Toast
+            var toast = document.getElementById('toast');
+            var toastIcon = document.getElementById('toastIcon');
+            var toastMsg = document.getElementById('toastMsg');
+            var toastTimer = null;
+
+            // ================================================================
+            // 状态
+            // ================================================================
+            var abortController = null;
+            var isRequesting = false;
+
+            // 默认请求头预设
+            var defaultHeaders = [
+                { key: 'Accept', value: 'application/json' },
+                { key: 'User-Agent', value: 'Mozilla/5.0 (compatible; DevTools/2.0)' }
+            ];
+
+            // 当前选中的文件
+            var selectedFile = null;
+
+            // 存储当前响应数据（用于下载）
+            var lastResponseBlob = null;
+            var lastContentType = '';
+
+            // ================================================================
+            // Toast
+            // ================================================================
+            function showToast(msg, type) {
+                type = type || 'success';
+                if (toastTimer) {
+                    clearTimeout(toastTimer);
+                    toastTimer = null;
+                }
+                toastIcon.className = type === 'error' ? 'fas fa-exclamation-circle' :
+                    type === 'warning' ? 'fas fa-exclamation-triangle' :
+                    'fas fa-check-circle';
+                toastMsg.textContent = msg;
+                toast.className = type === 'error' ? 'error' :
+                    type === 'warning' ? 'warning' :
+                    'success';
+                toast.classList.add('show');
+                toastTimer = setTimeout(function() {
+                    toast.classList.remove('show');
+                    toastTimer = null;
+                }, 3000);
+            }
+
+            // ================================================================
+            // 渲染请求面板
+            // ================================================================
+            function renderRequestPanel() {
+                var html = `
+                    <!-- 方法 & URL -->
+                    <div class="row-controls">
+                        <div class="ctrl-group shrink" style="flex:0 0 100px;">
+                            <label for="methodSelect">方法</label>
+                            <select id="methodSelect">
+                                <option value="GET">GET</option>
+                                <option value="POST">POST</option>
+                                <option value="PUT">PUT</option>
+                                <option value="DELETE">DELETE</option>
+                                <option value="PATCH">PATCH</option>
+                                <option value="HEAD">HEAD</option>
+                                <option value="OPTIONS">OPTIONS</option>
+                            </select>
+                        </div>
+                        <div class="ctrl-group">
+                            <label for="urlInput">URL</label>
+                            <input type="text" id="urlInput" placeholder="https://api.example.com/endpoint" value="https://httpbin.org/get" />
+                        </div>
+                    </div>
+
+                    <!-- 请求头 -->
+                    <div class="ctrl-group">
+                        <div class="group-label"><i class="fas fa-headers"></i> 请求头</div>
+                        <div class="headers-list" id="headersList">
+                            ${defaultHeaders.map(function(h, idx) {
+                                return `
+                                    <div class="header-item" data-index="${idx}">
+                                        <input type="text" class="header-key" value="${escapeHtml(h.key)}" placeholder="名称" />
+                                        <input type="text" class="header-value" value="${escapeHtml(h.value)}" placeholder="值" />
+                                        <button class="btn-remove-header" title="删除"><i class="fas fa-times"></i></button>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                        <button class="add-header-btn" id="addHeaderBtn"><i class="fas fa-plus"></i> 添加请求头</button>
+                    </div>
+
+                    <!-- 请求体类型 -->
+                    <div class="ctrl-group">
+                        <label for="bodyTypeSelect">请求体类型</label>
+                        <select id="bodyTypeSelect">
+                            <option value="none">无</option>
+                            <option value="json">JSON</option>
+                            <option value="form">x-www-form-urlencoded</option>
+                            <option value="formdata">FormData</option>
+                            <option value="text">纯文本</option>
+                            <option value="file">文件上传</option>
+                        </select>
+                    </div>
+
+                    <!-- 请求体内容（动态切换） -->
+                    <div class="ctrl-group" id="bodyContentGroup">
+                        <div id="bodyContent"></div>
+                    </div>
+
+                    <!-- 按钮 -->
+                    <div class="btn-group">
+                        <button class="btn btn-success" id="sendBtn"><i class="fas fa-play"></i> 发送请求</button>
+                        <button class="btn btn-danger" id="cancelBtn" disabled><i class="fas fa-stop"></i> 取消</button>
+                        <button class="btn btn-outline" id="clearBtn"><i class="fas fa-eraser"></i> 清空响应</button>
+                    </div>
+                `;
+                requestPanel.innerHTML = html;
+
+                // 绑定事件
+                bindEvents();
+                // 更新请求体显示
+                updateBodyContent();
+                // 恢复文件状态
+                if (selectedFile) {
+                    var fileInput = document.getElementById('fileInput');
+                    if (fileInput) {
+                        var dataTransfer = new DataTransfer();
+                        dataTransfer.items.add(selectedFile);
+                        fileInput.files = dataTransfer.files;
+                        var fileNameEl = document.getElementById('fileNameDisplay');
+                        if (fileNameEl) fileNameEl.textContent = selectedFile.name;
+                    }
+                }
+            }
+
+            function escapeHtml(text) {
+                if (!text) return '';
+                var div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            function bindEvents() {
+                // 方法/URL/body类型变化
+                document.getElementById('methodSelect').addEventListener('change', function() {
+                    // 无特殊操作
+                });
+                document.getElementById('urlInput').addEventListener('change', function() {
+                    // 无特殊操作
+                });
+                document.getElementById('bodyTypeSelect').addEventListener('change', updateBodyContent);
+
+                // 添加请求头
+                document.getElementById('addHeaderBtn').addEventListener('click', function() {
+                    var list = document.getElementById('headersList');
+                    var idx = list.children.length;
+                    var div = document.createElement('div');
+                    div.className = 'header-item';
+                    div.dataset.index = idx;
+                    div.innerHTML = `
+                        <input type="text" class="header-key" placeholder="名称" />
+                        <input type="text" class="header-value" placeholder="值" />
+                        <button class="btn-remove-header" title="删除"><i class="fas fa-times"></i></button>
+                    `;
+                    list.appendChild(div);
+                    // 绑定删除事件
+                    div.querySelector('.btn-remove-header').addEventListener('click', function() {
+                        div.remove();
+                    });
+                });
+
+                // 删除已有头
+                document.querySelectorAll('.header-item .btn-remove-header').forEach(function(btn) {
+                    btn.addEventListener('click', function() {
+                        this.closest('.header-item').remove();
+                    });
+                });
+
+                // 发送/取消/清空
+                document.getElementById('sendBtn').addEventListener('click', sendRequest);
+                document.getElementById('cancelBtn').addEventListener('click', cancelRequest);
+                document.getElementById('clearBtn').addEventListener('click', clearResponse);
+
+                // 文件输入
+                var fileInput = document.getElementById('fileInput');
+                if (fileInput) {
+                    fileInput.addEventListener('change', function() {
+                        if (this.files.length > 0) {
+                            selectedFile = this.files[0];
+                            document.getElementById('fileNameDisplay').textContent = selectedFile.name;
+                        }
+                    });
+                }
+                var fileClear = document.getElementById('fileClear');
+                if (fileClear) {
+                    fileClear.addEventListener('click', function() {
+                        selectedFile = null;
+                        document.getElementById('fileInput').value = '';
+                        document.getElementById('fileNameDisplay').textContent = '未选择文件';
+                    });
+                }
+            }
+
+            // ================================================================
+            // 请求体内容动态切换
+            // ================================================================
+            function updateBodyContent() {
+                var type = document.getElementById('bodyTypeSelect').value;
+                var container = document.getElementById('bodyContent');
+                var html = '';
+                switch (type) {
+                    case 'none':
+                        html = '<div class="hint">当前无请求体</div>';
+                        break;
+                    case 'json':
+                        html = `
+                            <textarea id="bodyText" placeholder="{\\n  \\"key\\": \\"value\\"\\n}" style="min-height:100px;">{"key":"value"}</textarea>
+                            <div class="hint">JSON 格式数据</div>
+                        `;
+                        break;
+                    case 'form':
+                        html = `
+                            <textarea id="bodyText" placeholder="key1=value1&key2=value2" style="min-height:80px;">key1=value1&key2=value2</textarea>
+                            <div class="hint">application/x-www-form-urlencoded</div>
+                        `;
+                        break;
+                    case 'formdata':
+                        html = `
+                            <div style="display:flex;flex-direction:column;gap:var(--space-xs);">
+                                <textarea id="bodyText" placeholder="每行一个键值对，格式: key=value" style="min-height:60px;">key1=value1
+        key2=value2</textarea>
+                                <div class="hint">每行一个键值对，格式 key=value，文件上传请使用"文件上传"类型</div>
+                            </div>
+                        `;
+                        break;
+                    case 'text':
+                        html = `
+                            <textarea id="bodyText" placeholder="纯文本内容" style="min-height:80px;">Hello, world!</textarea>
+                            <div class="hint">text/plain</div>
+                        `;
+                        break;
+                    case 'file':
+                        html = `
+                            <div class="file-upload-wrap">
+                                <label class="file-input-label">
+                                    <i class="fas fa-file-upload"></i> 选择文件
+                                    <input type="file" id="fileInput" />
+                                </label>
+                                <span class="file-name" id="fileNameDisplay">未选择文件</span>
+                                <button class="file-clear" id="fileClear" title="清除"><i class="fas fa-times"></i></button>
+                            </div>
+                            <div class="hint">上传文件，将作为请求体</div>
+                        `;
+                        break;
+                }
+                container.innerHTML = html;
+
+                // 绑定文件事件（重新绑定）
+                if (type === 'file') {
+                    var fileInput = document.getElementById('fileInput');
+                    if (fileInput) {
+                        fileInput.addEventListener('change', function() {
+                            if (this.files.length > 0) {
+                                selectedFile = this.files[0];
+                                document.getElementById('fileNameDisplay').textContent = selectedFile.name;
+                            }
+                        });
+                    }
+                    var fileClear = document.getElementById('fileClear');
+                    if (fileClear) {
+                        fileClear.addEventListener('click', function() {
+                            selectedFile = null;
+                            document.getElementById('fileInput').value = '';
+                            document.getElementById('fileNameDisplay').textContent = '未选择文件';
+                        });
+                    }
+                    // 恢复文件状态
+                    if (selectedFile) {
+                        var input = document.getElementById('fileInput');
+                        if (input) {
+                            var dataTransfer = new DataTransfer();
+                            dataTransfer.items.add(selectedFile);
+                            input.files = dataTransfer.files;
+                            document.getElementById('fileNameDisplay').textContent = selectedFile.name;
+                        }
+                    }
+                }
+            }
+
+            // ================================================================
+            // 格式化文件大小
+            // ================================================================
+            function formatSize(bytes) {
+                if (bytes < 1024) return bytes + ' B';
+                if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+                if (bytes < 1073741824) return (bytes / 1048576).toFixed(1) + ' MB';
+                return (bytes / 1073741824).toFixed(2) + ' GB';
+            }
+
+            // ================================================================
+            // 获取文件图标
+            // ================================================================
+            function getFileIcon(contentType) {
+                if (!contentType) return 'fa-file';
+                if (contentType.startsWith('image/')) return 'fa-file-image';
+                if (contentType.startsWith('video/')) return 'fa-file-video';
+                if (contentType.startsWith('audio/')) return 'fa-file-audio';
+                if (contentType.includes('pdf')) return 'fa-file-pdf';
+                if (contentType.includes('zip') || contentType.includes('gzip') || contentType.includes('tar')) return 'fa-file-archive';
+                if (contentType.includes('javascript') || contentType.includes('json') || contentType.includes('xml')) return 'fa-file-code';
+                if (contentType.includes('html') || contentType.includes('css')) return 'fa-file-code';
+                if (contentType.startsWith('text/')) return 'fa-file-alt';
+                if (contentType.includes('msword') || contentType.includes('word')) return 'fa-file-word';
+                if (contentType.includes('excel') || contentType.includes('spreadsheet')) return 'fa-file-excel';
+                if (contentType.includes('powerpoint') || contentType.includes('presentation')) return 'fa-file-powerpoint';
+                return 'fa-file';
+            }
+
+            // ================================================================
+            // 发送请求
+            // ================================================================
+            async function sendRequest() {
+                if (isRequesting) return;
+
+                var method = document.getElementById('methodSelect').value;
+                var url = document.getElementById('urlInput').value.trim();
+                if (!url) {
+                    showToast('请输入 URL', 'error');
+                    return;
+                }
+
+                var headers = getHeaders();
+                var bodyType = document.getElementById('bodyTypeSelect').value;
+                var body = null;
+                var isFormData = false;
+
+                // 处理请求体
+                if (bodyType !== 'none') {
+                    if (bodyType === 'file') {
+                        if (!selectedFile) {
+                            showToast('请选择文件', 'error');
+                            return;
+                        }
+                        body = selectedFile;
+                        // 不要设置 Content-Type，浏览器自动设置 multipart/form-data
+                    } else {
+                        var bodyTextEl = document.getElementById('bodyText');
+                        if (bodyTextEl) {
+                            var rawBody = bodyTextEl.value;
+                            if (bodyType === 'json') {
+                                try {
+                                    JSON.parse(rawBody);
+                                    body = rawBody;
+                                    headers['Content-Type'] = 'application/json';
+                                } catch (e) {
+                                    showToast('无效的 JSON 格式', 'error');
+                                    return;
+                                }
+                            } else if (bodyType === 'form') {
+                                body = rawBody;
+                                headers['Content-Type'] = 'application/x-www-form-urlencoded';
+                            } else if (bodyType === 'formdata') {
+                                var formData = new FormData();
+                                var lines = rawBody.split('\n');
+                                lines.forEach(function(line) {
+                                    line = line.trim();
+                                    if (!line) return;
+                                    var parts = line.split('=');
+                                    if (parts.length >= 2) {
+                                        var key = parts[0].trim();
+                                        var val = parts.slice(1).join('=').trim();
+                                        if (key) formData.append(key, val);
+                                    }
+                                });
+                                body = formData;
+                                isFormData = true;
+                                delete headers['Content-Type'];
+                            } else if (bodyType === 'text') {
+                                body = rawBody;
+                                headers['Content-Type'] = 'text/plain';
+                            }
+                        }
+                    }
+                }
+
+                // 如果是 GET/HEAD/OPTIONS 请求，忽略 body
+                if (['GET', 'HEAD', 'OPTIONS'].includes(method)) {
+                    body = null;
+                    if (bodyType !== 'none') {
+                        showToast(method + ' 请求不应包含请求体', 'warning');
+                    }
+                }
+
+                // 开始请求
+                isRequesting = true;
+                abortController = new AbortController();
+                document.getElementById('sendBtn').disabled = true;
+                document.getElementById('cancelBtn').disabled = false;
+
+                renderResponseLoading();
+
+                var startTime = performance.now();
+
+                try {
+                    var fetchOptions = {
+                        method: method,
+                        headers: headers,
+                        signal: abortController.signal,
+                        body: body
+                    };
+
+                    if (isFormData) {
+                        delete fetchOptions.headers['Content-Type'];
+                    }
+
+                    var response = await fetch(url, fetchOptions);
+
+                    var endTime = performance.now();
+                    var elapsed = (endTime - startTime).toFixed(1);
+
+                    // 获取响应头
+                    var headersObj = {};
+                    response.headers.forEach(function(value, key) {
+                        headersObj[key] = value;
+                    });
+
+                    var contentType = response.headers.get('content-type') || '';
+                    var contentDisposition = response.headers.get('content-disposition') || '';
+                    var fileName = null;
+                    // 尝试从 content-disposition 提取文件名
+                    var match = contentDisposition.match(/filename\*?=([^;]+)/i);
+                    if (match) {
+                        fileName = match[1].trim().replace(/^["']|["']$/g, '');
+                        if (fileName.startsWith("UTF-8''")) {
+                            fileName = decodeURIComponent(fileName.replace("UTF-8''", ''));
+                        }
+                    }
+                    if (!fileName) {
+                        // 从 URL 提取
+                        var urlParts = url.split('/');
+                        var lastPart = urlParts[urlParts.length - 1];
+                        if (lastPart && lastPart.includes('.')) {
+                            fileName = lastPart.split('?')[0];
+                        }
+                    }
+                    if (!fileName) {
+                        fileName = 'response';
+                    }
+
+                    // 读取响应体为 blob
+                    var blob = await response.blob();
+                    var size = blob.size;
+                    var sizeDisplay = formatSize(size);
+
+                    // 判断内容类型
+                    var isText = false;
+                    var isJSON = false;
+                    var isImage = false;
+                    var isBinary = false;
+
+                    if (contentType) {
+                        if (contentType.includes('text/') || contentType.includes('json') || contentType.includes('xml') ||
+                            contentType.includes('javascript') || contentType.includes('html') || contentType.includes('css')) {
+                            isText = true;
+                        }
+                        if (contentType.includes('json')) isJSON = true;
+                        if (contentType.includes('image/')) isImage = true;
+                        if (contentType.includes('application/octet-stream')) isBinary = true;
+                        // 对于其他 application/*，如果包含可读文本字符，视为文本
+                        if (contentType.includes('application/') && !contentType.includes('json') && !contentType.includes(
+                                'xml') && !contentType.includes('javascript') && !contentType.includes('html')) {
+                            // 尝试检测二进制
+                            if (size < 1024 * 1024) {
+                                try {
+                                    var testText = await blob.text();
+                                    // 如果包含空字符或控制字符比例高，视为二进制
+                                    var controlCount = 0;
+                                    for (var i = 0; i < Math.min(testText.length, 1000); i++) {
+                                        if (testText.charCodeAt(i) < 32 && testText.charCodeAt(i) !== 10 && testText
+                                            .charCodeAt(i) !== 13 && testText.charCodeAt(i) !== 9) {
+                                            controlCount++;
+                                        }
+                                    }
+                                    if (controlCount / Math.min(testText.length, 1000) > 0.05) {
+                                        isBinary = true;
+                                        isText = false;
+                                    }
+                                } catch (e) {
+                                    isBinary = true;
+                                    isText = false;
+                                }
+                            } else {
+                                isBinary = true;
+                                isText = false;
+                            }
+                        }
+                        if (contentType.includes('application/') && !isText && !isBinary) {
+                            // 默认作为二进制处理
+                            isBinary = true;
+                        }
+                    } else {
+                        // 无 content-type，尝试检测
+                        isBinary = true;
+                    }
+
+                    // 存储响应数据供下载
+                    lastResponseBlob = blob;
+                    lastContentType = contentType;
+
+                    // 构建响应显示
+                    var statusClass = response.status >= 200 && response.status < 300 ? 'success' : 'error';
+
+                    var bodyHtml = '';
+                    var actionButtons = '';
+
+                    if (isImage) {
+                        // 图片预览
+                        var imageUrl = URL.createObjectURL(blob);
+                        bodyHtml = `<img src="${imageUrl}" class="preview-image" />`;
+                        // 提供下载按钮
+                        actionButtons += `<button class="btn-sm download-btn" onclick="downloadResponse()"><i class="fas fa-download"></i> 下载</button>`;
+                    } else if (isText) {
+                        // 文本内容
+                        var textContent = await blob.text();
+                        if (isJSON) {
+                            try {
+                                var jsonData = JSON.parse(textContent);
+                                textContent = JSON.stringify(jsonData, null, 2);
+                            } catch (e) { /* 保留原样 */ }
+                        }
+                        bodyHtml = `<pre style="margin:0;white-space:pre-wrap;word-break:break-all;">${escapeHtml(textContent)}</pre>`;
+                        // 提供复制按钮
+                        actionButtons += `<button class="btn-sm" onclick="copyResponseText()"><i class="fas fa-copy"></i> 复制</button>`;
+                        // 同时也提供下载（保存为文件）
+                        actionButtons +=
+                            `<button class="btn-sm download-btn" onclick="downloadResponse()"><i class="fas fa-download"></i> 下载</button>`;
+                    } else if (isBinary || !isText) {
+                        // 二进制数据（非文本非图片）
+                        var icon = getFileIcon(contentType);
+                        bodyHtml = `
+                            <div class="file-preview">
+                                <i class="fas ${icon}"></i>
+                                <div class="file-name">${escapeHtml(fileName)}</div>
+                                <div class="file-meta">${formatSize(size)} · ${contentType || '未知类型'}</div>
+                                <div style="color:var(--text-dim);font-size:13px;">二进制数据，请下载查看</div>
+                            </div>
+                        `;
+                        actionButtons +=
+                            `<button class="btn-sm download-btn" onclick="downloadResponse()"><i class="fas fa-download"></i> 下载</button>`;
+                    }
+
+                    // 构建响应面板
+                    var metaHtml = `
+                        <div class="response-meta">
+                            <span><i class="fas fa-code"></i> 状态: <span class="status-code ${statusClass}">${response.status} ${response.statusText}</span></span>
+                            <span><i class="fas fa-clock"></i> 耗时: ${elapsed}ms</span>
+                            <span><i class="fas fa-weight-hanging"></i> 大小: ${sizeDisplay}</span>
+                            <span><i class="fas fa-file-signature"></i> 类型: ${contentType || '未知'}</span>
+                            <div class="action-buttons">
+                                ${actionButtons}
+                            </div>
+                        </div>
+                    `;
+
+                    // 响应头
+                    var headerHtml = Object.entries(headersObj).map(function(h) {
+                        return `<div class="header-line"><span class="hkey">${escapeHtml(h[0])}:</span> <span class="hvalue">${escapeHtml(h[1])}</span></div>`;
+                    }).join('');
+
+                    // 响应体
+                    var bodyContainer = `<div class="response-body">${bodyHtml}</div>`;
+
+                    responsePanel.innerHTML = metaHtml + `<div class="response-headers">${headerHtml}</div>` + bodyContainer;
+
+                    // 存储用于下载和复制的数据
+                    window._responseText = isText ? await blob.text() : null;
+                    window._responseBlob = blob;
+                    window._responseFileName = fileName || 'response';
+                    window._responseContentType = contentType;
+
+                    showToast('请求成功 (' + response.status + ')', 'success');
+
+                } catch (err) {
+                    if (err.name === 'AbortError') {
+                        renderResponseError('请求已取消');
+                        showToast('请求已取消', 'warning');
+                    } else {
+                        renderResponseError(err.message);
+                        showToast('请求失败: ' + err.message, 'error');
+                    }
+                } finally {
+                    isRequesting = false;
+                    document.getElementById('sendBtn').disabled = false;
+                    document.getElementById('cancelBtn').disabled = true;
+                    abortController = null;
+                }
+            }
+
+            // ================================================================
+            // 下载响应
+            // ================================================================
+            window.downloadResponse = function() {
+                var blob = window._responseBlob;
+                var fileName = window._responseFileName || 'response';
+                if (!blob) {
+                    showToast('没有可下载的内容', 'error');
+                    return;
+                }
+                var url = URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+                showToast('下载开始', 'success');
+            };
+
+            // ================================================================
+            // 复制响应文本
+            // ================================================================
+            window.copyResponseText = function() {
+                var text = window._responseText;
+                if (!text) {
+                    showToast('当前内容不是文本，无法复制', 'error');
+                    return;
+                }
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text).then(function() {
+                        showToast('已复制到剪贴板', 'success');
+                    }).catch(function() {
+                        fallbackCopy(text);
+                    });
+                } else {
+                    fallbackCopy(text);
+                }
+            };
+
+            function fallbackCopy(text) {
+                var textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                try {
+                    document.execCommand('copy');
+                    showToast('已复制到剪贴板', 'success');
+                } catch (e) {
+                    showToast('复制失败，请手动复制', 'error');
+                }
+                document.body.removeChild(textarea);
+            }
+
+            // ================================================================
+            // 获取请求头
+            // ================================================================
+            function getHeaders() {
+                var headers = {};
+                var items = document.querySelectorAll('.header-item');
+                items.forEach(function(item) {
+                    var keyInput = item.querySelector('.header-key');
+                    var valueInput = item.querySelector('.header-value');
+                    if (keyInput && valueInput) {
+                        var key = keyInput.value.trim();
+                        var value = valueInput.value.trim();
+                        if (key && value) {
+                            headers[key] = value;
+                        }
+                    }
+                });
+                return headers;
+            }
+
+            // ================================================================
+            // 取消请求
+            // ================================================================
+            function cancelRequest() {
+                if (abortController) {
+                    abortController.abort();
+                }
+            }
+
+            // ================================================================
+            // 清空响应
+            // ================================================================
+            function clearResponse() {
+                renderResponseEmpty();
+                window._responseBlob = null;
+                window._responseText = null;
+                showToast('已清空响应', 'success');
+            }
+
+            // ================================================================
+            // 响应渲染辅助
+            // ================================================================
+            function renderResponseEmpty() {
+                responsePanel.innerHTML = `
+                    <div style="display:flex;flex-direction:column;height:100%;justify-content:center;align-items:center;color:var(--text-muted);">
+                        <i class="fas fa-paper-plane" style="font-size:48px;margin-bottom:12px;color:var(--border-subtle);"></i>
+                        <div style="font-size:16px;font-weight:500;color:var(--text-secondary);">发送请求查看响应</div>
+                        <div style="font-size:13px;margin-top:6px;">支持 GET, POST, PUT, DELETE 等</div>
+                    </div>
+                `;
+            }
+
+            function renderResponseLoading() {
+                responsePanel.innerHTML = `
+                    <div style="display:flex;flex-direction:column;height:100%;justify-content:center;align-items:center;color:var(--text-muted);">
+                        <i class="fas fa-spinner fa-spin" style="font-size:40px;margin-bottom:12px;color:var(--accent-light);"></i>
+                        <div style="font-size:16px;font-weight:500;color:var(--text-secondary);">请求中...</div>
+                    </div>
+                `;
+            }
+
+            function renderResponseError(message) {
+                responsePanel.innerHTML = `
+                    <div style="display:flex;flex-direction:column;height:100%;justify-content:center;align-items:center;color:var(--error);padding:20px;">
+                        <i class="fas fa-exclamation-circle" style="font-size:40px;margin-bottom:12px;"></i>
+                        <div style="font-size:16px;font-weight:500;">请求失败</div>
+                        <div style="font-size:13px;margin-top:6px;color:var(--text-muted);word-break:break-all;text-align:center;">${escapeHtml(message)}</div>
+                    </div>
+                `;
+            }
+
+            // ================================================================
+            // 标签切换
+            // ================================================================
+            tabBtns.forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    tabBtns.forEach(function(b) { b.classList.remove('active'); });
+                    this.classList.add('active');
+                    var tab = this.dataset.tab;
+                    testTab.style.display = tab === 'test' ? 'block' : 'none';
+                    tutorialTab.style.display = tab === 'tutorial' ? 'block' : 'none';
+                    if (tab === 'tutorial') {
+                        renderBookmarks();
+                    }
+                });
+            });
+
+            // ================================================================
+            // 教程数据
+            // ================================================================
+            var chapters = [{
+                id: 'intro',
+                title: 'HTTP 请求简介',
+                content: `
+                    <h2>HTTP 请求简介</h2>
+                    <p>HTTP（HyperText Transfer Protocol）是互联网的基础协议，用于客户端与服务器之间的通信。</p>
+                    <ul>
+                        <li><strong>方法</strong>：GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS</li>
+                        <li><strong>URL</strong>：请求的目标地址</li>
+                        <li><strong>请求头</strong>：传递附加信息，如认证、内容类型等</li>
+                        <li><strong>请求体</strong>：POST/PUT/PATCH 等方法的负载数据</li>
+                    </ul>
+                    <p>本工具支持完整的 HTTP 请求定制，适合 API 调试和测试。</p>
+                    <div class="note success">网络请求是前后端交互的核心，掌握 HTTP 是开发者的基础技能。</div>
+                `
+            }, {
+                id: 'methods',
+                title: 'HTTP 方法详解',
+                content: `
+                    <h2>HTTP 方法详解</h2>
+                    <ul>
+                        <li><strong>GET</strong>：获取资源，无请求体。</li>
+                        <li><strong>POST</strong>：创建资源，有请求体。</li>
+                        <li><strong>PUT</strong>：更新资源（完整替换），有请求体。</li>
+                        <li><strong>DELETE</strong>：删除资源。</li>
+                        <li><strong>PATCH</strong>：部分更新资源，有请求体。</li>
+                        <li><strong>HEAD</strong>：同 GET，但不返回响应体，用于检查资源是否存在。</li>
+                        <li><strong>OPTIONS</strong>：查询服务器支持的请求方法。</li>
+                    </ul>
+                    <div class="note">选择合适的方法符合 RESTful 设计规范。</div>
+                `
+            }, {
+                id: 'headers',
+                title: '请求头解析',
+                content: `
+                    <h2>请求头解析</h2>
+                    <p>请求头（Headers）是键值对，用于传递元数据。</p>
+                    <ul>
+                        <li><strong>Content-Type</strong>：请求体的媒体类型，如 application/json</li>
+                        <li><strong>Accept</strong>：客户端希望接收的响应类型</li>
+                        <li><strong>Authorization</strong>：认证凭证，如 Bearer token</li>
+                        <li><strong>User-Agent</strong>：客户端标识</li>
+                        <li><strong>Cookie</strong>：会话信息</li>
+                    </ul>
+                    <p>本工具允许自由添加任意请求头，方便调试各种场景。</p>
+                `
+            }, {
+                id: 'body',
+                title: '请求体类型',
+                content: `
+                    <h2>请求体类型</h2>
+                    <p>本工具支持多种请求体格式：</p>
+                    <ul>
+                        <li><strong>JSON</strong>：application/json，结构化数据</li>
+                        <li><strong>x-www-form-urlencoded</strong>：表单编码，key=value&key2=value2</li>
+                        <li><strong>FormData</strong>：多部分表单，可用于文件上传</li>
+                        <li><strong>纯文本</strong>：text/plain</li>
+                        <li><strong>文件上传</strong>：直接上传文件作为请求体</li>
+                    </ul>
+                    <div class="note success">选择合适的请求体类型可确保后端正确解析数据。</div>
+                `
+            }, {
+                id: 'response',
+                title: '响应解读',
+                content: `
+                    <h2>响应解读</h2>
+                    <p>响应包含状态码、响应头和响应体。</p>
+                    <ul>
+                        <li><strong>状态码</strong>：2xx 成功，4xx 客户端错误，5xx 服务器错误</li>
+                        <li><strong>响应头</strong>：服务器返回的元数据，如 Content-Type, Set-Cookie</li>
+                        <li><strong>响应体</strong>：服务器返回的数据，可能是 JSON、HTML、文本或二进制</li>
+                    </ul>
+                    <p>本工具自动识别不同类型，并提供预览、复制和下载功能。</p>
+                `
+            }];
+
+            var activeChapterId = null;
+
+            function renderBookmarks(filter) {
+                filter = filter || '';
+                var list = document.getElementById('bookmarkList');
+                var filtered = filter.trim() === '' ?
+                    chapters :
+                    chapters.filter(function(ch) {
+                        return ch.title.toLowerCase().includes(filter.toLowerCase());
+                    });
+
+                if (filtered.length === 0) {
+                    list.innerHTML =
+                        '<div style="color: var(--text-muted); padding: var(--space-md); text-align: center;">未找到匹配章节</div>';
+                    return;
+                }
+
+                var html = '';
+                filtered.forEach(function(ch) {
+                    var active = (ch.id === activeChapterId) ? 'active' : '';
+                    html += '<div class="bookmark-item ' + active + '" data-id="' + ch.id + '">' +
+                        '<span class="chapter-tag">#</span> ' + ch.title +
+                        '</div>';
+                });
+                list.innerHTML = html;
+
+                list.querySelectorAll('.bookmark-item').forEach(function(el) {
+                    el.addEventListener('click', function() {
+                        var id = this.dataset.id;
+                        var chapter = chapters.find(function(c) { return c.id === id; });
+                        if (chapter) {
+                            activeChapterId = id;
+                            renderContent(chapter);
+                            document.querySelectorAll('.bookmark-item').forEach(function(b) { b.classList
+                                    .remove('active'); });
+                            this.classList.add('active');
+                            document.getElementById('tutorialSearch').value = '';
+                            renderBookmarks();
+                        }
+                    });
+                });
+
+                if (!activeChapterId && chapters.length > 0) {
+                    activeChapterId = chapters[0].id;
+                    renderContent(chapters[0]);
+                    var firstItem = list.querySelector('.bookmark-item');
+                    if (firstItem) firstItem.classList.add('active');
+                }
+            }
+
+            function renderContent(chapter) {
+                var container = document.getElementById('tutorialContent');
+                container.innerHTML = chapter.content;
+                container.scrollTop = 0;
+            }
+
+            tutorialSearch.addEventListener('input', function() {
+                var filter = this.value.trim();
+                renderBookmarks(filter);
+                var items = document.querySelectorAll('#bookmarkList .bookmark-item');
+                if (items.length > 0 && filter !== '') {
+                    items.forEach(function(b) { b.classList.remove('active'); });
+                    items[0].classList.add('active');
+                    var id = items[0].dataset.id;
+                    var chapter = chapters.find(function(c) { return c.id === id; });
+                    if (chapter) {
+                        activeChapterId = id;
+                        renderContent(chapter);
+                    }
+                } else if (filter === '') {
+                    if (activeChapterId) {
+                        var chapter = chapters.find(function(c) { return c.id === activeChapterId; });
+                        if (chapter) renderContent(chapter);
+                    } else if (chapters.length > 0) {
+                        activeChapterId = chapters[0].id;
+                        renderContent(chapters[0]);
+                    }
+                    renderBookmarks();
+                }
+            });
+
+            // ================================================================
+            // 初始化
+            // ================================================================
+            function init() {
+                renderBookmarks();
+                renderRequestPanel();
+                renderResponseEmpty();
+                testTab.style.display = 'block';
+                tutorialTab.style.display = 'none';
+
+                // 默认请求示例
+                document.getElementById('urlInput').value = 'https://httpbin.org/get';
+                updateBodyContent();
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+
+        })();
+    </script>
+
+</body>
+</html>

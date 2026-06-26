@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes" />
+    <title>Base64 编解码工具 · 开发者工具箱</title>
+    <link rel="stylesheet" href="/static/all.min.css" />
+    <style>
+        /* ===== 全局重置 & 暗色主题 ===== */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg-primary: #0b0914;
+            --bg-secondary: #12101e;
+            --bg-surface: #181625;
+            --bg-surface-hover: #221f35;
+            --bg-elevated: #1f1c30;
+            --border-subtle: #2a2740;
+            --border-strong: #3d385a;
+            --text-primary: #edeff5;
+            --text-secondary: #b8bfd9;
+            --text-muted: #7a83a3;
+            --text-dim: #94a3b8;
+            --accent: #6366f1;
+            --accent-light: #818cf8;
+            --accent-dark: #4f46e5;
+            --accent-glow: rgba(99, 102, 241, 0.3);
+            --success: #34d399;
+            --success-bg: rgba(52, 211, 153, 0.12);
+            --error: #f87171;
+            --error-bg: rgba(248, 113, 113, 0.12);
+            --warning: #fbbf24;
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 14px;
+            --radius-full: 9999px;
+            --shadow-soft: 0 8px 30px rgba(0, 0, 0, 0.5);
+            --shadow-glow: 0 0 30px var(--accent-glow);
+            --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --space-xs: 4px;
+            --space-sm: 8px;
+            --space-md: 14px;
+            --space-lg: 20px;
+            --space-xl: 28px;
+        }
+
+        html {
+            font-size: 15px;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            padding: 24px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            line-height: 1.6;
+            user-select: none;
+        }
+
+        /* 允许结果区域选择 */
+        .result-text,
+        .result-box .value,
+        .code-area {
+            user-select: text;
+        }
+
+        body *:not(input):not(textarea):not(.modal-input):not(.result-text):not(.code-area):not(.regex-content):not(.regex-content *) {
+            user-select: none;
+        }
+        .regex-content,
+        .regex-content * {
+            user-select: text;
+        }
+
+        /* ===== 滚动条 ===== */
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+            border-radius: 999px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-strong);
+            border-radius: 999px;
+            transition: background 0.2s;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent);
+        }
+
+        .app {
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        /* ===== 头部 ===== */
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0 20px 0;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .app-header .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .app-header .brand i {
+            font-size: 28px;
+            color: var(--accent-light);
+            filter: drop-shadow(0 0 8px var(--accent-glow));
+        }
+        .app-header .brand h1 {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            background: linear-gradient(135deg, #ffffff 40%, var(--accent-light));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .app-header .brand .version {
+            font-size: 13px;
+            color: var(--text-muted);
+            -webkit-text-fill-color: var(--text-muted);
+            background: var(--bg-surface);
+            padding: 0 10px;
+            border-radius: 999px;
+            border: 1px solid var(--border-subtle);
+            font-weight: 500;
+            margin-left: 4px;
+        }
+
+        .app-header .status-group {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .app-header .back-btn {
+            font-size: 13px;
+            color: var(--text-secondary);
+            background: var(--bg-surface);
+            padding: 4px 14px;
+            border-radius: 999px;
+            border: 1px solid var(--border-subtle);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            transition: all var(--transition);
+            white-space: nowrap;
+        }
+        .app-header .back-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent-light);
+            box-shadow: 0 0 16px var(--accent-glow);
+        }
+
+        .app-header .badge {
+            background: var(--success-bg);
+            color: var(--success);
+            padding: 5px 16px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid rgba(52, 211, 153, 0.2);
+            white-space: nowrap;
+        }
+        .app-header .badge i {
+            font-size: 12px;
+        }
+
+        /* ===== 标签页 ===== */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: 0;
+        }
+        .tab-btn {
+            background: transparent;
+            border: none;
+            padding: 10px 22px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-dim);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all var(--transition);
+            font-family: inherit;
+        }
+        .tab-btn:hover {
+            color: var(--text-primary);
+        }
+        .tab-btn.active {
+            color: var(--accent-light);
+            border-bottom-color: var(--accent-light);
+        }
+
+        /* ===== 面板通用 ===== */
+        .panel {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 20px 22px 22px;
+            transition: border-color var(--transition), box-shadow var(--transition);
+        }
+        .panel:hover {
+            border-color: var(--border-strong);
+        }
+
+        .panel-title {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .panel-title i {
+            font-size: 14px;
+            color: var(--accent-light);
+        }
+
+        /* ===== 双列布局（测试界面） ===== */
+        .converter-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 820px) {
+            .converter-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+        }
+
+        .input-group {
+            margin-bottom: var(--space-md);
+        }
+        .input-group label {
+            display: block;
+            font-size: 13px;
+            color: var(--text-dim);
+            margin-bottom: var(--space-sm);
+            font-weight: 500;
+        }
+        .input-group textarea,
+        .input-group input {
+            width: 100%;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+            font-size: 14px;
+            padding: var(--space-sm) var(--space-md);
+            transition: border var(--transition), box-shadow var(--transition);
+            outline: none;
+            resize: vertical;
+        }
+        .input-group textarea {
+            min-height: 120px;
+            line-height: 1.7;
+        }
+        .input-group textarea:focus,
+        .input-group input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+        .input-group textarea::placeholder,
+        .input-group input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .action-row {
+            display: flex;
+            gap: var(--space-sm);
+            flex-wrap: wrap;
+            margin-top: var(--space-sm);
+        }
+        .action-row .btn {
+            background: var(--accent);
+            border: none;
+            border-radius: var(--radius-md);
+            color: #fff;
+            padding: 6px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            min-height: 36px;
+        }
+        .action-row .btn:hover {
+            background: var(--accent-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px var(--accent-glow);
+        }
+        .action-row .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+        }
+        .action-row .btn-outline:hover {
+            border-color: var(--accent);
+            color: var(--accent-light);
+            background: rgba(99, 102, 241, 0.05);
+        }
+        .action-row .btn-success {
+            background: var(--success);
+            color: #0b0914;
+        }
+        .action-row .btn-success:hover {
+            background: #2dd4a0;
+        }
+        .action-row .file-upload-btn {
+            position: relative;
+            overflow: hidden;
+        }
+        .action-row .file-upload-btn input[type="file"] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .result-box {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            min-height: 80px;
+            margin-top: var(--space-sm);
+            position: relative;
+        }
+        .result-box .result-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-xs) 0;
+            border-bottom: 1px solid var(--border-subtle);
+            font-size: 13px;
+            gap: var(--space-sm);
+        }
+        .result-box .result-row:last-child {
+            border-bottom: none;
+        }
+        .result-box .result-row .label {
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
+        .result-box .result-row .value {
+            color: var(--text-primary);
+            font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+            text-align: right;
+            word-break: break-all;
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+        }
+        .result-box .result-row .value.highlight {
+            color: var(--accent-light);
+        }
+        .result-box .result-row .value .copy-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 0 4px;
+            border-radius: var(--radius-sm);
+            transition: all var(--transition);
+            font-size: 13px;
+            flex-shrink: 0;
+            opacity: 1;
+            line-height: 1;
+        }
+        .result-box .result-row .value .copy-btn:hover {
+            color: var(--accent-light);
+            background: rgba(99, 102, 241, 0.08);
+        }
+        .result-box .result-row .value .copy-btn.copied {
+            color: var(--success);
+        }
+
+        .result-empty {
+            color: var(--text-muted);
+            text-align: center;
+            padding: var(--space-md) 0;
+            font-size: 14px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+        .result-empty i {
+            font-size: 32px;
+            margin-bottom: var(--space-sm);
+            color: var(--border-subtle);
+        }
+
+        /* ===== 教程专用样式 ===== */
+        .tutorial-card {
+            height: 500px;
+            min-height: 450px;
+            max-height: 850px;
+            resize: vertical;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+        }
+        .tutorial-card .card-header {
+            padding: var(--space-md) var(--space-lg);
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 0;
+            flex-shrink: 0;
+        }
+        .tutorial-body {
+            display: flex;
+            flex: 1;
+            min-height: 0;
+        }
+        .tutorial-sidebar {
+            width: 250px;
+            flex-shrink: 0;
+            background: var(--bg-primary);
+            border-right: 1px solid var(--border-subtle);
+            display: flex;
+            flex-direction: column;
+            padding: var(--space-md);
+        }
+        .tutorial-sidebar .search-box {
+            margin-bottom: var(--space-md);
+        }
+        .tutorial-sidebar .search-box input {
+            width: 100%;
+            padding: var(--space-sm) var(--space-md);
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-size: 13px;
+            outline: none;
+            transition: border var(--transition);
+        }
+        .tutorial-sidebar .search-box input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px var(--accent-glow);
+        }
+        .tutorial-sidebar .bookmark-list {
+            flex: 1;
+            overflow-y: auto;
+            margin: 0 -8px;
+            padding: 0 8px;
+        }
+        .tutorial-sidebar .bookmark-list::-webkit-scrollbar {
+            width: 4px;
+        }
+        .bookmark-item {
+            padding: 5px 12px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: all var(--transition);
+            font-size: 13px;
+            border-left: 2px solid transparent;
+            margin-bottom: 1px;
+        }
+        .bookmark-item:hover {
+            background: var(--bg-surface-hover);
+            color: var(--text-primary);
+        }
+        .bookmark-item.active {
+            color: var(--accent-light);
+            background: rgba(99, 102, 241, 0.12);
+            border-left-color: var(--accent);
+        }
+        .bookmark-item .chapter-tag {
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-right: 6px;
+            opacity: 0.6;
+        }
+        .tutorial-content {
+            flex: 1;
+            padding: var(--space-lg);
+            overflow-y: auto;
+            min-height: 0;
+        }
+        .tutorial-content::-webkit-scrollbar {
+            width: 4px;
+        }
+        .tutorial-content h2 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--space-md);
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: var(--space-sm);
+        }
+        .tutorial-content h3 {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--accent-light);
+            margin: var(--space-md) 0 var(--space-sm);
+        }
+        .tutorial-content p {
+            color: var(--text-secondary);
+            line-height: 1.8;
+            margin-bottom: var(--space-md);
+        }
+        .tutorial-content pre {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: var(--space-md) var(--space-lg);
+            overflow-x: auto;
+            font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+            font-size: 12.5px;
+            color: var(--text-primary);
+            margin: var(--space-md) 0;
+            line-height: 1.7;
+        }
+        .tutorial-content pre code {
+            display: block;
+            white-space: pre;
+        }
+        .tutorial-content ul {
+            padding-left: var(--space-xl);
+            color: var(--text-secondary);
+            margin-bottom: var(--space-md);
+        }
+        .tutorial-content ul li {
+            margin-bottom: var(--space-xs);
+        }
+        .tutorial-content .note {
+            background: rgba(99, 102, 241, 0.06);
+            border-left: 3px solid var(--accent);
+            padding: var(--space-sm) var(--space-md);
+            border-radius: var(--radius-sm);
+            margin: var(--space-md) 0;
+            color: var(--text-dim);
+            font-size: 13px;
+        }
+        .tutorial-content .note.warning {
+            border-left-color: var(--warning);
+            background: rgba(251, 191, 36, 0.06);
+        }
+        .tutorial-content .note.danger {
+            border-left-color: var(--error);
+            background: rgba(239, 68, 68, 0.06);
+        }
+        .tutorial-content .note.success {
+            border-left-color: var(--success);
+            background: rgba(52, 211, 153, 0.06);
+        }
+        /* 确保所有 pre code 无缩进（由内容保证） */
+
+        /* ===== Toast ===== */
+        #toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(12px);
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 12px 24px;
+            font-size: 13px;
+            display: none;
+            align-items: center;
+            gap: 12px;
+            box-shadow: var(--shadow-soft);
+            z-index: 999;
+            backdrop-filter: blur(12px);
+            max-width: 92vw;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        #toast.show {
+            display: flex;
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        #toast.success {
+            border-left: 4px solid var(--success);
+            color: var(--success);
+        }
+        #toast.error {
+            border-left: 4px solid var(--error);
+            color: var(--error);
+        }
+        #toast i {
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 820px) {
+            .tutorial-card {
+                height: 600px;
+                min-height: 400px;
+            }
+            .tutorial-body {
+                flex-direction: column;
+            }
+            .tutorial-sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid var(--border-subtle);
+                max-height: 180px;
+                flex-shrink: 0;
+            }
+            .tutorial-content {
+                padding: var(--space-md);
+            }
+            .app-header .brand h1 {
+                font-size: 20px;
+            }
+            .app-header .back-btn {
+                font-size: 12px;
+                padding: 2px 10px;
+            }
+            .tab-btn {
+                padding: 8px 16px;
+                font-size: 13px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 12px;
+            }
+            .app-header {
+                padding: 12px 0 16px 0;
+                margin-bottom: 16px;
+                gap: 10px;
+            }
+            .app-header .brand i {
+                font-size: 22px;
+            }
+            .app-header .brand h1 {
+                font-size: 18px;
+            }
+            .app-header .brand .version {
+                font-size: 11px;
+                padding: 0 8px;
+            }
+            .app-header .status-group {
+                gap: 10px;
+            }
+            .app-header .back-btn {
+                font-size: 11px;
+                padding: 2px 8px;
+            }
+            .app-header .badge {
+                font-size: 10px;
+                padding: 2px 10px;
+            }
+            .panel {
+                padding: 16px 14px 18px;
+            }
+            .converter-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+            .input-group textarea {
+                min-height: 100px;
+            }
+            .action-row .btn {
+                font-size: 12px;
+                padding: 4px 12px;
+                min-height: 32px;
+            }
+            .result-box .result-row {
+                font-size: 12px;
+                flex-wrap: wrap;
+                gap: var(--space-xs);
+            }
+            .result-box .result-row .value {
+                text-align: left;
+                word-break: break-all;
+            }
+            .tutorial-card {
+                height: 500px;
+                min-height: 350px;
+            }
+            .tab-btn {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app">
+        <!-- ===== 头部 ===== -->
+        <header class="app-header">
+            <div class="brand">
+                <i class="fas fa-arrows-left-right"></i>
+                <h1>Base64 编解码</h1>
+                <span class="version">v1.0</span>
+            </div>
+            <div class="status-group">
+                <a href="/tools" class="back-btn" title="返回工具箱">
+                    <i class="fas fa-arrow-left"></i> 返回
+                </a>
+                <span class="badge">
+                    <i class="fas fa-lock"></i> 纯前端本地
+                </span>
+            </div>
+        </header>
+
+        <!-- ===== 标签页 ===== -->
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="test">编解码</button>
+            <button class="tab-btn" data-tab="tutorial">相关教程</button>
+        </div>
+
+        <!-- ===== 标签内容：编解码 ===== -->
+        <div id="testTab" class="tab-content">
+            <div class="panel">
+                <div class="panel-title"><i class="fas fa-exchange-alt"></i> Base64 转换</div>
+
+                <div class="converter-grid">
+                    <!-- 左侧：编码 -->
+                    <div>
+                        <div class="input-group">
+                            <label for="inputText">输入文本</label>
+                            <textarea id="inputText" placeholder="请输入要编码的文本..." spellcheck="false">Hello, 世界！</textarea>
+                        </div>
+                        <div class="action-row">
+                            <button class="btn" id="encodeBtn"><i class="fas fa-arrow-right"></i> 编码 →</button>
+                            <button class="btn btn-outline" id="clearInputBtn"><i class="fas fa-eraser"></i> 清空</button>
+                            <label class="btn btn-outline file-upload-btn">
+                                <i class="fas fa-file-upload"></i> 上传文件
+                                <input type="file" id="fileInput" accept="*/*" />
+                            </label>
+                            <select id="encodingSelect" style="background:var(--bg-primary);border:1px solid var(--border-subtle);border-radius:var(--radius-md);color:var(--text-primary);padding:var(--space-xs) var(--space-sm);font-size:13px;min-height:36px;">
+                                <option value="utf-8">UTF-8</option>
+                                <option value="gbk">GBK (模拟)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- 右侧：解码 -->
+                    <div>
+                        <div class="input-group">
+                            <label for="outputText">Base64 结果</label>
+                            <textarea id="outputText" placeholder="编码结果将显示在这里..." spellcheck="false"></textarea>
+                        </div>
+                        <div class="action-row">
+                            <button class="btn" id="decodeBtn"><i class="fas fa-arrow-left"></i> 解码 ←</button>
+                            <button class="btn btn-outline" id="copyOutputBtn"><i class="fas fa-copy"></i> 复制</button>
+                            <button class="btn btn-outline" id="clearOutputBtn"><i class="fas fa-eraser"></i> 清空</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 结果详情（长度、有效性等） -->
+                <div class="result-box" id="resultInfo">
+                    <div class="result-empty">
+                        <i class="fas fa-info-circle"></i>
+                        编解码结果将在此显示详细信息
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== 标签内容：教程 ===== -->
+        <div id="tutorialTab" class="tab-content" style="display: none;">
+            <div class="panel tutorial-card">
+                <div class="card-header">
+                    <i class="fas fa-book" style="font-size:20px;color:var(--accent-light);margin-right:8px;"></i>
+                    <h3 style="display:inline-block;font-size:18px;font-weight:600;color:var(--text-main);">Base64 相关教程</h3>
+                    <span style="float:right;font-size:12px;color:var(--text-muted);">共 6 章</span>
+                </div>
+                <div class="tutorial-body">
+                    <div class="tutorial-sidebar">
+                        <div class="search-box">
+                            <input type="text" id="tutorialSearch" placeholder="搜索章节..." />
+                        </div>
+                        <div class="bookmark-list" id="bookmarkList"></div>
+                    </div>
+                    <div class="tutorial-content" id="tutorialContent"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== Toast ===== -->
+        <div id="toast">
+            <i id="toastIcon"></i>
+            <span id="toastMsg"></span>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // ================================================================
+            // DOM 引用
+            // ================================================================
+            var inputText = document.getElementById('inputText');
+            var outputText = document.getElementById('outputText');
+            var encodeBtn = document.getElementById('encodeBtn');
+            var decodeBtn = document.getElementById('decodeBtn');
+            var clearInputBtn = document.getElementById('clearInputBtn');
+            var clearOutputBtn = document.getElementById('clearOutputBtn');
+            var copyOutputBtn = document.getElementById('copyOutputBtn');
+            var fileInput = document.getElementById('fileInput');
+            var encodingSelect = document.getElementById('encodingSelect');
+            var resultInfo = document.getElementById('resultInfo');
+
+            // 教程
+            var tutorialSearch = document.getElementById('tutorialSearch');
+            var bookmarkList = document.getElementById('bookmarkList');
+            var tutorialContent = document.getElementById('tutorialContent');
+
+            // 标签切换
+            var tabBtns = document.querySelectorAll('.tab-btn');
+            var testTab = document.getElementById('testTab');
+            var tutorialTab = document.getElementById('tutorialTab');
+
+            // Toast
+            var toast = document.getElementById('toast');
+            var toastIcon = document.getElementById('toastIcon');
+            var toastMsg = document.getElementById('toastMsg');
+            var toastTimer = null;
+
+            function showToast(msg, type) {
+                type = type || 'success';
+                if (toastTimer) {
+                    clearTimeout(toastTimer);
+                    toastTimer = null;
+                }
+                toastIcon.className = type === 'error' ? 'fas fa-exclamation-circle' : 'fas fa-check-circle';
+                toastMsg.textContent = msg;
+                toast.className = type === 'error' ? 'error' : 'success';
+                toast.classList.add('show');
+                toastTimer = setTimeout(function() {
+                    toast.classList.remove('show');
+                    toastTimer = null;
+                }, 2500);
+            }
+
+            // ================================================================
+            // 标签切换
+            // ================================================================
+            tabBtns.forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    tabBtns.forEach(function(b) { b.classList.remove('active'); });
+                    this.classList.add('active');
+                    var tab = this.dataset.tab;
+                    testTab.style.display = tab === 'test' ? 'block' : 'none';
+                    tutorialTab.style.display = tab === 'tutorial' ? 'block' : 'none';
+                    if (tab === 'tutorial') {
+                        renderBookmarks();
+                    }
+                });
+            });
+
+            // ================================================================
+            // 编解码核心
+            // ================================================================
+            function getTextEncoder(encoding) {
+                if (encoding === 'gbk') {
+                    // 简单的 GBK 模拟：使用 UTF-8 但提示用户
+                    return new TextEncoder();
+                }
+                return new TextEncoder(); // UTF-8
+            }
+
+            function getTextDecoder(encoding) {
+                if (encoding === 'gbk') {
+                    // 模拟 GBK，实际仍用 UTF-8
+                    return new TextDecoder('utf-8');
+                }
+                return new TextDecoder('utf-8');
+            }
+
+            function encodeBase64(text, encoding) {
+                try {
+                    var encoder = getTextEncoder(encoding);
+                    var bytes = encoder.encode(text);
+                    var binary = '';
+                    for (var i = 0; i < bytes.length; i++) {
+                        binary += String.fromCharCode(bytes[i]);
+                    }
+                    return btoa(binary);
+                } catch (e) {
+                    throw new Error('编码失败: ' + e.message);
+                }
+            }
+
+            function decodeBase64(base64, encoding) {
+                try {
+                    var binary = atob(base64);
+                    var bytes = new Uint8Array(binary.length);
+                    for (var i = 0; i < binary.length; i++) {
+                        bytes[i] = binary.charCodeAt(i);
+                    }
+                    var decoder = getTextDecoder(encoding);
+                    return decoder.decode(bytes);
+                } catch (e) {
+                    throw new Error('解码失败: ' + e.message);
+                }
+            }
+
+            function updateResultInfo(inputLen, outputLen, type) {
+                var html = '';
+                if (type === 'encode') {
+                    html = '<div class="result-row"><span class="label">原文本长度</span><span class="value">' + inputLen +
+                        ' 字符</span></div>';
+                    html += '<div class="result-row"><span class="label">Base64 长度</span><span class="value highlight">' +
+                        outputLen + ' 字符</span></div>';
+                    html += '<div class="result-row"><span class="label">编码增益</span><span class="value">约 ' + (
+                        (outputLen / inputLen * 100).toFixed(1)) + '%</span></div>';
+                } else {
+                    html = '<div class="result-row"><span class="label">Base64 长度</span><span class="value">' + inputLen +
+                        ' 字符</span></div>';
+                    html += '<div class="result-row"><span class="label">解码文本长度</span><span class="value highlight">' +
+                        outputLen + ' 字符</span></div>';
+                }
+                resultInfo.innerHTML = html;
+            }
+
+            function doEncode() {
+                var text = inputText.value;
+                if (!text) {
+                    showToast('请输入要编码的文本', 'error');
+                    return;
+                }
+                var encoding = encodingSelect.value;
+                try {
+                    var encoded = encodeBase64(text, encoding);
+                    outputText.value = encoded;
+                    updateResultInfo(text.length, encoded.length, 'encode');
+                    showToast('编码成功', 'success');
+                } catch (e) {
+                    showToast(e.message, 'error');
+                }
+            }
+
+            function doDecode() {
+                var base64 = outputText.value.trim();
+                if (!base64) {
+                    showToast('请输入或编码生成 Base64 字符串', 'error');
+                    return;
+                }
+                var encoding = encodingSelect.value;
+                try {
+                    var decoded = decodeBase64(base64, encoding);
+                    inputText.value = decoded;
+                    updateResultInfo(base64.length, decoded.length, 'decode');
+                    showToast('解码成功', 'success');
+                } catch (e) {
+                    showToast(e.message, 'error');
+                }
+            }
+
+            // 事件绑定
+            encodeBtn.addEventListener('click', doEncode);
+            decodeBtn.addEventListener('click', doDecode);
+
+            clearInputBtn.addEventListener('click', function() {
+                inputText.value = '';
+                resultInfo.innerHTML =
+                    '<div class="result-empty"><i class="fas fa-info-circle"></i>编解码结果将在此显示详细信息</div>';
+            });
+            clearOutputBtn.addEventListener('click', function() {
+                outputText.value = '';
+                resultInfo.innerHTML =
+                    '<div class="result-empty"><i class="fas fa-info-circle"></i>编解码结果将在此显示详细信息</div>';
+            });
+
+            copyOutputBtn.addEventListener('click', function() {
+                var text = outputText.value;
+                if (!text) {
+                    showToast('没有内容可复制', 'error');
+                    return;
+                }
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text).then(function() {
+                        showToast('已复制', 'success');
+                    }).catch(function() {
+                        fallbackCopy(text);
+                    });
+                } else {
+                    fallbackCopy(text);
+                }
+            });
+
+            function fallbackCopy(text) {
+                var textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                try {
+                    document.execCommand('copy');
+                    showToast('已复制', 'success');
+                } catch (e) {
+                    showToast('复制失败，请手动复制', 'error');
+                }
+                document.body.removeChild(textarea);
+            }
+
+            // 文件上传
+            fileInput.addEventListener('change', function() {
+                var file = this.files[0];
+                if (!file) return;
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    var content = e.target.result;
+                    inputText.value = content;
+                    showToast('文件已加载，可进行编码', 'success');
+                };
+                reader.onerror = function() {
+                    showToast('读取文件失败', 'error');
+                };
+                reader.readAsText(file);
+                this.value = '';
+            });
+
+            // ================================================================
+            // 教程数据（6 章，严格无缩进代码块）
+            // ================================================================
+            var chapters = [{
+                id: 'intro',
+                title: 'Base64 简介',
+                content: `
+                    <h2>Base64 简介</h2>
+                    <p>Base64 是一种基于 64 个可打印字符来表示二进制数据的编码方法。它常用于在文本协议（如 HTTP、电子邮件）中传输二进制数据。</p>
+                    <p>Base64 将每 3 个字节（24 位）转换为 4 个字符（每个 6 位），因此编码后数据长度约为原来的 4/3。</p>
+                    <div class="note success">Base64 不是加密，而是一种编码方式，任何人都可以解码。</div>
+                `
+            }, {
+                id: 'principle',
+                title: '编码原理',
+                content: `
+                    <h2>编码原理</h2>
+                    <p>Base64 编码过程如下：</p>
+                    <ol>
+                        <li>将输入字节流按 3 字节一组分组。</li>
+                        <li>将每组 24 位拆分为 4 个 6 位组。</li>
+                        <li>每个 6 位组映射到 Base64 字符表（A-Z, a-z, 0-9, +, /）。</li>
+                        <li>如果末尾不足 3 字节，用 <code>=</code> 填充。</li>
+                    </ol>
+                    <h3>示例</h3>
+                    <p>编码 "Man"：</p>
+                    <pre><code>M -> 77 (01001101)
+a -> 97 (01100001)
+n -> 110 (01101110)
+合并: 01001101 01100001 01101110
+拆分: 010011 (19 -> T)
+      010110 (22 -> W)
+      000101 (5 -> F)
+      101110 (46 -> u)
+结果: TWFu</code></pre>
+                    <div class="note">Base64 字符表：<code>ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/</code></div>
+                `
+            }, {
+                id: 'application',
+                title: '常见应用场景',
+                content: `
+                    <h2>应用场景</h2>
+                    <ul>
+                        <li><strong>数据 URL</strong>：在 HTML/CSS 中嵌入小图片（如 <code>data:image/png;base64,...</code>）。</li>
+                        <li><strong>电子邮件附件</strong>：MIME 编码传输二进制附件。</li>
+                        <li><strong>JWT（JSON Web Token）</strong>：头部和载荷使用 Base64 编码。</li>
+                        <li><strong>API 请求</strong>：在 JSON 中传输二进制数据（如图片、文件）。</li>
+                        <li><strong>HTTP Basic 认证</strong>：用户名和密码以 Base64 编码传输。</li>
+                    </ul>
+                    <div class="note success">了解这些场景有助于在实际开发中正确使用 Base64。</div>
+                `
+            }, {
+                id: 'urlsafe',
+                title: 'URL-safe Base64',
+                content: `
+                    <h2>URL-safe Base64</h2>
+                    <p>标准 Base64 包含 <code>+</code> 和 <code>/</code> 字符，在 URL 中需要转义。因此衍生出 URL-safe 变体：</p>
+                    <ul>
+                        <li><code>+</code> 替换为 <code>-</code></li>
+                        <li><code>/</code> 替换为 <code>_</code></li>
+                        <li>去除末尾的 <code>=</code> 填充（可选）</li>
+                    </ul>
+                    <p>本工具支持标准 Base64，如需 URL-safe，可手动替换字符。</p>
+                    <pre><code>标准: SGVsbG8sIFdvcmxkIQ==
+URL-safe: SGVsbG8sIFdvcmxkIQ</code></pre>
+                    <div class="note warning">注意：解码 URL-safe 时需将 <code>-</code> 和 <code>_</code> 替换回 <code>+</code> 和 <code>/</code>。</div>
+                `
+            }, {
+                id: 'limitations',
+                title: '限制与注意事项',
+                content: `
+                    <h2>限制与注意事项</h2>
+                    <ul>
+                        <li><strong>数据膨胀</strong>：Base64 编码后体积增加约 33%，不适合大文件传输。</li>
+                        <li><strong>不是加密</strong>：任何人都能解码，不适合保护敏感数据。</li>
+                        <li><strong>字符集限制</strong>：仅支持 ASCII 可打印字符，不适合直接存储二进制。</li>
+                        <li><strong>填充问题</strong>：不同实现可能对填充处理不同，建议统一使用标准填充。</li>
+                    </ul>
+                    <div class="note danger">注意：不要将 Base64 用作加密手段，它只是编码。</div>
+                `
+            }, {
+                id: 'practice',
+                title: '实践与工具',
+                content: `
+                    <h2>实践与工具</h2>
+                    <p>使用本工具可以快速测试编码解码。以下是一些实用技巧：</p>
+                    <ul>
+                        <li>将图片转换为 Base64 数据 URL，直接在 HTML 中嵌入。</li>
+                        <li>将 JSON 数据 Base64 编码后作为 URL 参数传递。</li>
+                        <li>使用本工具的“上传文件”功能直接编码文件内容。</li>
+                    </ul>
+                    <p>常见命令行工具：</p>
+                    <pre><code>Linux: base64 input.txt
+Windows: certutil -encode input.txt output.b64
+Python: import base64; base64.b64encode(b'text')</code></pre>
+                    <div class="note success">掌握 Base64 可以提升数据传输灵活性。</div>
+                `
+            }];
+
+            var activeChapterId = null;
+
+            function renderBookmarks(filter) {
+                filter = filter || '';
+                var list = document.getElementById('bookmarkList');
+                var filtered = filter.trim() === '' ?
+                    chapters :
+                    chapters.filter(function(ch) {
+                        return ch.title.toLowerCase().includes(filter.toLowerCase());
+                    });
+
+                if (filtered.length === 0) {
+                    list.innerHTML =
+                        '<div style="color: var(--text-muted); padding: var(--space-md); text-align: center;">未找到匹配章节</div>';
+                    return;
+                }
+
+                var html = '';
+                filtered.forEach(function(ch) {
+                    var active = (ch.id === activeChapterId) ? 'active' : '';
+                    html += '<div class="bookmark-item ' + active + '" data-id="' + ch.id + '">' +
+                        '<span class="chapter-tag">#</span> ' + ch.title +
+                        '</div>';
+                });
+                list.innerHTML = html;
+
+                list.querySelectorAll('.bookmark-item').forEach(function(el) {
+                    el.addEventListener('click', function() {
+                        var id = this.dataset.id;
+                        var chapter = chapters.find(function(c) { return c.id === id; });
+                        if (chapter) {
+                            activeChapterId = id;
+                            renderContent(chapter);
+                            document.querySelectorAll('.bookmark-item').forEach(function(b) { b.classList
+                                    .remove('active'); });
+                            this.classList.add('active');
+                            document.getElementById('tutorialSearch').value = '';
+                            renderBookmarks();
+                        }
+                    });
+                });
+
+                if (!activeChapterId && chapters.length > 0) {
+                    activeChapterId = chapters[0].id;
+                    renderContent(chapters[0]);
+                    var firstItem = list.querySelector('.bookmark-item');
+                    if (firstItem) firstItem.classList.add('active');
+                }
+            }
+
+            function renderContent(chapter) {
+                var container = document.getElementById('tutorialContent');
+                container.innerHTML = chapter.content;
+                container.scrollTop = 0;
+            }
+
+            tutorialSearch.addEventListener('input', function() {
+                var filter = this.value.trim();
+                renderBookmarks(filter);
+                var items = document.querySelectorAll('#bookmarkList .bookmark-item');
+                if (items.length > 0 && filter !== '') {
+                    items.forEach(function(b) { b.classList.remove('active'); });
+                    items[0].classList.add('active');
+                    var id = items[0].dataset.id;
+                    var chapter = chapters.find(function(c) { return c.id === id; });
+                    if (chapter) {
+                        activeChapterId = id;
+                        renderContent(chapter);
+                    }
+                } else if (filter === '') {
+                    if (activeChapterId) {
+                        var chapter = chapters.find(function(c) { return c.id === activeChapterId; });
+                        if (chapter) renderContent(chapter);
+                    } else if (chapters.length > 0) {
+                        activeChapterId = chapters[0].id;
+                        renderContent(chapters[0]);
+                    }
+                    renderBookmarks();
+                }
+            });
+
+            // ================================================================
+            // 初始化
+            // ================================================================
+            function init() {
+                renderBookmarks();
+                // 默认激活测试标签
+                testTab.style.display = 'block';
+                tutorialTab.style.display = 'none';
+                // 默认执行一次编码（展示初始内容）
+                doEncode();
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+
+        })();
+    </script>
+
+</body>
+</html>

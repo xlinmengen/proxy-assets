@@ -1,0 +1,1410 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes" />
+    <title>网络测速 · 开发者工具箱</title>
+    <link rel="stylesheet" href="/static/all.min.css" />
+    <style>
+        /* ===== 全局重置 & 暗色主题 ===== */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg-primary: #0b0914;
+            --bg-secondary: #12101e;
+            --bg-surface: #181625;
+            --bg-surface-hover: #221f35;
+            --bg-elevated: #1f1c30;
+            --border-subtle: #2a2740;
+            --border-strong: #3d385a;
+            --text-primary: #edeff5;
+            --text-secondary: #b8bfd9;
+            --text-muted: #7a83a3;
+            --text-dim: #94a3b8;
+            --accent: #6366f1;
+            --accent-light: #818cf8;
+            --accent-dark: #4f46e5;
+            --accent-glow: rgba(99, 102, 241, 0.3);
+            --success: #34d399;
+            --success-bg: rgba(52, 211, 153, 0.12);
+            --error: #f87171;
+            --error-bg: rgba(248, 113, 113, 0.12);
+            --warning: #fbbf24;
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 14px;
+            --radius-full: 9999px;
+            --shadow-soft: 0 8px 30px rgba(0, 0, 0, 0.5);
+            --shadow-glow: 0 0 30px var(--accent-glow);
+            --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --space-xs: 4px;
+            --space-sm: 8px;
+            --space-md: 14px;
+            --space-lg: 20px;
+            --space-xl: 28px;
+        }
+
+        html {
+            font-size: 15px;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            padding: 24px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            line-height: 1.6;
+            user-select: none;
+        }
+
+        .result-text,
+        .result-box .value,
+        .code-area {
+            user-select: text;
+        }
+
+        body *:not(input):not(textarea):not(.modal-input):not(.result-text):not(.code-area):not(.regex-content):not(.regex-content *) {
+            user-select: none;
+        }
+
+        /* ===== 滚动条 ===== */
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+            border-radius: 999px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-strong);
+            border-radius: 999px;
+            transition: background 0.2s;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent);
+        }
+
+        .app {
+            max-width: 1100px;
+            width: 100%;
+        }
+
+        /* ===== 头部 ===== */
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0 20px 0;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .app-header .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .app-header .brand i {
+            font-size: 28px;
+            color: var(--accent-light);
+            filter: drop-shadow(0 0 8px var(--accent-glow));
+        }
+        .app-header .brand h1 {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            background: linear-gradient(135deg, #ffffff 40%, var(--accent-light));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .app-header .brand .version {
+            font-size: 13px;
+            color: var(--text-muted);
+            -webkit-text-fill-color: var(--text-muted);
+            background: var(--bg-surface);
+            padding: 0 10px;
+            border-radius: 999px;
+            border: 1px solid var(--border-subtle);
+            font-weight: 500;
+            margin-left: 4px;
+        }
+
+        .app-header .status-group {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .app-header .back-btn {
+            font-size: 13px;
+            color: var(--text-secondary);
+            background: var(--bg-surface);
+            padding: 4px 14px;
+            border-radius: 999px;
+            border: 1px solid var(--border-subtle);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            transition: all var(--transition);
+            white-space: nowrap;
+        }
+        .app-header .back-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent-light);
+            box-shadow: 0 0 16px var(--accent-glow);
+        }
+
+        .app-header .badge {
+            background: var(--success-bg);
+            color: var(--success);
+            padding: 5px 16px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid rgba(52, 211, 153, 0.2);
+            white-space: nowrap;
+        }
+        .app-header .badge i {
+            font-size: 12px;
+        }
+
+        /* ===== 标签页 ===== */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: 0;
+        }
+        .tab-btn {
+            background: transparent;
+            border: none;
+            padding: 10px 22px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-dim);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all var(--transition);
+            font-family: inherit;
+        }
+        .tab-btn:hover {
+            color: var(--text-primary);
+        }
+        .tab-btn.active {
+            color: var(--accent-light);
+            border-bottom-color: var(--accent-light);
+        }
+
+        /* ===== 面板通用 ===== */
+        .panel {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 20px 22px 22px;
+            transition: border-color var(--transition), box-shadow var(--transition);
+            height: 580px;
+            resize: vertical;
+            overflow-y: auto;
+            min-height: 440px;
+            display: flex;
+            flex-direction: column;
+        }
+        .panel:hover {
+            border-color: var(--border-strong);
+        }
+
+        .panel-title {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .panel-title i {
+            font-size: 14px;
+            color: var(--accent-light);
+        }
+
+        /* ===== 测速布局 ===== */
+        .speed-grid {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+            gap: var(--space-md);
+        }
+
+        /* ===== 控制区 ===== */
+        .control-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-sm);
+            align-items: flex-end;
+        }
+        .control-row .input-group {
+            flex: 1;
+            min-width: 130px;
+        }
+        .input-group label {
+            display: block;
+            font-size: 12px;
+            color: var(--text-dim);
+            margin-bottom: var(--space-xs);
+            font-weight: 500;
+        }
+        .input-group select,
+        .input-group input {
+            width: 100%;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+            font-size: 13px;
+            padding: var(--space-xs) var(--space-sm);
+            transition: border var(--transition), box-shadow var(--transition);
+            outline: none;
+            height: 34px;
+        }
+        .input-group select:focus,
+        .input-group input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+        .input-group .hint {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: var(--space-xs);
+        }
+
+        .action-row {
+            display: flex;
+            gap: var(--space-sm);
+            flex-wrap: wrap;
+            margin-top: var(--space-sm);
+            flex-shrink: 0;
+        }
+        .action-row .btn {
+            background: var(--accent);
+            border: none;
+            border-radius: var(--radius-md);
+            color: #fff;
+            padding: 6px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            min-height: 36px;
+        }
+        .action-row .btn:hover {
+            background: var(--accent-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px var(--accent-glow);
+        }
+        .action-row .btn-danger {
+            background: var(--error);
+        }
+        .action-row .btn-danger:hover {
+            background: #dc2626;
+        }
+        .action-row .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        /* ===== 实时显示 ===== */
+        .speed-display {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: var(--space-md);
+        }
+        @media (max-width: 600px) {
+            .speed-display {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        .speed-item {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: var(--space-sm) var(--space-md);
+            text-align: center;
+        }
+        .speed-item .label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .speed-item .value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+            font-family: 'SF Mono', monospace;
+            margin: 2px 0;
+        }
+        .speed-item .unit {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+        .speed-item .sub {
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+
+        .progress-bar-wrap {
+            width: 100%;
+            height: 6px;
+            background: var(--bg-secondary);
+            border-radius: 3px;
+            overflow: hidden;
+            margin: var(--space-sm) 0;
+        }
+        .progress-bar-wrap .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--accent-light));
+            border-radius: 3px;
+            width: 0%;
+            transition: width 0.25s ease;
+        }
+
+        /* ===== 结果详情 ===== */
+        .result-details {
+            flex: 1;
+            overflow-y: auto;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            min-height: 60px;
+        }
+        .result-details .result-row {
+            display: flex;
+            justify-content: space-between;
+            padding: var(--space-xs) 0;
+            border-bottom: 1px solid var(--border-subtle);
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        .result-details .result-row:last-child {
+            border-bottom: none;
+        }
+        .result-details .result-row .label {
+            color: var(--text-muted);
+        }
+        .result-details .result-row .value {
+            color: var(--text-primary);
+            font-family: 'SF Mono', monospace;
+            font-weight: 500;
+        }
+        .result-details .result-row .value.highlight {
+            color: var(--accent-light);
+        }
+
+        .result-empty {
+            color: var(--text-muted);
+            text-align: center;
+            padding: var(--space-md) 0;
+            font-size: 14px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+        .result-empty i {
+            font-size: 32px;
+            margin-bottom: var(--space-sm);
+            color: var(--border-subtle);
+        }
+
+        /* ===== 教程样式 ===== */
+        .tutorial-card {
+            height: 500px;
+            min-height: 450px;
+            max-height: 850px;
+            resize: vertical;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+        }
+        .tutorial-card .card-header {
+            padding: var(--space-md) var(--space-lg);
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 0;
+            flex-shrink: 0;
+        }
+        .tutorial-body {
+            display: flex;
+            flex: 1;
+            min-height: 0;
+        }
+        .tutorial-sidebar {
+            width: 250px;
+            flex-shrink: 0;
+            background: var(--bg-primary);
+            border-right: 1px solid var(--border-subtle);
+            display: flex;
+            flex-direction: column;
+            padding: var(--space-md);
+        }
+        .tutorial-sidebar .search-box {
+            margin-bottom: var(--space-md);
+        }
+        .tutorial-sidebar .search-box input {
+            width: 100%;
+            padding: var(--space-sm) var(--space-md);
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-size: 13px;
+            outline: none;
+            transition: border var(--transition);
+        }
+        .tutorial-sidebar .search-box input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px var(--accent-glow);
+        }
+        .tutorial-sidebar .bookmark-list {
+            flex: 1;
+            overflow-y: auto;
+            margin: 0 -8px;
+            padding: 0 8px;
+        }
+        .tutorial-sidebar .bookmark-list::-webkit-scrollbar {
+            width: 4px;
+        }
+        .bookmark-item {
+            padding: 5px 12px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: all var(--transition);
+            font-size: 13px;
+            border-left: 2px solid transparent;
+            margin-bottom: 1px;
+        }
+        .bookmark-item:hover {
+            background: var(--bg-surface-hover);
+            color: var(--text-primary);
+        }
+        .bookmark-item.active {
+            color: var(--accent-light);
+            background: rgba(99, 102, 241, 0.12);
+            border-left-color: var(--accent);
+        }
+        .bookmark-item .chapter-tag {
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-right: 6px;
+            opacity: 0.6;
+        }
+        .tutorial-content {
+            flex: 1;
+            padding: var(--space-lg);
+            overflow-y: auto;
+            min-height: 0;
+        }
+        .tutorial-content::-webkit-scrollbar {
+            width: 4px;
+        }
+        .tutorial-content h2 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--space-md);
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: var(--space-sm);
+        }
+        .tutorial-content h3 {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--accent-light);
+            margin: var(--space-md) 0 var(--space-sm);
+        }
+        .tutorial-content p {
+            color: var(--text-secondary);
+            line-height: 1.8;
+            margin-bottom: var(--space-md);
+        }
+        .tutorial-content pre {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: var(--space-md) var(--space-lg);
+            overflow-x: auto;
+            font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+            font-size: 12.5px;
+            color: var(--text-primary);
+            margin: var(--space-md) 0;
+            line-height: 1.7;
+        }
+        .tutorial-content pre code {
+            display: block;
+            white-space: pre;
+        }
+        .tutorial-content ul {
+            padding-left: var(--space-xl);
+            color: var(--text-secondary);
+            margin-bottom: var(--space-md);
+        }
+        .tutorial-content ul li {
+            margin-bottom: var(--space-xs);
+        }
+        .tutorial-content .note {
+            background: rgba(99, 102, 241, 0.06);
+            border-left: 3px solid var(--accent);
+            padding: var(--space-sm) var(--space-md);
+            border-radius: var(--radius-sm);
+            margin: var(--space-md) 0;
+            color: var(--text-dim);
+            font-size: 13px;
+        }
+        .tutorial-content .note.warning {
+            border-left-color: var(--warning);
+            background: rgba(251, 191, 36, 0.06);
+        }
+        .tutorial-content .note.danger {
+            border-left-color: var(--error);
+            background: rgba(239, 68, 68, 0.06);
+        }
+        .tutorial-content .note.success {
+            border-left-color: var(--success);
+            background: rgba(52, 211, 153, 0.06);
+        }
+
+        /* ===== Toast ===== */
+        #toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(12px);
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 12px 24px;
+            font-size: 13px;
+            display: none;
+            align-items: center;
+            gap: 12px;
+            box-shadow: var(--shadow-soft);
+            z-index: 999;
+            backdrop-filter: blur(12px);
+            max-width: 92vw;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        #toast.show {
+            display: flex;
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        #toast.success {
+            border-left: 4px solid var(--success);
+            color: var(--success);
+        }
+        #toast.error {
+            border-left: 4px solid var(--error);
+            color: var(--error);
+        }
+        #toast.warning {
+            border-left: 4px solid var(--warning);
+            color: var(--warning);
+        }
+        #toast i {
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 820px) {
+            .tutorial-card {
+                height: 600px;
+                min-height: 400px;
+            }
+            .tutorial-body {
+                flex-direction: column;
+            }
+            .tutorial-sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid var(--border-subtle);
+                max-height: 180px;
+                flex-shrink: 0;
+            }
+            .tutorial-content {
+                padding: var(--space-md);
+            }
+            .app-header .brand h1 {
+                font-size: 20px;
+            }
+            .app-header .back-btn {
+                font-size: 12px;
+                padding: 2px 10px;
+            }
+            .tab-btn {
+                padding: 8px 16px;
+                font-size: 13px;
+            }
+            .panel {
+                height: auto;
+                min-height: 420px;
+                resize: vertical;
+            }
+            .speed-display {
+                grid-template-columns: 1fr 1fr;
+            }
+            .control-row .input-group {
+                min-width: 100px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 12px;
+            }
+            .app-header {
+                padding: 12px 0 16px 0;
+                margin-bottom: 16px;
+                gap: 10px;
+            }
+            .app-header .brand i {
+                font-size: 22px;
+            }
+            .app-header .brand h1 {
+                font-size: 18px;
+            }
+            .app-header .brand .version {
+                font-size: 11px;
+                padding: 0 8px;
+            }
+            .app-header .status-group {
+                gap: 10px;
+            }
+            .app-header .back-btn {
+                font-size: 11px;
+                padding: 2px 8px;
+            }
+            .app-header .badge {
+                font-size: 10px;
+                padding: 2px 10px;
+            }
+            .panel {
+                padding: 16px 14px 18px;
+                height: auto;
+                min-height: 380px;
+            }
+            .speed-display {
+                grid-template-columns: 1fr 1fr;
+                gap: var(--space-sm);
+            }
+            .speed-item .value {
+                font-size: 20px;
+            }
+            .result-details .result-row {
+                font-size: 12px;
+                flex-wrap: wrap;
+                gap: var(--space-xs);
+            }
+            .tutorial-card {
+                height: 500px;
+                min-height: 350px;
+            }
+            .tab-btn {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+            .action-row .btn {
+                font-size: 12px;
+                padding: 4px 12px;
+                min-height: 32px;
+            }
+            .control-row .input-group {
+                min-width: 80px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app">
+        <!-- ===== 头部 ===== -->
+        <header class="app-header">
+            <div class="brand">
+                <i class="fas fa-tachometer-alt"></i>
+                <h1>网络测速</h1>
+                <span class="version">v2.1</span>
+            </div>
+            <div class="status-group">
+                <a href="/tools" class="back-btn" title="返回工具箱">
+                    <i class="fas fa-arrow-left"></i> 返回
+                </a>
+                <span class="badge">
+                    <i class="fas fa-lock"></i> 纯前端本地
+                </span>
+            </div>
+        </header>
+
+        <!-- ===== 标签页 ===== -->
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="test">测速</button>
+            <button class="tab-btn" data-tab="tutorial">教程</button>
+        </div>
+
+        <!-- ===== 标签内容：测速 ===== -->
+        <div id="testTab" class="tab-content">
+            <div class="panel">
+                <div class="panel-title"><i class="fas fa-gauge-high"></i> 网速测试</div>
+
+                <div class="speed-grid">
+                    <!-- 控制区 -->
+                    <div>
+                        <div class="control-row">
+                            <div class="input-group">
+                                <label for="serverSelect">测速服务器</label>
+                                <select id="serverSelect">
+                                    <option value="https://httpbin.org">国内 (httpbin.org)</option>
+                                    <option value="https://httpbin.kde.org">国外 (httpbin.kde.org)</option>
+                                    <option value="custom">自定义</option>
+                                </select>
+                            </div>
+                            <div class="input-group" id="customServerGroup" style="display:none;">
+                                <label for="customServer">自定义服务器</label>
+                                <input type="text" id="customServer" placeholder="https://example.com" value="https://httpbin.org" />
+                                <div class="hint">需支持 /stream-bytes 和 /post</div>
+                            </div>
+                            <div class="input-group" style="min-width:80px;">
+                                <label for="downSize">下行大小 (MB)</label>
+                                <input type="number" id="downSize" value="10" min="1" max="100" step="1" />
+                            </div>
+                            <div class="input-group" style="min-width:80px;">
+                                <label for="upSize">上行大小 (MB)</label>
+                                <input type="number" id="upSize" value="5" min="1" max="50" step="1" />
+                            </div>
+                        </div>
+                        <div class="action-row">
+                            <button class="btn" id="startBtn"><i class="fas fa-play"></i> 开始测速</button>
+                            <button class="btn btn-danger" id="stopBtn" disabled><i class="fas fa-stop"></i> 停止</button>
+                        </div>
+                    </div>
+
+                    <!-- 实时速度 -->
+                    <div class="speed-display" id="speedDisplay">
+                        <div class="speed-item">
+                            <div class="label">下行速度</div>
+                            <div class="value" id="downSpeed">--</div>
+                            <div class="unit">Mbps</div>
+                        </div>
+                        <div class="speed-item">
+                            <div class="label">上行速度</div>
+                            <div class="value" id="upSpeed">--</div>
+                            <div class="unit">Mbps</div>
+                        </div>
+                        <div class="speed-item">
+                            <div class="label">延迟 (Ping)</div>
+                            <div class="value" id="pingValue">--</div>
+                            <div class="unit">ms</div>
+                        </div>
+                    </div>
+
+                    <!-- 进度条 -->
+                    <div class="progress-bar-wrap">
+                        <div class="progress-bar" id="progressBar" style="width:0%;"></div>
+                    </div>
+
+                    <!-- 结果详情 -->
+                    <div class="result-details" id="resultDetails">
+                        <div class="result-empty">
+                            <i class="fas fa-arrow-pointer"></i>
+                            点击「开始测速」测试您的网络速度
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== 标签内容：教程 ===== -->
+        <div id="tutorialTab" class="tab-content" style="display: none;">
+            <div class="panel tutorial-card">
+                <div class="card-header">
+                    <i class="fas fa-book" style="font-size:20px;color:var(--accent-light);margin-right:8px;"></i>
+                    <h3 style="display:inline-block;font-size:18px;font-weight:600;color:var(--text-main);">网络测速相关教程</h3>
+                    <span style="float:right;font-size:12px;color:var(--text-muted);">共 5 章</span>
+                </div>
+                <div class="tutorial-body">
+                    <div class="tutorial-sidebar">
+                        <div class="search-box">
+                            <input type="text" id="tutorialSearch" placeholder="搜索章节..." />
+                        </div>
+                        <div class="bookmark-list" id="bookmarkList"></div>
+                    </div>
+                    <div class="tutorial-content" id="tutorialContent"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== Toast ===== -->
+        <div id="toast">
+            <i id="toastIcon"></i>
+            <span id="toastMsg"></span>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // ================================================================
+            // DOM 引用
+            // ================================================================
+            var serverSelect = document.getElementById('serverSelect');
+            var customServerGroup = document.getElementById('customServerGroup');
+            var customServerInput = document.getElementById('customServer');
+            var downSizeInput = document.getElementById('downSize');
+            var upSizeInput = document.getElementById('upSize');
+            var startBtn = document.getElementById('startBtn');
+            var stopBtn = document.getElementById('stopBtn');
+            var downSpeedEl = document.getElementById('downSpeed');
+            var upSpeedEl = document.getElementById('upSpeed');
+            var pingValueEl = document.getElementById('pingValue');
+            var progressBar = document.getElementById('progressBar');
+            var resultDetails = document.getElementById('resultDetails');
+
+            var testTab = document.getElementById('testTab');
+            var tutorialTab = document.getElementById('tutorialTab');
+            var tabBtns = document.querySelectorAll('.tab-btn');
+
+            // 教程
+            var tutorialSearch = document.getElementById('tutorialSearch');
+            var bookmarkList = document.getElementById('bookmarkList');
+            var tutorialContent = document.getElementById('tutorialContent');
+
+            // Toast
+            var toast = document.getElementById('toast');
+            var toastIcon = document.getElementById('toastIcon');
+            var toastMsg = document.getElementById('toastMsg');
+            var toastTimer = null;
+
+            // ================================================================
+            // 状态
+            // ================================================================
+            var isTesting = false;
+            var abortController = null;
+            var xhrUpload = null;
+
+            // ================================================================
+            // Toast
+            // ================================================================
+            function showToast(msg, type) {
+                type = type || 'success';
+                if (toastTimer) {
+                    clearTimeout(toastTimer);
+                    toastTimer = null;
+                }
+                toastIcon.className = type === 'error' ? 'fas fa-exclamation-circle' :
+                    type === 'warning' ? 'fas fa-exclamation-triangle' :
+                    'fas fa-check-circle';
+                toastMsg.textContent = msg;
+                toast.className = type === 'error' ? 'error' :
+                    type === 'warning' ? 'warning' :
+                    'success';
+                toast.classList.add('show');
+                toastTimer = setTimeout(function() {
+                    toast.classList.remove('show');
+                    toastTimer = null;
+                }, 3000);
+            }
+
+            // ================================================================
+            // 工具函数
+            // ================================================================
+            function formatSpeed(bytesPerSecond) {
+                if (bytesPerSecond < 0) return '--';
+                var mbps = (bytesPerSecond * 8) / 1000000;
+                return mbps.toFixed(2);
+            }
+
+            function formatSize(bytes) {
+                if (bytes < 1024) return bytes + ' B';
+                if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+                if (bytes < 1073741824) return (bytes / 1048576).toFixed(1) + ' MB';
+                return (bytes / 1073741824).toFixed(2) + ' GB';
+            }
+
+            function getServerUrl() {
+                var val = serverSelect.value;
+                if (val === 'custom') {
+                    var custom = customServerInput.value.trim();
+                    if (!custom) return null;
+                    return custom;
+                }
+                return val;
+            }
+
+            function getDownSize() {
+                var val = parseInt(downSizeInput.value, 10);
+                if (isNaN(val) || val < 1) return 10;
+                if (val > 100) return 100;
+                return val;
+            }
+
+            function getUpSize() {
+                var val = parseInt(upSizeInput.value, 10);
+                if (isNaN(val) || val < 1) return 5;
+                if (val > 50) return 50;
+                return val;
+            }
+
+            // ================================================================
+            // 测速核心
+            // ================================================================
+            function runSpeedTest() {
+                if (isTesting) return;
+                isTesting = true;
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+                abortController = new AbortController();
+
+                downSpeedEl.textContent = '--';
+                upSpeedEl.textContent = '--';
+                pingValueEl.textContent = '--';
+                progressBar.style.width = '0%';
+                resultDetails.innerHTML = '<div class="result-empty"><i class="fas fa-spinner fa-spin"></i> 正在测试...</div>';
+
+                var serverUrl = getServerUrl();
+                if (!serverUrl) {
+                    showToast('请输入有效的服务器地址', 'error');
+                    finishTest();
+                    return;
+                }
+                if (!serverUrl.endsWith('/')) serverUrl += '/';
+
+                var downSize = getDownSize() * 1024 * 1024;
+                var upSize = getUpSize() * 1024 * 1024;
+                var signal = abortController.signal;
+
+                (async function() {
+                    try {
+                        // 1. Ping 测试
+                        var pingStart = performance.now();
+                        await fetch(serverUrl + 'get', { signal: signal, method: 'HEAD' });
+                        var pingMs = (performance.now() - pingStart).toFixed(1);
+                        pingValueEl.textContent = pingMs;
+
+                        // 2. 下行测试
+                        var downStart = performance.now();
+                        var downBytes = 0;
+                        var downSpeedMbps = 0;
+                        var downPeak = 0;
+
+                        var downResponse = await fetch(serverUrl + 'stream-bytes/' + downSize, { signal: signal });
+                        if (!downResponse.ok) throw new Error('下行测试失败: ' + downResponse.status);
+                        var reader = downResponse.body.getReader();
+                        var lastUpdate = performance.now();
+                        var lastBytes = 0;
+
+                        while (true) {
+                            var { done, value } = await reader.read();
+                            if (done) break;
+                            downBytes += value.length;
+                            var now = performance.now();
+                            var elapsed = (now - lastUpdate) / 1000;
+                            if (elapsed >= 0.1) {
+                                var speed = (downBytes - lastBytes) / elapsed;
+                                downSpeedMbps = (speed * 8) / 1000000;
+                                if (downSpeedMbps > downPeak) downPeak = downSpeedMbps;
+                                downSpeedEl.textContent = downSpeedMbps.toFixed(2);
+                                var progress = (downBytes / downSize) * 50;
+                                progressBar.style.width = Math.min(progress, 50) + '%';
+                                lastUpdate = now;
+                                lastBytes = downBytes;
+                            }
+                            if (signal.aborted) {
+                                reader.cancel();
+                                throw new Error('已取消');
+                            }
+                        }
+                        var downTotalTime = (performance.now() - downStart) / 1000;
+                        var downAvgSpeed = (downBytes / downTotalTime) * 8 / 1000000;
+                        progressBar.style.width = '50%';
+
+                        // 3. 上行测试
+                        var upStart = performance.now();
+                        var upBytes = 0;
+                        var upSpeedMbps = 0;
+                        var upPeak = 0;
+
+                        // 生成随机数据
+                        var chunkSize = 64 * 1024;
+                        var chunks = [];
+                        var remaining = upSize;
+                        while (remaining > 0) {
+                            var size = Math.min(chunkSize, remaining);
+                            var buf = new Uint8Array(size);
+                            crypto.getRandomValues(buf);
+                            chunks.push(buf);
+                            remaining -= size;
+                        }
+                        var blob = new Blob(chunks);
+
+                        xhrUpload = new XMLHttpRequest();
+                        var uploadComplete = new Promise(function(resolve, reject) {
+                            xhrUpload.open('POST', serverUrl + 'post', true);
+                            xhrUpload.setRequestHeader('Content-Type', 'application/octet-stream');
+                            xhrUpload.upload.addEventListener('progress', function(e) {
+                                if (e.lengthComputable) {
+                                    upBytes = e.loaded;
+                                    var now2 = performance.now();
+                                    var elapsed2 = (now2 - upStart) / 1000;
+                                    if (elapsed2 > 0) {
+                                        var speedUp = upBytes / elapsed2;
+                                        upSpeedMbps = (speedUp * 8) / 1000000;
+                                        if (upSpeedMbps > upPeak) upPeak = upSpeedMbps;
+                                        upSpeedEl.textContent = upSpeedMbps.toFixed(2);
+                                    }
+                                    var prog = 50 + (e.loaded / e.total) * 50;
+                                    progressBar.style.width = Math.min(prog, 100) + '%';
+                                }
+                            });
+                            xhrUpload.onload = function() {
+                                if (xhrUpload.status >= 200 && xhrUpload.status < 300) {
+                                    resolve();
+                                } else {
+                                    reject(new Error('上传失败: ' + xhrUpload.status));
+                                }
+                            };
+                            xhrUpload.onerror = function() { reject(new Error('上传请求失败')); };
+                            xhrUpload.onabort = function() { reject(new Error('已取消')); };
+                            xhrUpload.send(blob);
+                        });
+
+                        await uploadComplete;
+                        var upTotalTime = (performance.now() - upStart) / 1000;
+                        var upAvgSpeed = (upBytes / upTotalTime) * 8 / 1000000;
+
+                        // 最终显示
+                        downSpeedEl.textContent = downAvgSpeed.toFixed(2);
+                        upSpeedEl.textContent = upAvgSpeed.toFixed(2);
+                        progressBar.style.width = '100%';
+
+                        // 显示结果
+                        showResult({
+                            ping: pingMs,
+                            downSpeed: downAvgSpeed,
+                            upSpeed: upAvgSpeed,
+                            downBytes: downBytes,
+                            upBytes: upBytes,
+                            downTime: downTotalTime,
+                            upTime: upTotalTime,
+                            downPeak: downPeak,
+                            upPeak: upPeak
+                        });
+
+                        showToast('测速完成', 'success');
+                    } catch (err) {
+                        if (err.name === 'AbortError' || err.message === '已取消') {
+                            showToast('测速已取消', 'warning');
+                            resultDetails.innerHTML = '<div class="result-empty"><i class="fas fa-ban"></i> 测速已取消</div>';
+                        } else {
+                            showToast('测速失败: ' + err.message + '，建议更换服务器', 'error');
+                            resultDetails.innerHTML = '<div class="result-empty"><i class="fas fa-exclamation-circle"></i> 测速失败: ' +
+                                escapeHtml(err.message) + '<br/><span style="font-size:12px;color:var(--text-muted);">请检查网络或更换服务器</span></div>';
+                        }
+                    } finally {
+                        finishTest();
+                    }
+                })();
+            }
+
+            function showResult(data) {
+                var rows = [
+                    { label: '延迟 (Ping)', value: data.ping + ' ms' },
+                    { label: '下行速度', value: data.downSpeed.toFixed(2) + ' Mbps', highlight: true },
+                    { label: '下行峰值速度', value: data.downPeak.toFixed(2) + ' Mbps' },
+                    { label: '下行数据量', value: formatSize(data.downBytes) },
+                    { label: '下行耗时', value: data.downTime.toFixed(2) + ' s' },
+                    { label: '上行速度', value: data.upSpeed.toFixed(2) + ' Mbps', highlight: true },
+                    { label: '上行峰值速度', value: data.upPeak.toFixed(2) + ' Mbps' },
+                    { label: '上行数据量', value: formatSize(data.upBytes) },
+                    { label: '上行耗时', value: data.upTime.toFixed(2) + ' s' }
+                ];
+                var html = '';
+                rows.forEach(function(row) {
+                    var cls = row.highlight ? 'highlight' : '';
+                    html += '<div class="result-row"><span class="label">' + row.label + '</span><span class="value ' +
+                        cls + '">' + row.value + '</span></div>';
+                });
+                resultDetails.innerHTML = html;
+            }
+
+            function finishTest() {
+                isTesting = false;
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+                abortController = null;
+                xhrUpload = null;
+                if (progressBar.style.width !== '100%') {
+                    progressBar.style.width = progressBar.style.width || '0%';
+                }
+            }
+
+            function stopTest() {
+                if (abortController) abortController.abort();
+                if (xhrUpload) xhrUpload.abort();
+                downSpeedEl.textContent = '--';
+                upSpeedEl.textContent = '--';
+                pingValueEl.textContent = '--';
+                progressBar.style.width = '0%';
+                resultDetails.innerHTML = '<div class="result-empty"><i class="fas fa-ban"></i> 测速已停止</div>';
+                finishTest();
+                showToast('正在停止...', 'warning');
+            }
+
+            function escapeHtml(text) {
+                if (!text) return '';
+                var div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            // ================================================================
+            // 事件绑定
+            // ================================================================
+
+            startBtn.addEventListener('click', runSpeedTest);
+            stopBtn.addEventListener('click', stopTest);
+
+            serverSelect.addEventListener('change', function() {
+                if (this.value === 'custom') {
+                    customServerGroup.style.display = 'block';
+                } else {
+                    customServerGroup.style.display = 'none';
+                }
+            });
+
+            // ================================================================
+            // 标签切换
+            // ================================================================
+            tabBtns.forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    tabBtns.forEach(function(b) { b.classList.remove('active'); });
+                    this.classList.add('active');
+                    var tab = this.dataset.tab;
+                    testTab.style.display = tab === 'test' ? 'block' : 'none';
+                    tutorialTab.style.display = tab === 'tutorial' ? 'block' : 'none';
+                    if (tab === 'tutorial') {
+                        renderBookmarks();
+                    }
+                });
+            });
+
+            // ================================================================
+            // 教程数据
+            // ================================================================
+            var chapters = [{
+                id: 'intro',
+                title: '网络测速简介',
+                content: `
+                    <h2>网络测速简介</h2>
+                    <p>网络测速用于测量互联网连接的性能，包括下载速度、上传速度和延迟（Ping）。</p>
+                    <ul>
+                        <li><strong>下载速度</strong>：数据从服务器到客户端的传输速率，单位 Mbps。</li>
+                        <li><strong>上传速度</strong>：数据从客户端到服务器的传输速率。</li>
+                        <li><strong>延迟 (Ping)</strong>：数据包往返时间，单位 ms，越低越好。</li>
+                    </ul>
+                    <p>本工具通过下载/上传测试文件来计算速度，并显示实时进度和详细结果。</p>
+                    <div class="note success">测速结果受网络状况、服务器距离、带宽限制等因素影响。</div>
+                `
+            }, {
+                id: 'howitworks',
+                title: '测速原理',
+                content: `
+                    <h2>测速原理</h2>
+                    <p>测速过程分为三个步骤：</p>
+                    <ol>
+                        <li><strong>Ping 测试</strong>：发送 HEAD 请求，测量往返时间。</li>
+                        <li><strong>下行测试</strong>：通过 HTTP GET 请求下载指定大小的文件，计算平均速度和实时速度。</li>
+                        <li><strong>上行测试</strong>：通过 HTTP POST 上传随机生成的数据，计算平均速度和实时速度。</li>
+                    </ol>
+                    <p>所有测试使用 HTTPS 协议，确保数据传输安全。</p>
+                    <div class="note">本工具使用 <code>httpbin</code> 作为测速服务器，支持自定义服务器。</div>
+                `
+            }, {
+                id: 'servers',
+                title: '测速服务器选择',
+                content: `
+                    <h2>测速服务器选择</h2>
+                    <p>选择合适的测速服务器可提高测试准确性。本工具提供多个预设服务器：</p>
+                    <ul>
+                        <li><strong>国内 (httpbin.org)</strong>：默认选项，适合国内用户。</li>
+                        <li><strong>国外 (httpbin.kde.org)</strong>：适用于海外用户或测试国际线路。</li>
+                        <li><strong>自定义</strong>：可输入任意支持 <code>stream-bytes</code> 和 <code>post</code> 端点的服务器。</li>
+                    </ul>
+                    <p>建议选择距离您较近的服务器，以获得更真实的网速。</p>
+                    <div class="note warning">自定义服务器需遵循 httpbin 的 API 规范（/stream-bytes 和 /post）。</div>
+                `
+            }, {
+                id: 'interpret',
+                title: '如何解读测速结果',
+                content: `
+                    <h2>如何解读测速结果</h2>
+                    <ul>
+                        <li><strong>下载速度</strong>：反映您的网络下载能力，影响网页加载、文件下载等。</li>
+                        <li><strong>上传速度</strong>：影响文件上传、视频会议、云备份等。</li>
+                        <li><strong>延迟</strong>：影响实时应用（游戏、视频通话）的体验，越低越好。</li>
+                        <li><strong>峰值速度</strong>：测试过程中的最大瞬时速度，可反映网络的突发能力。</li>
+                    </ul>
+                    <p>多次测速取平均值可得到更准确的结果。</p>
+                    <div class="note success">不同应用对网络要求不同，建议根据实际需求评估。</div>
+                `
+            }, {
+                id: 'tips',
+                title: '测速注意事项',
+                content: `
+                    <h2>测速注意事项</h2>
+                    <ul>
+                        <li>关闭其他占用带宽的应用程序（如视频、下载）。</li>
+                        <li>使用有线连接或靠近路由器以获取最佳信号。</li>
+                        <li>测速过程中勿进行其他网络操作。</li>
+                        <li>多次测试取平均值，以获得更准确结果。</li>
+                        <li>不同时间段的测速结果可能不同，受网络高峰影响。</li>
+                    </ul>
+                    <div class="note success">理解测速结果有助于优化网络使用和排查问题。</div>
+                `
+            }];
+
+            var activeChapterId = null;
+
+            function renderBookmarks(filter) {
+                filter = filter || '';
+                var list = document.getElementById('bookmarkList');
+                var filtered = filter.trim() === '' ?
+                    chapters :
+                    chapters.filter(function(ch) {
+                        return ch.title.toLowerCase().includes(filter.toLowerCase());
+                    });
+
+                if (filtered.length === 0) {
+                    list.innerHTML =
+                        '<div style="color: var(--text-muted); padding: var(--space-md); text-align: center;">未找到匹配章节</div>';
+                    return;
+                }
+
+                var html = '';
+                filtered.forEach(function(ch) {
+                    var active = (ch.id === activeChapterId) ? 'active' : '';
+                    html += '<div class="bookmark-item ' + active + '" data-id="' + ch.id + '">' +
+                        '<span class="chapter-tag">#</span> ' + ch.title +
+                        '</div>';
+                });
+                list.innerHTML = html;
+
+                list.querySelectorAll('.bookmark-item').forEach(function(el) {
+                    el.addEventListener('click', function() {
+                        var id = this.dataset.id;
+                        var chapter = chapters.find(function(c) { return c.id === id; });
+                        if (chapter) {
+                            activeChapterId = id;
+                            renderContent(chapter);
+                            document.querySelectorAll('.bookmark-item').forEach(function(b) { b.classList
+                                    .remove('active'); });
+                            this.classList.add('active');
+                            document.getElementById('tutorialSearch').value = '';
+                            renderBookmarks();
+                        }
+                    });
+                });
+
+                if (!activeChapterId && chapters.length > 0) {
+                    activeChapterId = chapters[0].id;
+                    renderContent(chapters[0]);
+                    var firstItem = list.querySelector('.bookmark-item');
+                    if (firstItem) firstItem.classList.add('active');
+                }
+            }
+
+            function renderContent(chapter) {
+                var container = document.getElementById('tutorialContent');
+                container.innerHTML = chapter.content;
+                container.scrollTop = 0;
+            }
+
+            tutorialSearch.addEventListener('input', function() {
+                var filter = this.value.trim();
+                renderBookmarks(filter);
+                var items = document.querySelectorAll('#bookmarkList .bookmark-item');
+                if (items.length > 0 && filter !== '') {
+                    items.forEach(function(b) { b.classList.remove('active'); });
+                    items[0].classList.add('active');
+                    var id = items[0].dataset.id;
+                    var chapter = chapters.find(function(c) { return c.id === id; });
+                    if (chapter) {
+                        activeChapterId = id;
+                        renderContent(chapter);
+                    }
+                } else if (filter === '') {
+                    if (activeChapterId) {
+                        var chapter = chapters.find(function(c) { return c.id === activeChapterId; });
+                        if (chapter) renderContent(chapter);
+                    } else if (chapters.length > 0) {
+                        activeChapterId = chapters[0].id;
+                        renderContent(chapters[0]);
+                    }
+                    renderBookmarks();
+                }
+            });
+
+            // ================================================================
+            // 初始化
+            // ================================================================
+            function init() {
+                renderBookmarks();
+                testTab.style.display = 'block';
+                tutorialTab.style.display = 'none';
+                customServerGroup.style.display = 'none';
+                stopBtn.disabled = true;
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+
+        })();
+    </script>
+
+</body>
+</html>
