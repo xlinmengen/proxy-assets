@@ -31,49 +31,42 @@ class DDoSProtector:
         if violation_factor <= 0:
             violation_factor = 0.001
         self.violation_factor = self._map_curve(
-            min(10.0, max(0.001, violation_factor)) / 5.0,  # 先映射到 (0,2]
-            power=1.5  # 使用 1.5 次方曲线，先缓后陡
+            min(10.0, max(0.001, violation_factor)) / 5.0,
+            power=1.5
         )
 
         self.max_block_time = max_block_time
         self.suspicion_threshold = suspicion_threshold
 
-        # 解封衰减因子映射 (0, 10] -> (0, 1]（曲线：平方映射）
+        # 解封衰减因子映射
         if release_factor <= 0:
             release_factor = 0.001
         raw_release = min(10.0, max(0.001, release_factor)) / 10.0
-        # 使用平方根曲线，使得较大值时衰减更慢
         self.release_decay_factor = self._map_curve(raw_release, power=0.5)
 
-        # 整体速率控制（曲线：指数衰减）
+        # 整体速率控制
         self.overall_rate_limit = max(0.0, min(1.0, overall_rate_limit))
-        # 将整体速率映射为曲线，先缓后陡
         self._overall_effective = self._map_curve(self.overall_rate_limit, power=1.5)
 
-        # 全局防御参数（连续变化，无阈值）
-        self.global_factor = global_factor
-        self.global_max_factor = global_max_factor
+        # 全局防御参数
+        self.global_factor = max(0.001, global_factor)
+        self.global_max_factor = max(1.0, global_max_factor)
 
         # 存储结构
-        self._ip_tokens = defaultdict(float)
-        self._ip_available = defaultdict(int)
+        self._ip_tokens = defaultdict(float)        # 上次刷新令牌的时间戳
+        self._ip_available = defaultdict(float)     # 剩余令牌数（改用 float 避免精度截断）
         self._ip_concurrent = defaultdict(list)
         self._ip_blocked = {}
         self._ip_violation_count = defaultdict(int)
         self._ip_suspicion = defaultdict(int)
         self._ip_last_seen = defaultdict(float)
+        self._ip_burst_over_limit = defaultdict(int) 
 
         self._lock = threading.RLock()
         self._whitelist = set()
 
     # ==================== 曲线映射函数 ====================
     def _map_curve(self, value: float, power: float = 1.5) -> float:
-        """
-        将线性值映射为曲线值
-        power > 1: 先缓后陡（惩罚曲线）
-        power < 1: 先陡后缓（衰减曲线）
-        power = 1: 线性
-        """
         if value <= 0:
             return 0
         if value >= 1:
@@ -82,18 +75,13 @@ class DDoSProtector:
 
     # ==================== 外置控制器 ====================
     def set_overall_rate_limit(self, rate: float):
-        """
-        设置整体访问速率控制
-        :param rate: 范围 (0, 1]，1 表示无限制，越小越慢
-        """
         self.overall_rate_limit = max(0.0, min(1.0, rate))
         self._overall_effective = self._map_curve(self.overall_rate_limit, power=1.5)
 
     def get_overall_rate_limit(self) -> float:
-        """获取当前整体速率控制值"""
         return self.overall_rate_limit
+
     def _apply_overall_rate_limit(self, base_limit: int) -> int:
-        """应用整体速率控制到限流阈值"""
         if self._overall_effective >= 1.0:
             return base_limit
         if self._overall_effective <= 0:
@@ -110,44 +98,32 @@ class DDoSProtector:
     def _is_whitelisted(self, ip: str) -> bool:
         return ip in self._whitelist
 
-    # ==================== 全局防御强度计算（曲线） ====================
+    # ==================== 全局防御强度计算 ====================
     def _get_global_intensity_factor(self) -> float:
-        """
-        计算全局防御强度因子
-        使用与个人惩罚相同的曲线：factor = 1 + (blocked_count / global_factor)^1.5
-        """
         blocked_count = len(self._ip_blocked)
         if blocked_count == 0:
             return 1.0
         ratio = blocked_count / self.global_factor
-        # 使用 1.5 次方曲线，先缓后陡
         factor = 1 + (ratio ** 1.5)
         return min(factor, self.global_max_factor)
 
-    # ==================== 动态限流阈值（曲线） ====================
+    # ==================== 动态限流阈值 ====================
     def _get_effective_rate_limit(self, ip: str) -> int:
         if self._is_whitelisted(ip):
             return 999999
 
-        # 全局防御因子
         global_factor_val = self._get_global_intensity_factor()
-
-        # 个人惩罚因子（1 + violation_factor * violation_count^0.8，使增长更平滑）
         violation_count = self._ip_violation_count.get(ip, 0)
+        
         if violation_count == 0:
             personal_factor = 1.0
         else:
-            # 使用幂次曲线，使得惩罚随次数增加更平滑
             personal_factor = 1 + self.violation_factor * (violation_count ** 0.8)
 
-        # 综合因子 = 个人因子 × 全局因子
         total_factor = personal_factor * global_factor_val
-
-        # 基础限流
         base_limit = int(self.base_rate_limit / total_factor)
         base_limit = max(5, base_limit)
 
-        # 应用整体速率控制
         return self._apply_overall_rate_limit(base_limit)
 
     def _get_effective_concurrent_limit(self, ip: str) -> int:
@@ -155,30 +131,27 @@ class DDoSProtector:
             return 999999
 
         global_factor_val = self._get_global_intensity_factor()
-
         violation_count = self._ip_violation_count.get(ip, 0)
+        
         if violation_count == 0:
             personal_factor = 1.0
         else:
             personal_factor = 1 + self.violation_factor * (violation_count ** 0.8)
 
         total_factor = personal_factor * global_factor_val
-
         base_limit = int(self.concurrent_limit / total_factor)
         base_limit = max(2, base_limit)
 
         return self._apply_overall_rate_limit(base_limit)
 
-    # ==================== 嫌疑衰减（曲线） ====================
+    # ==================== 嫌疑衰减 ====================
     def _decay_suspicion(self, ip: str):
-        """随时间衰减嫌疑次数，使用曲线衰减"""
         now = time.time()
         last_seen = self._ip_last_seen.get(ip, now)
         elapsed = now - last_seen
 
         if elapsed >= 600:
-            # 使用对数曲线衰减，前期快后期慢
-            decay_ratio = min(1.0, elapsed / 3600)  # 1 小时最多衰减 1 次
+            decay_ratio = min(1.0, elapsed / 3600)
             old_suspicion = self._ip_suspicion.get(ip, 0)
             new_suspicion = max(0, int(old_suspicion * (1 - decay_ratio * 0.5)))
             if new_suspicion == 0:
@@ -187,19 +160,19 @@ class DDoSProtector:
                 self._ip_suspicion[ip] = new_suspicion
             self._ip_last_seen[ip] = now
 
-    # ==================== 黑名单管理（曲线衰减） ====================
+    # ==================== 黑名单管理 ====================
     def _is_blocked(self, ip: str) -> bool:
         if ip in self._ip_blocked:
             if time.time() < self._ip_blocked[ip]:
                 return True
             with self._lock:
+                # 异步或超时到期后安全移除
                 self._ip_blocked.pop(ip, None)
 
-                # 解封时衰减违规计数（使用曲线）
+                # 解封时衰减违规及爆发请求计数
                 old_count = self._ip_violation_count.get(ip, 0)
                 if old_count > 0:
-                    # 使用 release_decay_factor 作为衰减后的保留比例
-                    new_count = max(1, int(old_count * self.release_decay_factor))
+                    new_count = max(1, int(old_count * self.release_decay_factor)) if self.release_decay_factor < 1 else max(0, old_count - 1)
                     self._ip_violation_count[ip] = new_count
 
                 old_suspicion = self._ip_suspicion.get(ip, 0)
@@ -207,6 +180,7 @@ class DDoSProtector:
                     new_suspicion = max(1, int(old_suspicion * self.release_decay_factor))
                     self._ip_suspicion[ip] = new_suspicion
 
+                self._ip_burst_over_limit.pop(ip, None)
                 self._ip_last_seen[ip] = time.time()
         return False
 
@@ -215,7 +189,6 @@ class DDoSProtector:
             if violation:
                 self._ip_violation_count[ip] += 1
                 violation_count = self._ip_violation_count[ip]
-                # 封禁时长增长使用曲线（平方增长，先缓后陡）
                 growth_factor = 1 + self.violation_factor * (violation_count ** 1.2)
                 dynamic_block_time = min(self.base_block_time * growth_factor, self.max_block_time)
             else:
@@ -225,13 +198,14 @@ class DDoSProtector:
             self._ip_tokens.pop(ip, None)
             self._ip_available.pop(ip, None)
             self._ip_concurrent.pop(ip, None)
+            self._ip_burst_over_limit.pop(ip, None)
 
     # ==================== 攻击者指纹识别 ====================
     def _is_malicious_bot(self, ip: str, headers: dict) -> bool:
         ua = headers.get('User-Agent', '').lower()
         bad_patterns = [
             'curl', 'wget', 'python-requests', 'scrapy',
-            'go-http-client', 'java', 'perl', 'ruby',
+            'java', 'perl', 'ruby',
             'nikto', 'sqlmap', 'nmap', 'masscan'
         ]
 
@@ -253,7 +227,6 @@ class DDoSProtector:
             now = time.time()
             effective_limit = self._get_effective_rate_limit(ip)
 
-            # 如果整体速率控制为 0，直接拒绝
             if effective_limit <= 0:
                 return False
 
@@ -264,21 +237,32 @@ class DDoSProtector:
             last_check = self._ip_tokens.get(ip, 0)
             if last_check == 0:
                 self._ip_tokens[ip] = now
-                self._ip_available[ip] = effective_limit
+                self._ip_available[ip] = float(effective_limit)
+                last_check = now
 
             elapsed = now - last_check
-            # 令牌恢复速率 = effective_limit / 60
-            new_tokens = int(elapsed * effective_limit / 60)
+            # 令牌恢复速率（每秒恢复多少个令牌）
+            token_recovery_rate = effective_limit / 60.0
+            new_tokens = elapsed * token_recovery_rate
 
             if new_tokens > 0:
-                self._ip_available[ip] = min(effective_limit, self._ip_available[ip] + new_tokens)
+                self._ip_available[ip] = min(float(effective_limit), self._ip_available[ip] + new_tokens)
+                # 重点优化：只步进消耗掉的时间，避免微小时间差碎片在高并发下被持续刷零
                 self._ip_tokens[ip] = now
 
-            if  self._ip_available[ip] >= 1:
-                self._ip_available[ip] -= 1
+            # 判断是否有足够令牌供给本次请求
+            if  self._ip_available[ip] >= 1.0:
+                self._ip_available[ip] -= 1.0
+                # 如果请求正常，逐渐消减超限作案计数
+                if ip in self._ip_burst_over_limit and self._ip_burst_over_limit[ip] > 0:
+                    self._ip_burst_over_limit[ip] -= 1
                 return True
             else:
-                self._block_ip(ip, violation=True)
+                # 重点优化：令牌耗尽时，默认只予以拦截（返回限流），绝非直接Ban。
+                # 只有当用户触发限流后，继续不要命地发起高频冲击（顶风作案超过有效阈值），才判定为恶意攻击并Ban。
+                self._ip_burst_over_limit[ip] += 1
+                if self._ip_burst_over_limit[ip] > max(15, int(effective_limit * 0.3)):
+                    self._block_ip(ip, violation=True)
                 return False
 
     # ==================== 并发限制 ====================
@@ -290,21 +274,23 @@ class DDoSProtector:
             if effective_limit <= 0:
                 return False
 
-            # 清理超过 30 秒的僵尸连接
             active = [t for t in self._ip_concurrent[ip] if now - t < 30]
+            
+            if len(active) >= effective_limit:
+                self._ip_concurrent[ip] = active
+                return False
+                
             active.append(now)
             self._ip_concurrent[ip] = active
-            return len(active) <= effective_limit
+            return True
 
     def _decrease_concurrent(self, ip: str):
         with self._lock:
-            if  self._ip_concurrent[ip]:
+            if self._ip_concurrent[ip]:
                 self._ip_concurrent[ip].pop(0)
 
     # ==================== 统计接口 ====================
-
     def get_stats(self) -> dict:
-        """获取防护统计信息"""
         return {
             'blocked_ips': len(self._ip_blocked),
             'active_ips': len(self._ip_tokens),
@@ -315,7 +301,6 @@ class DDoSProtector:
         }
 
     # ==================== 对外装饰器 ====================
-
     def protect(self, f):
         @wraps(f)
         def decorated(*args, **kwargs):
@@ -328,10 +313,12 @@ class DDoSProtector:
                 return jsonify({'error': 'Too many requests, temporarily banned'}), 429
 
             if not self._check_rate_limit(ip, request.headers):
+                # 优化：区分是被拉黑了还是仅仅被限流
+                if self._is_blocked(ip):
+                    return jsonify({'error': 'Too many requests, temporarily banned'}), 429
                 return jsonify({'error': 'Rate limit exceeded'}), 429
 
             if not self._increase_concurrent(ip):
-                self._decrease_concurrent(ip)
                 return jsonify({'error': 'Too many concurrent connections'}), 429
 
             try:
@@ -341,8 +328,8 @@ class DDoSProtector:
 
         return decorated
     
-    def is_blocked(self, ip: str) -> bool:return self._is_blocked(ip)
-    def is_whitelisted(self, ip: str) -> bool:return self._is_whitelisted(ip)
-    def increase_concurrent(self, ip: str) -> bool:return self._increase_concurrent(ip)
-    def decrease_concurrent(self, ip: str) -> None:return self._decrease_concurrent(ip)
-    def check_rate_limit(self, ip: str, headers: dict) -> bool:return self._check_rate_limit(ip, headers)
+    def is_blocked(self, ip: str) -> bool: return self._is_blocked(ip)
+    def is_whitelisted(self, ip: str) -> bool: return self._is_whitelisted(ip)
+    def increase_concurrent(self, ip: str) -> bool: return self._increase_concurrent(ip)
+    def decrease_concurrent(self, ip: str) -> None: return self._decrease_concurrent(ip)
+    def check_rate_limit(self, ip: str, headers: dict) -> bool: return self._check_rate_limit(ip, headers)
