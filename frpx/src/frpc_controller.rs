@@ -256,8 +256,6 @@ auth.oidc.tokenEndpointURL = "https://{}:1000/oauth2/token"
 transport.tcpMux = true
 transport.poolCount = 10
 transport.wireProtocol = "v2"
-transport.heartbeatInterval = 30
-transport.heartbeatTimeout = 120
 
 transport.tls.enable = true
 transport.tls.keyFile = "./cert/client.key"
