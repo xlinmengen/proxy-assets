@@ -1,5 +1,6 @@
 import os, time
 import datetime
+import platform
 import ipaddress
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
@@ -224,21 +225,13 @@ def generate_cert(
     return server_key_bytes, server_cert_bytes
 
 def get_ca_time(
-    ca_private_key_bytes: bytes,
     ca_cert_bytes: bytes,
-    ca_format: str = "PEM",
-    ca_private_key_password: Optional[bytes] = None
+    ca_format: str = "PEM"
 ) -> Tuple[float, float]:
     if  ca_format.upper() == "DER":
         ca_cert = x509.load_der_x509_certificate(ca_cert_bytes)
-        ca_private_key = serialization.load_der_private_key(
-            ca_private_key_bytes, password=ca_private_key_password
-        )
     else:
         ca_cert = x509.load_pem_x509_certificate(ca_cert_bytes)
-        ca_private_key = serialization.load_pem_private_key(
-            ca_private_key_bytes, password=ca_private_key_password
-        )
     return (
         ca_cert.not_valid_before.timestamp(),
         ca_cert.not_valid_after.timestamp()
@@ -298,26 +291,25 @@ class makecerts:
         write_file(ca_cert_path, self.ca_cert_data)
     
     def Install_CA(self):
-        import platform
+        
         system = platform.system()
         if system == "Windows":
-            import subprocess
-            subprocess.run(['certutil', '-addstore', '-f', 'Root', str(self.cert_path / 'ca.crt')], check=True)
+            os.system(' '.join(['certutil', '-addstore', '-f', 'Root', str(self.cert_path / 'ca.crt')]))
         elif system == "Darwin":
-            import subprocess
-            subprocess.run(['sudo', 'security', 'add-trusted-cert', '-d', '-r', 'trustRoot', '-k', '/Library/Keychains/System.keychain', str(self.cert_path / 'ca.crt')], check=True)
+            os.system(' '.join(['sudo', 'security', 'add-trusted-cert', '-d', '-r', 'trustRoot', '-k', '/Library/Keychains/System.keychain', str(self.cert_path / 'ca.crt')]))
         elif system == "Linux":
             import shutil
             if os.path.exists('/usr/local/share/ca-certificates/monitor_ca.crt'):
                 os.remove('/usr/local/share/ca-certificates/monitor_ca.crt')
             shutil.copy(str(self.cert_path / 'ca.crt'), '/usr/local/share/ca-certificates/monitor_ca.crt')
-            subprocess.run(['sudo', 'update-ca-certificates'], check=True)
+            os.system(' '.join(['sudo', 'update-ca-certificates']))
+        '''
         else:
             raise NotImplementedError(f"Unsupported OS: {system}")
+        '''
 
     def get_ca_time(self) -> Tuple[float, float]:
         return get_ca_time(
-            self.ca_priv_data,
             self.ca_cert_data,
             ca_format="PEM"
         )
