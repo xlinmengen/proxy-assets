@@ -16,6 +16,8 @@ server_ip = xsettings.get_server_ip()
 DDoSProtector = ddos.DDoSProtector(**config.ddos_config)
 DDoSProtector.whitelist_add(server_ip)
 
+xsettings.makecert.Install_CA()
+
 def linear_map(value: float, from_range: tuple[float, float], to_range: tuple[float, float]) -> float:
     from_min, from_max = min(*from_range), max(*from_range)
     to_min  , to_max   = min(*to_range)  , max(*to_range)
@@ -31,8 +33,10 @@ def get_system_load() -> float:
 
 def rebuildCert():
     xsettings.makecert.Rebuild_Root_CA()
+    xsettings.makecert.Install_CA()
     xsettings.update_frps_certs()
     
+    utils.Timer(1.0, lambda: os.system('systemctl restart frps'))
     utils.Timer(1.0, lambda: os.system('systemctl restart monitor_launcher'))
 
 def TCreator(ctype:int = 0):
@@ -53,9 +57,11 @@ if __name__ == '__main__':
     update_assets.updater(server_ip)
     update_blacklist.Updater()
 
+    os.system('systemctl restart frps')
     os.system('systemctl restart monitor_launcher')
 
     def handler():
+        os.system('systemctl stop frps')
         os.system('systemctl stop monitor_launcher')
         sys.exit()
 
