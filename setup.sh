@@ -118,6 +118,9 @@ sudo apt install -y curl nano ufw wget vim systemd-resolved dnsutils cpufrequtil
 sudo systemctl enable ssh
 sudo systemctl enable sshd
 
+sudo rm -f /etc/resolv.conf
+printf 'nameserver 1.1.1.1\nnameserver 8.8.8.8\n' | sudo tee /etc/resolv.conf
+
 sudo ln -sf /usr/bin/python3 /usr/bin/py
 sudo ln -sf /usr/bin/python3 /usr/bin/python
 
