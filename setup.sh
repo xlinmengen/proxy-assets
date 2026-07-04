@@ -109,9 +109,12 @@ SCRIPT_START=$(date +%s)
 sudo hostnamectl set-hostname server
 echo 'PS1='\''${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '\' | sudo tee -a ~/.bashrc > /dev/null
 
+sudo rm -f /etc/resolv.conf
+printf 'nameserver 1.1.1.1\nnameserver 8.8.8.8\n' | sudo tee /etc/resolv.conf
+
 sudo apt update
 sudo apt upgrade -y
-sudo apt install -y curl nano ufw wget vim dnsutils cpufrequtils unzip ipset ca-certificates python3 python3-pip python3-venv
+sudo apt install -y curl nano ufw wget vim systemd-resolved dnsutils cpufrequtils unzip ipset ca-certificates python3 python3-pip python3-venv
 sudo systemctl enable ssh
 sudo systemctl enable sshd
 
