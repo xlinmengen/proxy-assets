@@ -60,3 +60,36 @@ payload:
   - '+.cloudfront.net'
 
   - '+.playstove.com'
+  
+  # --- TikTok 官方核心域名 ---
+  - '+.tiktok.com'
+  - '+.tiktokv.com'
+  - '+.tiktokw.us'
+  - '+.tiktokv.us'
+  - '+.tiktokcdn.com'
+  - '+.tiktokcdn-us.com'
+
+  # --- 静态资源与 CDN 加速 ---
+  - '+.ttwstatic.com'
+  - '+.byteoversea.com'
+  - '+.ibyteimg.com'
+  - '+.ibytedtos.com'
+  - '+.myvzw.com'
+  - '+.pstatp.com'
+
+  # --- 广告、分析与 SDK 服务 ---
+  - '+.ads-tiktok.com'
+  - '+.ttads.com'
+  - '+.byte-fcdn.com'
+  - '+.appsflyersdk.com'
+  - '+.snapkit.com'
+  - '+.app-analytics-services.com'
+  - '+.onelink.me'
+
+  # --- 登录与第三方验证补充 ---
+  - '+.tiktokcdn'
+  - '+.musical.ly'
+  - '+.sgpstatp.com'
+  - '+.snssdk.com'
+  - '+.googleapis.com'
+  - '+.onelink.me'
