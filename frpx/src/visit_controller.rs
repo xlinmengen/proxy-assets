@@ -32,7 +32,7 @@ impl VisitController {
     }
 
     pub async fn add_xtcp(&self, name: &str, bind_port: u16, server_name: &str, secret_key: &str) -> Result<(bool, Value)> {
-        let payload = json!({ "name": name, "type": "xtcp", "xtcp": { "bindPort": bind_port, "serverName": server_name, "secretKey": secret_key } });
+        let payload = json!({ "name": name, "type": "xtcp", "xtcp": { "bindPort": bind_port, "serverName": server_name, "secretKey": secret_key, "keepTunnelOpen": true } });
         let (ok, code, body) = (self.api_callback)("POST".to_string(), "store/visitors".to_string(), payload).await?;
         Ok((ok && code == 200, if ok && code == 200 { json!({ "success": true }) } else { json!({ "error": body }) }))
     }
