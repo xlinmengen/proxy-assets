@@ -80,7 +80,28 @@ impl VisitController {
         let info: Value = serde_json::from_str(&body)?;
         let typ = info.get("type").and_then(|v| v.as_str()).unwrap_or("").to_string();
         if typ.is_empty() { return Ok((false, json!({ "error": "Invalid visitor type" }))); }
-        let payload = json!({ "name": name, "type": typ, typ: { "bindPort": bind_port, "serverName": server_name, "secretKey": secret_key } });
+        let payload = if typ == "xtcp" {
+            json!({
+                "name": name,
+                "type": typ,
+                typ: {
+                    "bindPort": bind_port,
+                    "serverName": server_name,
+                    "secretKey": secret_key,
+                    "keepTunnelOpen": true
+                }
+            })
+        } else {
+            json!({
+                "name": name,
+                "type": typ,
+                typ: {
+                    "bindPort": bind_port,
+                    "serverName": server_name,
+                    "secretKey": secret_key
+                }
+            })
+        };
         let (ok2, code, body2) = (self.api_callback)("PUT".to_string(), format!("store/visitors/{}", name), payload).await?;
         Ok((ok2 && code == 200, if ok2 && code == 200 { json!({ "success": true }) } else { json!({ "error": body2 }) }))
     }
