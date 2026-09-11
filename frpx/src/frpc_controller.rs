@@ -253,8 +253,8 @@ auth.oidc.clientID = "{}"
 auth.oidc.clientSecret = "{}"
 auth.oidc.tokenEndpointURL = "https://{}:1000/oauth2/token"
 
-transport.tcpMux = true
-transport.poolCount = 10
+transport.tcpMux = false
+transport.poolCount = 20
 transport.wireProtocol = "v2"
 
 transport.tls.enable = true
