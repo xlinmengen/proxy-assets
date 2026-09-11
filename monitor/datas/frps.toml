@@ -19,11 +19,10 @@ log.to = "/var/log/frps/frps.log"
 log.level = "info"
 log.maxDays = 3
 
-transport.tcpMux = true
-transport.tcpMuxKeepaliveInterval = 30
+transport.tcpMux = false
 
-transport.maxPoolCount = 20
-transport.heartbeatTimeout = 90
+transport.maxPoolCount = 500
+transport.heartbeatTimeout = 120
 
 transport.tls.force = true
 transport.tls.certFile = "/opt/frps/certs/server.crt"
