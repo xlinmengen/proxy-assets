@@ -7,7 +7,7 @@ ipv6: false
 log-level: info
 
 tcp-concurrent: true
-tcp-fast-open: false
+tcp-fast-open: true
 udp-fragment: false
 geodata-mode: true
 
