@@ -37,6 +37,7 @@ payload:
 
   # --- 国内游戏服务 ---
   - '+.mihoyo.com'
+  - '+.hypergryph.com'
   
   # --- 手机系统服务 ---
   - '+.apple.com'
