@@ -2,6 +2,7 @@ payload:
   # --- 常见国内域名 ---
   - '+.age.tv'
   - '+.agedm.io'
+  - '+.douyin.com'
   - '+.bilibili.com'
   - '+.biliapi.net'
   - '+.biliapi.com'
@@ -33,6 +34,9 @@ payload:
   - '+.jd.com'
   - '+.163.com'
   - '+.126.net'
+
+  # --- 国内游戏服务 ---
+  - '+.mihoyo.com'
   
   # --- 手机系统服务 ---
   - '+.apple.com'
