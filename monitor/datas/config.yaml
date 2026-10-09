@@ -66,7 +66,7 @@ proxies:
     tls: true
     udp: true
     flow: xtls-rprx-vision
-    servername: www.apple.com
+    servername: gateway.icloud.com
     reality-opts:
       public-key: "#[publickey]"
       short-id: "#[shortid]"
