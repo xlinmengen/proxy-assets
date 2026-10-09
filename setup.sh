@@ -184,7 +184,7 @@ sudo ufw --force reset >/dev/null
 sudo ufw default deny  incoming >/dev/null
 sudo ufw default allow outgoing >/dev/null
 sudo ufw allow 10/tcp   comment 'FRP Service' >/dev/null
-sudo ufw allow 443/tcp  comment 'Xray Proxy  Service' >/dev/null
+sudo ufw allow 400/tcp  comment 'Xray Proxy  Service' >/dev/null
 sudo ufw allow 1000/tcp comment 'Web Monitor Service' >/dev/null
 
 echo y|sudo -S ufw delete 4 >/dev/null
