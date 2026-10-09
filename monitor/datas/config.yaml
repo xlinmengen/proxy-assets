@@ -60,13 +60,13 @@ proxies:
   - name: "WORK-REMOTE"
     type: vless
     server: #[serverip]
-    port: 443
+    port: 400
     uuid: "#[uuid]"
     network: tcp
     tls: true
     udp: true
     flow: xtls-rprx-vision
-    servername: gateway.icloud.com
+    servername: www.apple.com
     reality-opts:
       public-key: "#[publickey]"
       short-id: "#[shortid]"
