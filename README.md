@@ -339,7 +339,7 @@ journalctl -u monitor -f -n 50
 | `net.ipv4.tcp_congestion_control` | `bbr` | 启用 BBR 拥塞控制 |
 | `net.core.rmem_max / wmem_max` | 256 MiB | 最大接收/发送缓冲区 (适配高 BDP) |
 | `net.ipv4.tcp_rmem / wmem` | 4K–256M | 动态缓冲区范围 |
-| `net.ipv4.tcp_fastopen` | 0 | 禁用 TFO (保证兼容性) |
+| `net.ipv4.tcp_fastopen` | 3 | 启用 TFO |
 | `net.ipv4.tcp_slow_start_after_idle` | 0 | 禁用空闲后慢启动 |
 | `net.ipv4.tcp_keepalive_time` | 20 | 保活探测间隔 (适配 NAT 超时短的环境) |
 | `net.ipv4.tcp_keepalive_intvl` | 10 | 保活探测间隔 |
