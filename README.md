@@ -122,7 +122,7 @@ proxies:
   - name: "WORK-REMOTE"
     type: vless
     server: <VPS_IP>
-    port: 443
+    port: 400
     uuid: <用户UUID>
     network: tcp
     tls: true
@@ -252,7 +252,7 @@ journalctl -u monitor -f -n 50
 | 端口 | 用途 | 状态 |
 | :--- | :--- | :--- |
 | `10` | FRP 内网穿透 | ✅ 已开放 |
-| `443` | Xray Reality 代理 | ✅ 已开放 |
+| `400` | Xray Reality 代理 | ✅ 已开放 |
 | `1000` | Web 管理面板 | ✅ 已开放 |
 | `1020` | FRP 管理面板 | ❌ 仅限本地 |
 
